@@ -46,10 +46,10 @@ DJANGO_APPS = [
 
 APPLICATION_APPS = [
     'pages.apps.PagesConfig',
-    'listings.apps.ListingsConfig',
-    'doctors.apps.DoctorsConfig',
-    'accounts.apps.AccountsConfig',
-    'contacts.apps.ContactsConfig',
+    'administration.apps.AdministrationConfig',
+    'students.apps.StudentsConfig',
+    'teachers.apps.TeachersConfig',
+    'web_contents.apps.WebContentsConfig',
 ]
 
 THIRD_PARTY_APPS = [
@@ -95,14 +95,14 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'erb9',
-        'USER': 'postgres',
-        'PASSWORD': '1156',
-        'HOST': 'localhost',
-        'PORT': '5432'
-    }
+    # 'default': {
+    #     'ENGINE': 'django.db.backends.postgresql',
+    #     'NAME': 'erb9',
+    #     'USER': 'postgres',
+    #     'PASSWORD': '1156',
+    #     'HOST': 'localhost',
+    #     'PORT': '5432'
+    # }
 }
 
 
