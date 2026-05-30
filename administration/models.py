@@ -1,3 +1,109 @@
 from django.db import models
 
 # Create your models here.
+
+class Staff(models.Model):
+    staff_no = models.CharField(max_length=50, blank=True, null=True, verbose_name="員工編號")
+    first_name = models.CharField(max_length=50, blank=True, null=True, verbose_name="名字")
+    last_name = models.CharField(max_length=50, blank=True, null=True, verbose_name="姓氏")
+    phone = models.CharField(max_length=50, blank=True, null=True, verbose_name="電話")
+    email = models.CharField(max_length=200, blank=True, null=True, verbose_name="電子郵件")
+    addr = models.CharField(max_length=200, blank=True, null=True, verbose_name="地址")
+    username = models.CharField(max_length=50, blank=True, null=True, verbose_name="帳號")
+    password = models.CharField(max_length=50, blank=True, null=True, verbose_name="密碼")
+    remarks = models.TextField(blank=True, null=True, verbose_name="備註")
+    is_active = models.BooleanField(default=True, verbose_name="是否啟用")
+    is_admin = models.BooleanField(default=False, verbose_name="是否為管理員")
+    file_status = models.CharField(max_length=100, blank=True, null=True, verbose_name="檔案狀態")
+    created_by = models.CharField(max_length=100, blank=True, null=True, verbose_name="建立者")
+    created_datetime = models.DateTimeField(blank=True, null=True, verbose_name="建立時間", auto_now_add=True)
+    last_updated_by = models.CharField(max_length=100, blank=True, null=True, verbose_name="最後更新者")
+    last_updated_datetime = models.DateTimeField(blank=True, null=True, verbose_name="最後更新時間", auto_now=True)
+
+    class Meta:
+        db_table = 'staff'
+        verbose_name = '行政員工'
+        verbose_name_plural = '行政員工'
+
+    def __str__(self):
+        return f"{self.staff_no} - {self.first_name} {self.last_name}"
+
+
+class Center(models.Model):
+    name = models.CharField(max_length=200, blank=True, null=True, verbose_name="中心名稱")
+    addr = models.CharField(max_length=200, blank=True, null=True, verbose_name="中心地址")
+    addr_desc = models.CharField(max_length=200, blank=True, null=True, verbose_name="地址描述")
+    phone = models.CharField(max_length=100, blank=True, null=True, verbose_name="電話")
+    fax = models.CharField(max_length=100, blank=True, null=True, verbose_name="傳真")
+    email = models.CharField(max_length=100, blank=True, null=True, verbose_name="電子郵件")
+    map_url = models.CharField(max_length=200, blank=True, null=True, verbose_name="地圖連結")
+    intro = models.TextField(blank=True, null=True, verbose_name="中心簡介")
+    file_status = models.CharField(max_length=100, blank=True, null=True, verbose_name="檔案狀態")
+    created_by = models.CharField(max_length=100, blank=True, null=True, verbose_name="建立者")
+    created_datetime = models.DateTimeField(blank=True, null=True, verbose_name="建立時間", auto_now_add=True)
+    last_updated_by = models.CharField(max_length=100, blank=True, null=True, verbose_name="最後更新者")
+    last_updated_datetime = models.DateTimeField(blank=True, null=True, verbose_name="最後更新時間", auto_now=True)
+
+    class Meta:
+        db_table = 'center'
+        verbose_name = '中心'
+        verbose_name_plural = '中心'
+
+    def __str__(self):
+        return self.name or f"Center {self.id}"
+
+
+class Room(models.Model):
+    center = models.ForeignKey('Center', on_delete=models.CASCADE, db_column='center_id', blank=True, null=True, verbose_name="所屬中心")
+    name = models.CharField(max_length=200, blank=True, null=True, verbose_name="房間/教室名稱")
+    desc = models.CharField(max_length=200, blank=True, null=True, verbose_name="描述")
+    file_status = models.CharField(max_length=100, blank=True, null=True, verbose_name="檔案狀態")
+    created_by = models.CharField(max_length=100, blank=True, null=True, verbose_name="建立者")
+    created_datetime = models.DateTimeField(blank=True, null=True, verbose_name="建立時間", auto_now_add=True)
+    last_updated_by = models.CharField(max_length=100, blank=True, null=True, verbose_name="最後更新者")
+    last_updated_datetime = models.DateTimeField(blank=True, null=True, verbose_name="最後更新時間", auto_now=True)
+
+    class Meta:
+        db_table = 'room'
+        verbose_name = '房間/教室'
+        verbose_name_plural = '房間/教室'
+
+    def __str__(self):
+        return self.name or f"Room {self.id}"
+
+
+class CourseMainCategory(models.Model):
+    name = models.CharField(max_length=50, blank=True, null=True, verbose_name="主類別名稱")
+    desc = models.TextField(blank=True, null=True, verbose_name="主類別描述")
+    file_status = models.CharField(max_length=100, blank=True, null=True, verbose_name="檔案狀態")
+    created_by = models.CharField(max_length=100, blank=True, null=True, verbose_name="建立者")
+    created_datetime = models.DateTimeField(blank=True, null=True, verbose_name="建立時間", auto_now_add=True)
+    last_updated_by = models.CharField(max_length=100, blank=True, null=True, verbose_name="最後更新者")
+    last_updated_datetime = models.DateTimeField(blank=True, null=True, verbose_name="最後更新時間", auto_now=True)
+
+    class Meta:
+        db_table = 'course_main_category'
+        verbose_name = '課程主類別'
+        verbose_name_plural = '課程主類別'
+
+    def __str__(self):
+        return self.name or f"MainCategory {self.id}"
+
+
+class CourseSubCategory(models.Model):
+    main_category = models.ForeignKey('CourseMainCategory', on_delete=models.CASCADE, db_column='main_category_id', blank=True, null=True, verbose_name="所屬主類別")
+    name = models.CharField(max_length=50, blank=True, null=True, verbose_name="子類別名稱")
+    desc = models.TextField(blank=True, null=True, verbose_name="子類別描述")
+    file_status = models.CharField(max_length=100, blank=True, null=True, verbose_name="檔案狀態")
+    created_by = models.CharField(max_length=100, blank=True, null=True, verbose_name="建立者")
+    created_datetime = models.DateTimeField(blank=True, null=True, verbose_name="建立時間", auto_now_add=True)
+    last_updated_by = models.CharField(max_length=100, blank=True, null=True, verbose_name="最後更新者")
+    last_updated_datetime = models.DateTimeField(blank=True, null=True, verbose_name="最後更新時間", auto_now=True)
+
+    class Meta:
+        db_table = 'course_sub_category'
+        verbose_name = '課程子類別'
+        verbose_name_plural = '課程子類別'
+
+    def __str__(self):
+        return self.name or f"SubCategory {self.id}"
