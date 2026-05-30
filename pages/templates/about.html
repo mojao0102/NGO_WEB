@@ -1,138 +1,17 @@
-<!DOCTYPE html>
-<html lang="zh-Hant">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>頁面</title>
-<!-- Tailwind CSS -->
-<script src="https://cdn.tailwindcss.com"></script>
-<!-- Google Fonts - Yusei Magic -->
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Yusei+Magic&display=swap" rel="stylesheet">
-<!-- Font Awesome -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-<style type="text/tailwindcss">
-@layer utilities {
-    .font-yusei {
-    font-family: 'Yusei Magic', sans-serif;
-    }
-    .text-course-brown {
-    color: #592E00;
-    }
-}
-</style>
-</head>
-<body class="m-0 p-0 font-yusei bg-white font-yusei text-course-brown">
-
-<!-- 1. Navbar -->
-<!-- Desktop navbar -->
-<div id="navbar" class="fixed w-full top-0 md:top-5 md:w-[90%] md:left-1/2 md:-translate-x-1/2 md:rounded-full bg-white shadow-lg z-50">
-    <div class="container mx-auto px-4 py-3 flex justify-between items-center">
-    <!-- Desktop Links -->
-    <div class="hidden md:flex gap-6">
-        <a href="#" class="text-gray-700 hover:text-blue-600"><i class="fa-solid fa-baby fa-xl" style="color: #FCD82A;"></i>Playgroup</a>
-        <a href="#" class="text-gray-700 hover:text-blue-600"><i class="fa-solid fa-child-reaching fa-xl" style="color: #accf56;"></i>兒童課程</a>
-        <a href="#" class="text-gray-700 hover:text-blue-600"><i class="fa-solid fa-person fa-xl" style="color: #c7a4a0;"></i>成人課程</a>
-    </div>
-
-    <!-- Logo -->
-    <div>
-        <a href="#" class="text-xl font-bold text-gray-800">
-        <img src="./img/logo/jc.png" class="h-12" alt="jclogo">
-        </a>
-    </div>
-
-    <!-- Login / Register -->
-    <div class="hidden md:flex gap-6">
-        <div class="flex items-center gap-5">
-        <a href="#">
-            <div class="flex items-center">
-            <div class="w-8 h-8 bg-green-300 rounded-full flex items-center justify-center">
-                <i class="fa-solid fa-arrow-right-to-bracket text-lg text-black"></i>
-            </div>
-            <span class="text-md text-gray-600 font-medium">登入</span>
-            </div>
-        </a>
-        <a href="#">
-            <div class="flex items-center">
-            <div class="w-8 h-8 bg-orange-200 rounded-full flex items-center justify-center">
-                <i class="fa-solid fa-user-plus text-md text-black"></i>
-            </div>
-            <span class="text-md text-gray-600 font-medium">註冊</span>
-            </div>
-        </a>
-        </div>
-    </div>
-
-    <!-- 手機漢堡按鈕 -->
-    <button id="menuBtn" class="md:hidden text-2xl text-gray-600 z-50">
-        <i class="fa-solid fa-bars"></i>
-    </button>
-</div>
-</div>
-
-<!-- 手機選單 -->
-<div id="mobileMenu" 
-  class="fixed inset-0 bg-white/95 z-[9998] flex flex-col items-center justify-center gap-3 text-lg hidden opacity-0 transition-opacity duration-300"
-  style="background-image: url('./img/banner/mainbanner.jpg');">
-
-  <a href="#" class="w-full px-10">
-    <p class="w-full py-2 px-5 bg-blue-400 text-white font-medium rounded-full hover:bg-blue-500 transition-colors text-center">首頁</p>
-  </a>
-  <a href="#" class="w-full px-10">
-    <p class="w-full py-2 px-5 bg-blue-400 text-white font-medium rounded-full hover:bg-blue-500 transition-colors text-center">關於我們</p>
-  </a>
-  <a href="#" class="w-full px-10">
-    <p class="w-full py-2 px-5 bg-blue-400 text-white font-medium rounded-full hover:bg-blue-500 transition-colors text-center">最新消息</p>
-  </a>
-
-  <div class="flex flex-col items-center gap-4 mt-4">
-    <button class="w-40 py-2 bg-white hover:bg-gray-100 border-4 border-yellow-400 rounded-2xl flex flex-col items-center justify-center shadow-md">
-      <i class="fa-solid fa-baby text-4xl text-yellow-400 mb-2"></i>
-      <span class="text-gray-700 text-lg font-medium">幼嬰課程</span>
-    </button>
-    <button class="w-40 py-2 bg-white hover:bg-gray-100 border-4 border-green-400 rounded-2xl flex flex-col items-center justify-center shadow-md">
-      <i class="fa-solid fa-child text-4xl text-green-500 mb-2"></i>
-      <span class="text-gray-700 text-lg font-medium">兒童課程</span>
-    </button>
-    <button class="w-40 py-2 bg-white hover:bg-gray-100 border-4 border-pink-300 rounded-2xl flex flex-col items-center justify-center shadow-md">
-      <i class="fa-solid fa-user text-4xl text-pink-400 mb-2"></i>
-      <span class="text-gray-700 text-lg font-medium">成人課程</span>
-    </button>
-  </div>
-
-  <div class="flex justify-center gap-4 mt-6 w-full px-4">
-    <a href="">
-      <button class="py-4 px-8 bg-green-400 text-white rounded-full flex items-center gap-3 hover:bg-green-500 transition-colors">
-        <i class="fa-solid fa-arrow-right-to-bracket text-xl"></i>
-        <span class="font-medium text-xl">登入</span>
-      </button>
-    </a>
-    <a href="">
-      <button class="py-4 px-8 bg-blue-500 text-white rounded-full flex items-center gap-3 hover:bg-blue-600 transition-colors">
-        <i class="fa-solid fa-user-plus text-xl"></i>
-        <span class="font-medium text-xl">註冊</span>
-      </button>
-    </a>
-  </div>
-</div>
-
-<!-- 手機關閉按鈕 -->
-<button id="closeBtn" 
-  class="bg-blue-500 px-2 rounded-lg fixed top-5 right-5 text-2xl text-white z-[9999] hidden">
-  <i class="fa-solid fa-xmark"></i>
-</button>
+{% extends "base.html" %} 
+{% load static %}
+{% load humanize %}
+{% block content %}
 
 <!-- 1.2 background -->
 <div class="relative h-[200px] bg-cover bg-center" 
-    style="background-image: url('./img//banner/mainbanner.jpg');">
+    style="background-image: url('{% static "img/banner/mainbanner.jpg" %}');">
 </div>
 
 <!-- 2. Page Content -->
 <div class="relative z-10 flex flex-col items-center px-4 py-16">
     <div class="w-full max-w-4xl space-y-12">
-
+      
     <!-- 中心介紹 -->
     <section class="bg-white/90 backdrop-blur-sm rounded-2xl shadow-lg p-8">
         <h2 class="text-3xl font-bold text-center mb-6">中心介紹</h2>
@@ -144,18 +23,29 @@
 
     <!-- 聯絡我們 -->
     <section class="bg-white/90 backdrop-blur-sm rounded-2xl shadow-lg p-8">
-        <h2 class="text-3xl font-bold text-center mb-6">聯絡我們</h2>
-        <div class="text-base leading-relaxed space-y-3 mb-5">
-        <p class="font-bold">基督教家庭服務中心 — 成龍全人發展中心</p>
-        <p>地址：將軍澳景林鄰里社區中心一、二、四樓</p>
-        <p>電話：2704 0020</p>
-        <p>傳真：2703 7979</p>
-        <p>電郵：info@wholeperson.org.hk</p>
-        <p class="mt-4">中心位置：本中心位於將軍澳景林鄰里社區中心一、二、四樓<br>(景林村百佳超級市場斜對面)</p>
-        </div>
-        <!-- Google Map -->
-        <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3690.898820492803!2d114.260955!3d22.319665999999994!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3404040b1df99f71%3A0xceec424cfa6d26c3!2sChristian%20Family%20Service%20Centre_cheung%20Kwan%20O!5e0!3m2!1sen!2shk!4v1779854295031!5m2!1sen!2shk" width="600" height="450" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
-    </section>
+        <h1 class="text-3xl font-bold text-center mb-6">聯絡我們</h1>
+
+        {% for center in list_center %}
+          <div class="text-base leading-relaxed space-y-3 mb-6">
+          <p class="font-bold">{{center.name}}</p>
+          <p>地址：{{center.addr}}</p>
+          <p>電話：{{center.phone}}</p>
+          <p>傳真：{{center.fax}}</p>
+          <p>電郵：{{center.email}}</p>
+          <p class="mt-4">中心位置：{{center.addr_desc}}</p>
+          </div>
+          <!-- Google Map -->
+          <iframe src="{{center.map_url}}" 
+          width="600" 
+          height="450" 
+          style="border:0;" 
+          allowfullscreen="" 
+          loading="lazy" 
+          referrerpolicy="no-referrer-when-downgrade">
+        </iframe>      
+        {% endfor %}
+      </section>
+
 
     <!-- 惡劣天氣安排 -->
     <section class="bg-white/90 backdrop-blur-sm rounded-2xl shadow-lg p-8">
@@ -174,51 +64,4 @@
     </section>
     </div>
 </div>
-
-<script>
-const mainnavbar = document.getElementById('navbar');
-const menuBtn = document.getElementById('menuBtn');
-const closeBtn = document.getElementById('closeBtn');
-const mobileMenu = document.getElementById('mobileMenu');
-
-  // 開啟選單
-  menuBtn.addEventListener('click', () => {
-    menuBtn.classList.add('hidden');
-    mainnavbar.classList.add('hidden');
-    mobileMenu.classList.remove('hidden');
-    closeBtn.classList.remove('hidden'); // 顯示關閉鈕
-    setTimeout(() => {
-      mobileMenu.classList.add('opacity-100');
-    }, 10);
-    document.body.style.overflow = 'hidden';
-  });
-
-  // 關閉選單
-  closeBtn.addEventListener('click', () => {
-    mobileMenu.classList.remove('opacity-100');
-    setTimeout(() => {
-      mobileMenu.classList.add('hidden');
-      mainnavbar.classList.remove('hidden');
-      closeBtn.classList.add('hidden');
-      menuBtn.classList.remove('hidden');
-    });
-    document.body.style.overflow = '';
-  });
-
-  // 點選連結自動關閉
-  const links = mobileMenu.querySelectorAll('a');
-  links.forEach(link => {
-    link.addEventListener('click', () => {
-      mobileMenu.classList.remove('opacity-100');
-      setTimeout(() => {
-        mobileMenu.classList.add('hidden');
-        closeBtn.classList.add('hidden');
-        menuBtn.classList.remove('hidden');
-      }, 300);
-      document.body.style.overflow = '';
-    });
-  });
-</script>
-
-</body>
-</html>
+{% endblock %}

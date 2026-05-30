@@ -36,7 +36,7 @@ class Center(models.Model):
     phone = models.CharField(max_length=100, blank=True, null=True, verbose_name="電話")
     fax = models.CharField(max_length=100, blank=True, null=True, verbose_name="傳真")
     email = models.CharField(max_length=100, blank=True, null=True, verbose_name="電子郵件")
-    map_url = models.CharField(max_length=200, blank=True, null=True, verbose_name="地圖連結")
+    map_url = models.TextField(blank=True, null=True, verbose_name="地圖連結")
     intro = models.TextField(blank=True, null=True, verbose_name="中心簡介")
     file_status = models.CharField(max_length=100, blank=True, null=True, verbose_name="檔案狀態")
     created_by = models.CharField(max_length=100, blank=True, null=True, verbose_name="建立者")

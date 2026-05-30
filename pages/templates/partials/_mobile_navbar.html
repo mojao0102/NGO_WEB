@@ -1,0 +1,52 @@
+{% load static %}
+<!-- 手機選單 -->
+<div id="mobileMenu" 
+  class="fixed inset-0 bg-white/95 z-[9998] flex flex-col items-center justify-center gap-3 text-lg hidden opacity-0 transition-opacity duration-300"
+  style="background-image: url('{% static "img/banner/mainbanner.jpg" %}');">
+
+  <a href="#" class="w-full px-10">
+    <p class="w-full py-2 px-5 bg-blue-400 text-white font-medium rounded-full hover:bg-blue-500 transition-colors text-center">首頁</p>
+  </a>
+  <a href="#" class="w-full px-10">
+    <p class="w-full py-2 px-5 bg-blue-400 text-white font-medium rounded-full hover:bg-blue-500 transition-colors text-center">關於我們</p>
+  </a>
+  <a href="#" class="w-full px-10">
+    <p class="w-full py-2 px-5 bg-blue-400 text-white font-medium rounded-full hover:bg-blue-500 transition-colors text-center">最新消息</p>
+  </a>
+
+  <div class="flex flex-col items-center gap-4 mt-4">
+    <button class="w-40 py-2 bg-white hover:bg-gray-100 border-4 border-yellow-400 rounded-2xl flex flex-col items-center justify-center shadow-md">
+      <i class="fa-solid fa-baby text-4xl text-yellow-400 mb-2"></i>
+      <span class="text-gray-700 text-lg font-medium">幼嬰課程</span>
+    </button>
+    <button class="w-40 py-2 bg-white hover:bg-gray-100 border-4 border-green-400 rounded-2xl flex flex-col items-center justify-center shadow-md">
+      <i class="fa-solid fa-child text-4xl text-green-500 mb-2"></i>
+      <span class="text-gray-700 text-lg font-medium">兒童課程</span>
+    </button>
+    <button class="w-40 py-2 bg-white hover:bg-gray-100 border-4 border-pink-300 rounded-2xl flex flex-col items-center justify-center shadow-md">
+      <i class="fa-solid fa-user text-4xl text-pink-400 mb-2"></i>
+      <span class="text-gray-700 text-lg font-medium">成人課程</span>
+    </button>
+  </div>
+
+  <div class="flex justify-center gap-4 mt-6 w-full px-4">
+    <a href="">
+      <button class="py-4 px-8 bg-green-400 text-white rounded-full flex items-center gap-3 hover:bg-green-500 transition-colors">
+        <i class="fa-solid fa-arrow-right-to-bracket text-xl"></i>
+        <span class="font-medium text-xl">登入</span>
+      </button>
+    </a>
+    <a href="">
+      <button class="py-4 px-8 bg-blue-500 text-white rounded-full flex items-center gap-3 hover:bg-blue-600 transition-colors">
+        <i class="fa-solid fa-user-plus text-xl"></i>
+        <span class="font-medium text-xl">註冊</span>
+      </button>
+    </a>
+  </div>
+</div>
+
+<!-- 手機關閉按鈕 -->
+<button id="closeBtn" 
+  class="bg-blue-500 px-2 rounded-lg fixed top-5 right-5 text-2xl text-white z-[9999] hidden">
+  <i class="fa-solid fa-xmark"></i>
+</button>

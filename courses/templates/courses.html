@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>頁面</title>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com"></script>
+<!-- Google Fonts - Yusei Magic -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Yusei+Magic&display=swap" rel="stylesheet">
+<!-- Font Awesome -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style type="text/tailwindcss">
+@layer utilities {
+    .font-yusei {
+    font-family: 'Yusei Magic', sans-serif;
+    }
+    .text-course-brown {
+    color: #592E00;
+    }
+}
+</style>
+</head>
+<body class="m-0 p-0 font-yusei bg-white font-yusei text-course-brown">
+
+<!-- 1. Navbar -->
+<!-- Desktop navbar -->
+<div id="navbar" class="fixed w-full top-0 md:top-5 md:w-[90%] md:left-1/2 md:-translate-x-1/2 md:rounded-full bg-white shadow-lg z-50">
+    <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+    <!-- Desktop Links -->
+    <div class="hidden md:flex gap-6">
+        <a href="#" class="text-gray-700 hover:text-blue-600"><i class="fa-solid fa-baby fa-xl" style="color: #FCD82A;"></i>Playgroup</a>
+        <a href="#" class="text-gray-700 hover:text-blue-600"><i class="fa-solid fa-child-reaching fa-xl" style="color: #accf56;"></i>兒童課程</a>
+        <a href="#" class="text-gray-700 hover:text-blue-600"><i class="fa-solid fa-person fa-xl" style="color: #c7a4a0;"></i>成人課程</a>
+    </div>
+
+    <!-- Logo -->
+    <div>
+        <a href="#" class="text-xl font-bold text-gray-800">
+        <img src="./img/logo/jc.png" class="h-12" alt="jclogo">
+        </a>
+    </div>
+
+    <!-- Login / Register -->
+    <div class="hidden md:flex gap-6">
+        <div class="flex items-center gap-5">
+        <a href="#">
+            <div class="flex items-center">
+            <div class="w-8 h-8 bg-green-300 rounded-full flex items-center justify-center">
+                <i class="fa-solid fa-arrow-right-to-bracket text-lg text-black"></i>
+            </div>
+            <span class="text-md text-gray-600 font-medium">登入</span>
+            </div>
+        </a>
+        <a href="#">
+            <div class="flex items-center">
+            <div class="w-8 h-8 bg-orange-200 rounded-full flex items-center justify-center">
+                <i class="fa-solid fa-user-plus text-md text-black"></i>
+            </div>
+            <span class="text-md text-gray-600 font-medium">註冊</span>
+            </div>
+        </a>
+        </div>
+    </div>
+
+    <!-- 手機漢堡按鈕 -->
+    <button id="menuBtn" class="md:hidden text-2xl text-gray-600 z-50">
+        <i class="fa-solid fa-bars"></i>
+    </button>
+</div>
+</div>
+
+<!-- 手機選單 -->
+<div id="mobileMenu" 
+  class="fixed inset-0 bg-white/95 z-[9998] flex flex-col items-center justify-center gap-3 text-lg hidden opacity-0 transition-opacity duration-300"
+  style="background-image: url('./img/banner/mainbanner.jpg');">
+
+  <a href="#" class="w-full px-10">
+    <p class="w-full py-2 px-5 bg-blue-400 text-white font-medium rounded-full hover:bg-blue-500 transition-colors text-center">首頁</p>
+  </a>
+  <a href="#" class="w-full px-10">
+    <p class="w-full py-2 px-5 bg-blue-400 text-white font-medium rounded-full hover:bg-blue-500 transition-colors text-center">關於我們</p>
+  </a>
+  <a href="#" class="w-full px-10">
+    <p class="w-full py-2 px-5 bg-blue-400 text-white font-medium rounded-full hover:bg-blue-500 transition-colors text-center">最新消息</p>
+  </a>
+
+  <div class="flex flex-col items-center gap-4 mt-4">
+    <button class="w-40 py-2 bg-white hover:bg-gray-100 border-4 border-yellow-400 rounded-2xl flex flex-col items-center justify-center shadow-md">
+      <i class="fa-solid fa-baby text-4xl text-yellow-400 mb-2"></i>
+      <span class="text-gray-700 text-lg font-medium">幼嬰課程</span>
+    </button>
+    <button class="w-40 py-2 bg-white hover:bg-gray-100 border-4 border-green-400 rounded-2xl flex flex-col items-center justify-center shadow-md">
+      <i class="fa-solid fa-child text-4xl text-green-500 mb-2"></i>
+      <span class="text-gray-700 text-lg font-medium">兒童課程</span>
+    </button>
+    <button class="w-40 py-2 bg-white hover:bg-gray-100 border-4 border-pink-300 rounded-2xl flex flex-col items-center justify-center shadow-md">
+      <i class="fa-solid fa-user text-4xl text-pink-400 mb-2"></i>
+      <span class="text-gray-700 text-lg font-medium">成人課程</span>
+    </button>
+  </div>
+
+  <div class="flex justify-center gap-4 mt-6 w-full px-4">
+    <a href="">
+      <button class="py-4 px-8 bg-green-400 text-white rounded-full flex items-center gap-3 hover:bg-green-500 transition-colors">
+        <i class="fa-solid fa-arrow-right-to-bracket text-xl"></i>
+        <span class="font-medium text-xl">登入</span>
+      </button>
+    </a>
+    <a href="">
+      <button class="py-4 px-8 bg-blue-500 text-white rounded-full flex items-center gap-3 hover:bg-blue-600 transition-colors">
+        <i class="fa-solid fa-user-plus text-xl"></i>
+        <span class="font-medium text-xl">註冊</span>
+      </button>
+    </a>
+  </div>
+</div>
+
+<!-- 手機關閉按鈕 -->
+<button id="closeBtn" 
+  class="bg-blue-500 px-2 rounded-lg fixed top-5 right-5 text-2xl text-white z-[9999] hidden">
+  <i class="fa-solid fa-xmark"></i>
+</button>
+
+<!-- 1.2 background -->
+<div class="relative h-[180px] bg-cover bg-center" 
+    style="background-image: url('./img/bg/course_infants.avif')">
+</div>
+
+<!-- 2. Page Content -->
+<div class="max-w-4xl mx-auto p-4 mt-6">
+    <!-- 頂部課程分類導航 -->
+    <div class="flex justify-center -space-x-2">
+        <a href="#">
+            <div class="bg-yellow-400 hover:bg-yellow-200 text-center py-3 px-8 rounded-t-lg text-sm font-medium">
+            親子 Playgroup / 學前系列 課程
+            </div>
+        </a>
+        <a href="#">
+            <div class="bg-green-400 hover:bg-green-200 text-center py-3 px-8 rounded-t-lg text-white text-sm font-medium">
+            幼兒及兒童課程
+            </div>
+        </a>
+        <a href="#">
+            <div class="bg-[#c7a4a0] hover:bg-pink-100 text-center py-3 px-8 rounded-t-lg text-sm font-medium">
+            成人課程
+            </div>
+        </a>
+    </div>
+
+    <!-- 主內容卡片 -->
+    <div class="border-4 border-green-400 rounded-2xl p-6">
+        <!-- 課程模組標籤 -->
+        <div class="flex flex-wrap justify-center gap-3 mb-8">
+            <!-- 在當前的sub cat會變 bg-green-400 -->
+            <a href="#">
+                <div class="bg-green-400 text-white text-center py-3 px-4 rounded-full text-sm font-medium transition-colors hover:bg-gray-200">
+                語言發展 · 普通話
+                </div>
+            </a>
+            <a href="#">
+                <div class="bg-cyan-200 text-center py-3 px-4 rounded-full text-sm font-medium transition-colors hover:bg-gray-200">
+                STEM 系列
+                </div>
+            </a>
+            <a href="#">
+                <div class="bg-cyan-200 text-center py-3 px-4 rounded-full text-sm font-medium transition-colors hover:bg-gray-200">
+                舞蹈律動
+                </div>
+            </a>
+            <a href="#">
+                <div class="bg-cyan-200 text-center py-3 px-4 rounded-full text-sm font-medium transition-colors hover:bg-gray-200">
+                語言發展 · 普通話
+                </div>
+            </a>
+            <a href="#">
+                <div class="bg-cyan-200 text-center py-3 px-4 rounded-full text-sm font-medium transition-colors hover:bg-gray-200">
+                視覺感官
+                </div>
+            </a>
+            <a href="#">
+                <div class="bg-cyan-200 text-center py-3 px-4 rounded-full text-sm font-medium transition-colors hover:bg-gray-200">
+                運動技能
+                </div>
+            </a>
+            <a href="#">
+                <div class="bg-cyan-200 text-center py-3 px-4 rounded-full text-sm font-medium transition-colors hover:bg-gray-200">
+                學習效能
+                </div>
+            </a>
+            <a href="#">
+                <div class="bg-cyan-200 text-center py-3 px-4 rounded-full text-sm font-medium transition-colors hover:bg-gray-200">
+                音樂發展
+                </div>
+            </a>
+        </div>
+
+        <!-- 課程標題與描述 -->
+        <div class="text-center mb-10">
+        <h2 class="text-2xl font-bold text-green-400 mb-4">語言發展 · 普通話</h2>
+        <p class="text-gray-600 text-sm leading-relaxed">
+            一套循序漸進的學習安排<br>
+            一套全面的學前系列<br>
+            從初生嬰兒至入小學前<br>
+            助你的子女輕輕鬆鬆預備入學....
+        </p>
+        </div>
+
+        <!-- 課程卡片 -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- 課程 1 -->
+        <a href="#">
+            <div class="bg-white shadow-md rounded-lg p-6 text-center relative h-full">
+            <div class="text-lg font-medium mb-4">
+                3 - 5 歲<br>
+                幼兒喜洋洋普通話唱遊<br>
+                及會話班
+            </div>
+            <!-- 小熊圖片 絕對定位 貼齊左下角 -->
+            <img src="./img/icon/Playgroup_bear.png" 
+                class="absolute bottom-0 left-0 h-20 w-auto" 
+                alt="">
+            </div>
+        </a>
+        <!-- 課程 2 -->
+        <a href="#">
+            <div class="bg-white shadow-md rounded-lg p-6 text-center relative h-full">
+            <div class="text-lg font-medium mb-4">
+                3 - 5 歲<br>
+                幼兒喜洋洋普通話唱遊<br>
+                及會話班
+            </div>
+            <!-- 小熊圖片 絕對定位 貼齊左下角 -->
+            <img src="./img/icon/Playgroup_bear.png" 
+                class="absolute bottom-0 left-0 h-20 w-auto" 
+                alt="">
+            </div>
+        </a>
+
+        </div>
+    </div>
+</div>
+
+<script>
+const mainnavbar = document.getElementById('navbar');
+const menuBtn = document.getElementById('menuBtn');
+const closeBtn = document.getElementById('closeBtn');
+const mobileMenu = document.getElementById('mobileMenu');
+
+  // 開啟選單
+  menuBtn.addEventListener('click', () => {
+    menuBtn.classList.add('hidden');
+    mainnavbar.classList.add('hidden');
+    mobileMenu.classList.remove('hidden');
+    closeBtn.classList.remove('hidden'); // 顯示關閉鈕
+    setTimeout(() => {
+      mobileMenu.classList.add('opacity-100');
+    }, 10);
+    document.body.style.overflow = 'hidden';
+  });
+
+  // 關閉選單
+  closeBtn.addEventListener('click', () => {
+    mobileMenu.classList.remove('opacity-100');
+    setTimeout(() => {
+      mobileMenu.classList.add('hidden');
+      mainnavbar.classList.remove('hidden');
+      closeBtn.classList.add('hidden');
+      menuBtn.classList.remove('hidden');
+    });
+    document.body.style.overflow = '';
+  });
+
+  // 點選連結自動關閉
+  const links = mobileMenu.querySelectorAll('a');
+  links.forEach(link => {
+    link.addEventListener('click', () => {
+      mobileMenu.classList.remove('opacity-100');
+      setTimeout(() => {
+        mobileMenu.classList.add('hidden');
+        closeBtn.classList.add('hidden');
+        menuBtn.classList.remove('hidden');
+      }, 300);
+      document.body.style.overflow = '';
+    });
+  });
+</script>
+
+</body>
+</html>

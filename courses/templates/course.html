@@ -1,0 +1,115 @@
+{% extends "base.html" %} 
+{% load static %}
+{% load humanize %}
+{% block content %}
+
+<!-- 1.2 background -->
+<div class="relative h-[250px] bg-cover bg-center" 
+    style="background-image: url('./img//banner/mainbanner.jpg');">
+</div>
+
+<!-- 2. Page Content -->
+<div class="max-w-3xl mx-auto p-8">
+<!-- 課程標題 -->
+<h1 class="text-[#70c1d6] text-3xl md:text-4xl font-light mb-6">
+    Little Ones自理與學前分離預備<br>Playgroup
+</h1>
+
+<!-- 立即報名按鈕 -->
+<button id="openModalBtn" class="bg-[#70c1d6] text-white px-6 py-2 rounded-full flex items-center gap-2 mb-8 hover:opacity-90 transition-opacity">
+    <i class="fa-brands fa-leanpub fa-xl" style="color: #fff;"></i>
+    立即報名
+</button>
+
+<!-- 課程內容 -->
+<div class="mb-6">
+    <h3 class="font-bold text-lg mb-2">課程內容:</h3>
+    <p class="text-gray-800 leading-relaxed">
+    課程主要培養小朋友的獨立性、自主性及全方位自理能力以循序漸進的方法、遊戲與活動，讓小孩子能在父母的帶領下學習自理，繼而準備獨立進入課室上課，學習課堂紀律、聆聽指令、群體學習等，預早適應學校生活之餘，更全面提升小朋友自理、情緒、及社交方面的發展。
+    </p>
+</div>
+
+<!-- 課程特色 -->
+<div class="mb-6">
+    <h3 class="font-bold text-lg mb-2">課程特色:</h3>
+    <ul class="list-disc pl-6 space-y-1 text-gray-800">
+    <li>循序漸進學習自理，減少依賴，最終能獨立上課與人群體相處</li>
+    <li>逐步分離與過渡，減少面對陌生環境不適應與驚惶情緒</li>
+    <li>模擬幼稚園學習模式，增強小朋友適應力與靜態學習能力</li>
+    </ul>
+</div>
+
+<!-- 費用 -->
+<div class="mb-6">
+    <h3 class="font-bold text-lg mb-2">費用:</h3>
+    <ul class="list-disc pl-6 space-y-1 text-gray-800">
+    <li>會員 $1480</li>
+    <li>非會員 $1640</li>
+    </ul>
+</div>
+
+<!-- 對象 -->
+<div>
+    <h3 class="font-bold text-lg mb-2">對象:</h3>
+    <p class="text-gray-800">24-36個月幼兒</p>
+</div>
+</div>
+
+<!-- 3. Pop up course application -->
+<div id="modalOverlay" class="fixed inset-0 bg-black/50 z-[999] hidden opacity-0 transition-opacity duration-300"></div>
+<div id="modal" class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-lg shadow-xl p-6 w-11/12 max-w-md z-[1000] hidden opacity-0 transition-opacity duration-300">
+    <button id="closeModalBtn" class="absolute top-3 right-3 text-gray-400 hover:text-gray-600">
+        <i class="fa-solid fa-xmark text-2xl"></i>
+    </button>
+    <p class="text-gray-800 mb-4">請選擇課程:</p>
+    <!-- 改為下拉選單 select -->
+    <select class="w-full border border-gray-300 rounded px-3 py-2 mb-4 bg-white">
+        <option selected>Little Ones自理與學前分離預備 Playgroup (Sat 12:30)</option>
+        <option>幼兒藝術體驗班 (Sun 10:00)</option>
+        <option>親子音樂律動班 (Sat 14:00)</option>
+        <option>學前適應小組 (Sun 11:30)</option>
+    </select>
+    <div class="text-gray-700 space-y-1 mb-6">
+        <p>課程編號: 26PG311-02</p>
+        <p>日期: 25/04/2026 - 13/06/2026</p>
+        <p>時間: 下午12:30-下午1:30</p>
+        <p>逢星期六，共8堂</p>
+    </div>
+    <button id="confirmModalBtn" class="bg-green-400 hover:bg-green-500 text-white px-6 py-2 rounded-full flex items-center gap-2">
+        <i class="fa-solid fa-check"></i> 確定報名
+    </button>
+</div>
+
+<script>
+// ========= Course pop up js ==================
+// 🔥 報名彈窗控制
+const openModalBtn = document.getElementById('openModalBtn');
+const modal = document.getElementById('modal');
+const closeModalBtn = document.getElementById('closeModalBtn');
+const confirmModalBtn = document.getElementById('confirmModalBtn');
+
+function openModal() {
+modalOverlay.classList.remove('hidden');
+modal.classList.remove('hidden');
+setTimeout(() => {
+    modalOverlay.classList.add('opacity-100');
+    modal.classList.add('opacity-100');
+}, 10);
+document.body.style.overflow = 'hidden';
+}
+
+function closeModal() {
+modalOverlay.classList.remove('opacity-100');
+modal.classList.remove('opacity-100');
+setTimeout(() => {
+    modalOverlay.classList.add('hidden');
+    modal.classList.add('hidden');
+}, 300);
+document.body.style.overflow = '';
+}
+
+openModalBtn.addEventListener('click', openModal);
+closeModalBtn.addEventListener('click', closeModal);
+confirmModalBtn.addEventListener('click', closeModal);
+</script>
+{% endblock %}
