@@ -25,7 +25,7 @@ urlpatterns = [
     # path('administration/', include('administration.urls', namespace='administration')),
     # path('students/', include('students.urls', namespace='students')),
     # path('teachers/', include('teachers.urls', namespace='teachers')),
-    # path('courses/', include('courses.urls', namespace='courses')),
+    path('courses/', include('courses.urls', namespace='courses')),
     # path('web_contents/', include('web_contents.urls', namespace='web_contents')),
     path('admin/', admin.site.urls),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT) + debug_toolbar_urls()

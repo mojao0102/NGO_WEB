@@ -12,12 +12,12 @@
 <div class="relative z-10 flex flex-col items-center px-4 py-16">
     <div class="w-full max-w-4xl space-y-12">
       
+    {% for center in list_center %}  
     <!-- 中心介紹 -->
     <section class="bg-white/90 backdrop-blur-sm rounded-2xl shadow-lg p-8">
         <h2 class="text-3xl font-bold text-center mb-6">中心介紹</h2>
         <div class="text-base leading-relaxed space-y-4">
-        <p>基督教家庭服務中心(CFSC)為香港一間致力支援及促進家庭功能的社會服務機構，自1954年創立以來，一直為東九龍區居民提供不同類型服務。六十多年來，因應社會的改變與需要，本會不斷更新原有服務，同時亦拓展新的工作方向。迄今，本會已發展成為一間多元化的社會服務機構，涵蓋多個服務範疇，包括: 兒童及家庭服務、青年服務、長者照顧服務、長者社區服務、殘疾人士綜合服務、殘疾人士發展及共融、精神健康服務、醫療健康服務、社區發展服務、環保及綠色生活、僱員服務顧問、全人發展及專業培訓等。</p>
-        <p>「成龍全人發展中心」為其轄下的其中一個服務單位，成立於二零零一年，以靈活及創新的手法提供全方位培育，服務對象由幼兒至成人，務求照顧全面，達至全人發展的目標。</p>
+        <p>{{center.intro | linebreaks}}</p>
         </div>
     </section>
 
@@ -25,7 +25,6 @@
     <section class="bg-white/90 backdrop-blur-sm rounded-2xl shadow-lg p-8">
         <h1 class="text-3xl font-bold text-center mb-6">聯絡我們</h1>
 
-        {% for center in list_center %}
           <div class="text-base leading-relaxed space-y-3 mb-6">
           <p class="font-bold">{{center.name}}</p>
           <p>地址：{{center.addr}}</p>
@@ -43,9 +42,8 @@
           loading="lazy" 
           referrerpolicy="no-referrer-when-downgrade">
         </iframe>      
-        {% endfor %}
       </section>
-
+    {% endfor %}
 
     <!-- 惡劣天氣安排 -->
     <section class="bg-white/90 backdrop-blur-sm rounded-2xl shadow-lg p-8">

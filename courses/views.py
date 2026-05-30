@@ -5,6 +5,7 @@ from django.http import HttpResponse
 
 # Create your views here.
 def course_list(request):
+    print("hi")
     return render(request, "courses.html")
 
 def course(request):

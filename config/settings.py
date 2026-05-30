@@ -46,6 +46,7 @@ DJANGO_APPS = [
 
 APPLICATION_APPS = [
     'pages.apps.PagesConfig',
+    'courses.apps.CoursesConfig',
     'administration.apps.AdministrationConfig',
     'students.apps.StudentsConfig',
     'teachers.apps.TeachersConfig',
@@ -55,6 +56,7 @@ APPLICATION_APPS = [
 THIRD_PARTY_APPS = [
     "debug_toolbar",
     "widget_tweaks",
+    "colorfield",
     # "taggit",
 ]
 
