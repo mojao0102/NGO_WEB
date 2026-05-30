@@ -55,7 +55,7 @@ APPLICATION_APPS = [
 THIRD_PARTY_APPS = [
     "debug_toolbar",
     "widget_tweaks",
-    "taggit",
+    # "taggit",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + APPLICATION_APPS + THIRD_PARTY_APPS
@@ -95,14 +95,14 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
 DATABASES = {
-    # 'default': {
-    #     'ENGINE': 'django.db.backends.postgresql',
-    #     'NAME': 'erb9',
-    #     'USER': 'postgres',
-    #     'PASSWORD': '1156',
-    #     'HOST': 'localhost',
-    #     'PORT': '5432'
-    # }
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'NGO_WEB',
+        'USER': 'postgres',
+        'PASSWORD': '1156',
+        'HOST': 'localhost',
+        'PORT': '5432'
+    }
 }
 
 
