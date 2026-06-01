@@ -122,72 +122,41 @@
 </button>
 
 <!-- 1.2 background -->
-<div class="relative h-[200px] bg-cover bg-center" 
-    style="background-image: url('./img/banner/news_banner.png');">
+<div class="relative min-h-screen bg-cover bg-center flex items-center justify-center" 
+    style="background-image: url('./img//banner/mainbanner.jpg');">
+
+    <!-- login form -->
+    <div class="bg-white shadow-lg rounded-lg p-10 w-full max-w-md mx-auto ">
+    <h2 class="text-3xl font-bold text-gray-700 mb-8">登入</h2>
+
+    <!-- 登入 Form -->
+    <form action="" id="loginForm">
+      <!-- 帳號 -->
+      <div class="mb-6">
+        <label for="username" class="block text-gray-700 font-medium mb-2">帳號</label>
+        <input type="text" id="username" name="username" placeholder="Username" required
+               class="w-full border border-gray-300 rounded-md px-4 py-3 focus:outline-none focus:ring-2 focus:ring-green-400">
+      </div>
+
+      <!-- 密碼 -->
+      <div class="mb-8">
+        <label for="password" class="block text-gray-700 font-medium mb-2">密碼</label>
+        <input type="password" id="password" name="password" placeholder="Password" required
+               class="w-full border border-gray-300 rounded-md px-4 py-3 focus:outline-none focus:ring-2 focus:ring-green-400">
+      </div>
+
+      <!-- 確定按鈕 -->
+      <button type="submit" 
+              class="bg-green-400 hover:bg-green-500 text-white font-bold py-3 px-8 rounded-full transition-colors">
+        確定
+      </button>
+    </form>
+  </div>
 </div>
+
 
 <!-- 2. Page Content -->
-<div class="max-w-4xl mx-auto p-6">
-    <!-- Title -->
-    <div class="flex items-center justify-center gap-4 mt-5 mb-10">
-        <h2 class="text-2xl md:text-3xl font-bold text-[#592E00]">最新消息</h2>
-    </div>
-    <!-- 2x2 網格卡片佈局 -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
 
-    <!-- 卡片 1：2026 暑期活動 (looping) -->
-    <a href="#">
-        <div class="bg-white rounded-xl shadow-lg overflow-hidden">
-        <!-- 圖片區 -->
-        <div class="w-full aspect-video bg-gray-100">
-            <img src="./img/banner/home_2026summer.jpg" 
-                alt="2026 暑期活動" 
-                class="w-full h-full object-cover">
-        </div>
-        <!-- 文字區 -->
-        <div class="p-4 text-center">
-            <h3 class="text-xl font-bold text-gray-800">2026 暑期活動</h3>
-            <p class="text-sm text-gray-600 mt-1">發佈於：2026-05-21, 週四 09:30</p>
-        </div>
-        </div>
-    </a>
-
-    <!-- 卡片 2：2026 暑期活動 -->
-    <a href="#">
-        <div class="bg-white rounded-xl shadow-lg overflow-hidden">
-        <!-- 圖片區 -->
-        <div class="w-full aspect-video bg-gray-100">
-            <img src="./img/banner/home_summerkidscaring.jpg" 
-                alt="2026 暑期活動" 
-                class="w-full h-full object-cover">
-        </div>
-        <!-- 文字區 -->
-        <div class="p-4 text-center">
-            <h3 class="text-xl font-bold text-gray-800">2026 暑期活動</h3>
-            <p class="text-sm text-gray-600 mt-1">發佈於：2026-05-21, 週四 09:30</p>
-        </div>
-        </div>
-    </a>
-
-    <!-- 卡片 3：2026 暑期活動 -->
-    <a href="#">
-        <div class="bg-white rounded-xl shadow-lg overflow-hidden">
-        <!-- 圖片區 -->
-        <div class="w-full aspect-video bg-gray-100">
-            <img src="./img/banner/home_summerkidscaring.jpg" 
-                alt="2026 暑期活動" 
-                class="w-full h-full object-cover">
-        </div>
-        <!-- 文字區 -->
-        <div class="p-4 text-center">
-            <h3 class="text-xl font-bold text-gray-800">2026 暑期活動</h3>
-            <p class="text-sm text-gray-600 mt-1">發佈於：2026-05-21, 週四 09:30</p>
-        </div>
-        </div>
-    </a>
-
-    </div>
-</div>
 
 <script>
 const mainnavbar = document.getElementById('navbar');

@@ -2,11 +2,11 @@ from django.db import models
 
 # Create your models here.
 class Student(models.Model):
-    student_no = models.CharField(max_length=50, unique=True, verbose_name="編號/學號")
+    student_no = models.CharField(max_length=50, unique=True, verbose_name="編號")
     cn_name = models.CharField(max_length=100, verbose_name="中文姓名")
     en_name = models.CharField(max_length=100, verbose_name="英文姓名")
     dob = models.DateTimeField(blank=True, null=True, verbose_name="出生日期")
-    email = models.EmailField(max_length=200, blank=True, verbose_name="電子郵件信箱")
+    email = models.EmailField(max_length=200, blank=True, verbose_name="Email")
     
     # v04 緊急聯絡人結構
     contact1_name = models.CharField(max_length=200, blank=True, null=True, verbose_name="聯絡人1姓名")
@@ -35,8 +35,8 @@ class Student(models.Model):
 
     class Meta:
         db_table = 'student'
-        verbose_name = "學員學生基本資料"
-        verbose_name_plural = "學員學生基本資料"
+        verbose_name = "學生資料"
+        verbose_name_plural = "學生資料"
         ordering = ['student_no']
 
     def __str__(self):
