@@ -22,6 +22,7 @@ def load_main_category(view_func):
 def home(request):
 
     current_time = timezone.localtime(timezone.now())
+    
     #load newses
     list_news = News.objects.filter(is_publish = True, expiry_date__gt=current_time)
     #load course
