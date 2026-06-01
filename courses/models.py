@@ -1,13 +1,19 @@
 from django.db import models
 from colorfield.fields import ColorField
+from .choices import course_status
+from administration.models import Center, Room
+from teachers.models import Teacher
+
 
 class CourseMainCategory(models.Model):
 
     name = models.CharField(max_length=50, null=True, verbose_name="主類別名稱")
     short_name = models.CharField(max_length=50, null=True, verbose_name="簡稱")
     desc = models.TextField(blank=True, null=True, verbose_name="描述")
-    icon_class = models.CharField(max_length=100, verbose_name="Icon(FontAwesome Icon Class)", help_text="例如: fa-baby", blank=True, null=True)
+    nav_icon = models.CharField(max_length=100, verbose_name="Icon(FontAwesome Icon Class)", help_text="例如: fa-baby", blank=True, null=True)
+    home_photo = models.ImageField(upload_to='news/%Y/%m/%d/', blank=True, null=True, verbose_name="首頁展示圖片")
     theme_color = ColorField(default="#FFFFFF", blank=True, null=True)
+    
     file_status = models.CharField(max_length=100, blank=True, null=True, verbose_name="檔案狀態")
     created_by = models.CharField(max_length=100, blank=True, null=True, verbose_name="建立者")
     created_datetime = models.DateTimeField(blank=True, null=True, verbose_name="建立時間", auto_now_add=True)
@@ -28,6 +34,7 @@ class CourseSubCategory(models.Model):
     name = models.CharField(max_length=50, null=True, verbose_name="子類別名稱")
     short_name = models.CharField(max_length=50, null=True, verbose_name="簡稱")
     desc = models.TextField(blank=True, null=True, verbose_name="描述")
+    
     file_status = models.CharField(max_length=100, blank=True, null=True, verbose_name="檔案狀態")
     created_by = models.CharField(max_length=100, blank=True, null=True, verbose_name="建立者")
     created_datetime = models.DateTimeField(blank=True, null=True, verbose_name="建立時間", auto_now_add=True)
@@ -41,3 +48,114 @@ class CourseSubCategory(models.Model):
 
     def __str__(self):
         return self.name or f"SubCategory {self.id}"
+    
+class CourseTemplate(models.Model):
+    teacher = models.ForeignKey(Teacher, on_delete=models.DO_NOTHING, related_name='templates', verbose_name="負責/授課老師")
+    sub_category = models.ForeignKey(CourseSubCategory, on_delete=models.DO_NOTHING, null=True, blank=True,  verbose_name="課程子分類")   
+    name = models.CharField(max_length=50, verbose_name="課程名稱")
+    content = models.TextField(blank=True, null=True, verbose_name="課程介紹")
+    
+    # 彈性擴充特徵欄位
+    feature_1 = models.CharField(max_length=200, blank=True, null=True, verbose_name="特徵 1")
+    feature_2 = models.CharField(max_length=200, blank=True, null=True, verbose_name="特徵 2")
+    feature_3 = models.CharField(max_length=200, blank=True, null=True, verbose_name="特徵 3")
+    feature_4 = models.CharField(max_length=200, blank=True, null=True, verbose_name="特徵 4")
+    feature_5 = models.CharField(max_length=200, blank=True, null=True, verbose_name="特徵 5")
+    feature_6 = models.CharField(max_length=200, blank=True, null=True, verbose_name="特徵 6")
+    feature_7 = models.CharField(max_length=200, blank=True, null=True, verbose_name="特徵 7")
+    feature_8 = models.CharField(max_length=200, blank=True, null=True, verbose_name="特徵 8")
+    
+    total_lessons = models.DecimalField(max_digits=5, decimal_places=1, blank=True, null=True, verbose_name="總堂數")
+    hours_per_lesson = models.DecimalField(max_digits=5, decimal_places=1, blank=True, null=True, verbose_name="每堂時數")
+    total_hours = models.DecimalField(max_digits=5, decimal_places=1, blank=True, null=True, verbose_name="總時數")
+    course_fee = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True, verbose_name="預設學費")
+    is_active = models.BooleanField(default=True, verbose_name="是否啟用", help_text="控制此範本是否可在開課時被選用")
+    
+    # 內嵌 Audit Fields
+    file_status = models.CharField(max_length=100, blank=True, null=True, verbose_name="存檔狀態")
+    created_by = models.CharField(max_length=100, blank=True, null=True, verbose_name="建立者")
+    created_datetime = models.DateTimeField(auto_now_add=True, verbose_name="建立日期時間")
+    last_updated_by = models.CharField(max_length=100, blank=True, null=True, verbose_name="最後更新者")
+    last_updated_datetime = models.DateTimeField(auto_now=True, verbose_name="最後更新日期時間")
+
+    class Meta:
+        db_table = 'course_template'
+        verbose_name = "課程基本範本"
+        verbose_name_plural = "課程基本範本"
+        ordering = ['-id']
+
+    def __str__(self):
+        return self.name
+
+class Course(models.Model):
+    template = models.ForeignKey(CourseTemplate, on_delete=models.DO_NOTHING, verbose_name="關聯課程範本")
+    sub_category = models.ForeignKey(CourseSubCategory, on_delete=models.DO_NOTHING, null=True, blank=True, verbose_name="課程子分類")
+    teacher = models.ForeignKey(Teacher, on_delete=models.DO_NOTHING, null=True, blank=True, verbose_name="任課老師")
+    center = models.ForeignKey(Center, on_delete=models.DO_NOTHING,  verbose_name="上課分校/中心")
+    default_room = models.ForeignKey(Room, on_delete=models.DO_NOTHING, null=True, blank=True, verbose_name="預設上課教室")
+    
+    code = models.CharField(max_length=50, verbose_name="課程編號", help_text="例如：PY-2026-001")
+    name = models.CharField(max_length=50, verbose_name="課程名稱")
+    content = models.TextField(blank=True, null=True, verbose_name="課程介紹")
+    
+    feature_1 = models.CharField(max_length=200, blank=True, null=True, verbose_name="詳情 1")
+    feature_2 = models.CharField(max_length=200, blank=True, null=True, verbose_name="詳情 2")
+    feature_3 = models.CharField(max_length=200, blank=True, null=True, verbose_name="詳情 3")
+    feature_4 = models.CharField(max_length=200, blank=True, null=True, verbose_name="詳情 4")
+    feature_5 = models.CharField(max_length=200, blank=True, null=True, verbose_name="詳情 5")
+    feature_6 = models.CharField(max_length=200, blank=True, null=True, verbose_name="詳情 6")
+    feature_7 = models.CharField(max_length=200, blank=True, null=True, verbose_name="詳情 7")
+    feature_8 = models.CharField(max_length=200, blank=True, null=True, verbose_name="詳情 8")
+    
+    total_lessons = models.DecimalField(max_digits=5, decimal_places=1, verbose_name="總上課堂數")
+    hours_per_lesson = models.DecimalField(max_digits=5, decimal_places=1, blank=True, null=True, verbose_name="每堂上課時數")
+    
+    # 日期與時間 (v04 核心欄位：供前端扁平表單輸入)
+    period_from = models.DateField(verbose_name="開始日期")
+    period_to = models.DateField(verbose_name="結束日期")
+    time_from = models.TimeField(blank=True, null=True, verbose_name="上課開始時間", help_text="格式如 14:00") 
+    time_to = models.TimeField(blank=True, null=True, verbose_name="上課結束時間", help_text="格式如 16:00")
+    
+    course_fee = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="實際實體學費")
+    course_status = models.CharField(max_length=50, choices=course_status.items(), default="", verbose_name="課程狀態")
+    registation_expiry_date = models.DateTimeField(blank=True, null=True, verbose_name="報名截止截止時間")
+    max_no_student = models.IntegerField(verbose_name="人數上限限制")
+    is_promote = models.BooleanField(default=False, verbose_name="是否熱門推薦", help_text="控制是否在外台首頁焦點推薦區塊顯示")
+    
+    # 內嵌 Audit Fields
+    file_status = models.CharField(max_length=100, blank=True, null=True, verbose_name="存檔狀態")
+    created_by = models.CharField(max_length=100, blank=True, null=True, verbose_name="建立者")
+    created_datetime = models.DateTimeField(auto_now_add=True, verbose_name="建立日期時間")
+    last_updated_by = models.CharField(max_length=100, blank=True, null=True, verbose_name="最後更新者")
+    last_updated_datetime = models.DateTimeField(auto_now=True, verbose_name="最後更新日期時間")
+
+    class Meta:
+        db_table = 'course'
+        verbose_name = "實體班級課程"
+        verbose_name_plural = "實體班級課程"
+        ordering = ['-id']
+
+
+
+    def __str__(self):
+        return f"[{self.code}] {self.name}"
+
+
+class CourseSchedule(models.Model):
+    course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='schedules', verbose_name="關聯實體課程")
+    day_of_week = models.IntegerField(verbose_name="星期幾數字鍵", help_text="1=星期一, 2=星期二, ..., 7=星期日")
+    start_time = models.TimeField(verbose_name="該日上課開始時間")
+    end_time = models.TimeField(verbose_name="該日上課結束時間")
+
+    # 內嵌 Audit Fields
+    file_status = models.CharField(max_length=100, blank=True, null=True, verbose_name="存檔狀態")
+    created_by = models.CharField(max_length=100, blank=True, null=True, verbose_name="建立者")
+    created_datetime = models.DateTimeField(auto_now_add=True, verbose_name="建立日期時間")
+    last_updated_by = models.CharField(max_length=100, blank=True, null=True, verbose_name="最後更新者")
+    last_updated_datetime = models.DateTimeField(auto_now=True, verbose_name="最後更新日期時間")
+
+    class Meta:
+        db_table = 'course_schedule'
+        verbose_name = "課程內部拆解規律排班"
+        verbose_name_plural = "課程內部拆解規律排班"
+        ordering = ['course', 'day_of_week', 'start_time']

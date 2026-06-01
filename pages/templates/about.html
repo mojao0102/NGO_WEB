@@ -11,7 +11,7 @@
 <!-- 2. Page Content -->
 <div class="relative z-10 flex flex-col items-center px-4 py-16">
     <div class="w-full max-w-4xl space-y-12">
-      
+
     {% for center in list_center %}  
     <!-- 中心介紹 -->
     <section class="bg-white/90 backdrop-blur-sm rounded-2xl shadow-lg p-8">
@@ -24,25 +24,24 @@
     <!-- 聯絡我們 -->
     <section class="bg-white/90 backdrop-blur-sm rounded-2xl shadow-lg p-8">
         <h1 class="text-3xl font-bold text-center mb-6">聯絡我們</h1>
-
-          <div class="text-base leading-relaxed space-y-3 mb-6">
-          <p class="font-bold">{{center.name}}</p>
-          <p>地址：{{center.addr}}</p>
-          <p>電話：{{center.phone}}</p>
-          <p>傳真：{{center.fax}}</p>
-          <p>電郵：{{center.email}}</p>
-          <p class="mt-4">中心位置：{{center.addr_desc}}</p>
-          </div>
-          <!-- Google Map -->
-          <iframe src="{{center.map_url}}" 
-          width="600" 
-          height="450" 
-          style="border:0;" 
-          allowfullscreen="" 
-          loading="lazy" 
-          referrerpolicy="no-referrer-when-downgrade">
+            <div class="text-base leading-relaxed space-y-3 mb-6">
+            <p class="font-bold">{{center.name}}</p>
+            <p>地址：{{center.addr}}</p>
+            <p>電話：{{center.phone}}</p>
+            <p>傳真：{{center.fax}}</p>
+            <p>電郵：{{center.email}}</p>
+            <p class="mt-4">中心位置：{{center.addr_desc}}</p>
+            </div>
+            <!-- Google Map -->
+            <iframe src="{{center.map_url}}" 
+            width="600" 
+            height="450" 
+            style="border:0;" 
+            allowfullscreen="" 
+            loading="lazy" 
+            referrerpolicy="no-referrer-when-downgrade">
         </iframe>      
-      </section>
+    </section>
     {% endfor %}
 
     <!-- 惡劣天氣安排 -->
