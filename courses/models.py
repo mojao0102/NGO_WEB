@@ -10,9 +10,9 @@ class CourseMainCategory(models.Model):
     short_name = models.CharField(max_length=50, null=True, verbose_name="簡稱")
     desc = models.TextField(blank=True, null=True, verbose_name="描述")
     nav_icon = models.CharField(max_length=100, verbose_name="Icon(FontAwesome Icon Class)", help_text="例如: fa-baby", blank=True, null=True)
-    home_photo = models.ImageField(upload_to='news/%Y/%m/%d/', blank=True, null=True, verbose_name="首頁展示圖片")
-    theme_color = ColorField(default="#FFFFFF", blank=True, null=True)
-    
+    home_photo = models.ImageField(upload_to='main_category/%Y/%m/%d/', blank=True, null=True, verbose_name="首頁展示圖片")
+    theme_color = ColorField(default="", blank=True, null=True)
+    is_active = models.BooleanField(default=True, verbose_name="是否啟用", help_text="是否可在用/顯示")
     file_status = models.CharField(max_length=100, blank=True, null=True, verbose_name="檔案狀態")
     created_by = models.CharField(max_length=100, blank=True, null=True, verbose_name="建立者")
     created_datetime = models.DateTimeField(blank=True, null=True, verbose_name="建立時間", auto_now_add=True)
@@ -33,7 +33,7 @@ class CourseSubCategory(models.Model):
     name = models.CharField(max_length=50, null=True, verbose_name="子類別名稱")
     short_name = models.CharField(max_length=50, null=True, verbose_name="簡稱")
     desc = models.TextField(blank=True, null=True, verbose_name="描述")
-    
+    is_active = models.BooleanField(default=True, verbose_name="是否啟用", help_text="是否可在用/顯示")
     file_status = models.CharField(max_length=100, blank=True, null=True, verbose_name="檔案狀態")
     created_by = models.CharField(max_length=100, blank=True, null=True, verbose_name="建立者")
     created_datetime = models.DateTimeField(blank=True, null=True, verbose_name="建立時間", auto_now_add=True)
@@ -87,7 +87,7 @@ class CourseTemplate(models.Model):
         return self.name
 
 class Course(models.Model):
-    template = models.ForeignKey(CourseTemplate, on_delete=models.DO_NOTHING, verbose_name="範本")
+    template = models.ForeignKey(CourseTemplate, null=True, blank=True, on_delete=models.DO_NOTHING, verbose_name="範本")
     sub_category = models.ForeignKey(CourseSubCategory, on_delete=models.DO_NOTHING, null=True, blank=True, verbose_name="分類")
     teacher = models.ForeignKey(Teacher, on_delete=models.DO_NOTHING, null=True, blank=True, verbose_name="老師")
     center = models.ForeignKey(Center, on_delete=models.DO_NOTHING,  verbose_name="上課分校/中心")
@@ -95,6 +95,7 @@ class Course(models.Model):
     
     code = models.CharField(max_length=50, verbose_name="課程編號", help_text="例如：PY-2026-001")
     name = models.CharField(max_length=50, verbose_name="課程名稱")
+    photo = models.ImageField(upload_to='course/%Y/%m/%d/', blank=True, null=True, verbose_name="首頁展示圖片")
     content = models.TextField(blank=True, null=True, verbose_name="課程介紹")
     
     feature_1 = models.CharField(max_length=200, blank=True, null=True, verbose_name="詳情 1")
@@ -115,12 +116,13 @@ class Course(models.Model):
     time_from = models.TimeField(blank=True, null=True, verbose_name="上課開始時間", help_text="格式如 14:00") 
     time_to = models.TimeField(blank=True, null=True, verbose_name="上課結束時間", help_text="格式如 16:00")
     
-    course_fee = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="學費")
-    course_status = models.CharField(max_length=50, choices=course_status.items(), default="", verbose_name="課程狀態")
-    registation_expiry_date = models.DateTimeField(blank=True, null=True, verbose_name="截止時間")
+    course_fee = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="學費") 
     max_no_student = models.IntegerField(verbose_name="人數上限")
-    is_promote = models.BooleanField(default=False, verbose_name="是否推薦", help_text="控制是否在外台首頁焦點推薦區塊顯示")
-    
+    registation_expiry_date = models.DateTimeField(blank=True, null=True, verbose_name="截止時間")
+    is_promote = models.BooleanField(default=False, verbose_name="是是否在首頁推薦?")
+    is_web_publish = models.BooleanField(default=False, verbose_name="是否公開發布?")
+    course_status = models.CharField(max_length=50, choices=course_status.items(), default="", verbose_name="課程狀態")
+
     # 內嵌 Audit Fields
     file_status = models.CharField(max_length=100, blank=True, null=True, verbose_name="狀態")
     created_by = models.CharField(max_length=100, blank=True, null=True, verbose_name="建立者")
