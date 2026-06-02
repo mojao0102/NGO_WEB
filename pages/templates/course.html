@@ -5,32 +5,34 @@
 
 <!-- 1.2 background -->
 <div class="relative h-[250px] bg-cover bg-center" 
-    style="background-image: url('./img//banner/mainbanner.jpg');">
+    style="background-image: url('{% static "img/banner/mainbanner.jpg" %}');">
 </div>
 
 <!-- 2. Page Content -->
 <div class="max-w-3xl mx-auto p-8">
 <!-- 課程標題 -->
 <h1 class="text-[#70c1d6] text-3xl md:text-4xl font-light mb-6">
-    Little Ones自理與學前分離預備<br>Playgroup
+    {{obj_course.name}}
 </h1>
 
+{% if obj_course.str_course_status == "available" %}
 <!-- 立即報名按鈕 -->
 <button id="openModalBtn" class="bg-[#70c1d6] text-white px-6 py-2 rounded-full flex items-center gap-2 mb-8 hover:opacity-90 transition-opacity">
     <i class="fa-brands fa-leanpub fa-xl" style="color: #fff;"></i>
     立即報名
 </button>
-
+{% elif obj_course.str_course_status == "full" %}
 <!-- 報名已滿 -->
 <div class="mb-6">
     <h3 class="font-bold text-lg mb-2 text-red-500">報名已滿！ 敬請留意下一期開始時間</h3>
 </div>
+{% endif %}
 
 <!-- 課程內容 -->
 <div class="mb-6">
     <h3 class="font-bold text-lg mb-2">課程內容:</h3>
     <p class="text-gray-800 leading-relaxed">
-    課程主要培養小朋友的獨立性、自主性及全方位自理能力以循序漸進的方法、遊戲與活動，讓小孩子能在父母的帶領下學習自理，繼而準備獨立進入課室上課，學習課堂紀律、聆聽指令、群體學習等，預早適應學校生活之餘，更全面提升小朋友自理、情緒、及社交方面的發展。
+    {{obj_course.content}}
     </p>
 </div>
 
@@ -38,29 +40,34 @@
 <div class="mb-6">
     <h3 class="font-bold text-lg mb-2">課程特色:</h3>
     <ul class="list-disc pl-6 space-y-1 text-gray-800">
-    <li>循序漸進學習自理，減少依賴，最終能獨立上課與人群體相處</li>
-    <li>逐步分離與過渡，減少面對陌生環境不適應與驚惶情緒</li>
-    <li>模擬幼稚園學習模式，增強小朋友適應力與靜態學習能力</li>
+        {% if obj_course.feature_1 %}<li>{{obj_course.feature_1}}</li>{% endif %}
+        {% if obj_course.feature_2 %}<li>{{obj_course.feature_2}}</li>{% endif %}
+        {% if obj_course.feature_3 %}<li>{{obj_course.feature_3}}</li>{% endif %}
+        {% if obj_course.feature_4 %}<li>{{obj_course.feature_4}}</li>{% endif %}
+        {% if obj_course.feature_5 %}<li>{{obj_course.feature_5}}</li>{% endif %}
+        {% if obj_course.feature_6 %}<li>{{obj_course.feature_6}}</li>{% endif %}
+        {% if obj_course.feature_7 %}<li>{{obj_course.feature_7}}</li>{% endif %}
+        {% if obj_course.feature_8 %}<li>{{obj_course.feature_8}}</li>{% endif %}
     </ul>
 </div>
 
 <!-- 費用 -->
 <div class="mb-6">
     <h3 class="font-bold text-lg mb-2">費用:</h3>
-    <p class="text-gray-800">$1480</p>
+    <p class="text-gray-800">${{obj_course.course_fee | floatformat:2}}</p>
 </div>
 
 <!-- 對象 -->
 <div class="mb-6">
     <h3 class="font-bold text-lg mb-2">對象:</h3>
-    <p class="text-gray-800">24-36個月幼兒</p>
+    <p class="text-gray-800">{{obj_course.age_group}}</p>
 </div>
 
 <!-- 上課日期及時間 -->
 <div>
     <h3 class="font-bold text-lg mb-2">上課日期及時間</h3>
-    <p class="text-gray-800">25/04/2026 – 13/06/2026 (12:30-13:30)</p>
-    <p class="text-gray-800">逢星期六，共8堂</p>
+    <p class="text-gray-800">{{obj_course.period_from | date:"d/m/Y"}} – {{obj_course.period_to | date:"d/m/Y"}} ({{obj_course.time_from | date:"H:i"}}-{{obj_course.time_to | date:"H:i"}})</p>
+    <p class="text-gray-800">{{obj_course.lesson_weekday_pattern}}，共{{obj_course.total_lessons | floatformat:0}}堂</p>
 </div>
 </div>
 
@@ -95,4 +102,40 @@
         </button>
     </div>
 </div>
+
+<script>
+// ========= Course pop up js ==================
+// 🔥 報名彈窗控制
+const openModalBtn = document.getElementById('openModalBtn');
+const modal = document.getElementById('modal');
+const closeModalBtn = document.getElementById('closeModalBtn');
+const confirmModalBtn = document.getElementById('confirmModalBtn');
+const cancelModalBtn = document.getElementById('cancelModalBtn');
+
+function openModal() {
+modalOverlay.classList.remove('hidden');
+modal.classList.remove('hidden');
+setTimeout(() => {
+    modalOverlay.classList.add('opacity-100');
+    modal.classList.add('opacity-100');
+}, 10);
+document.body.style.overflow = 'hidden';
+}
+
+function closeModal() {
+modalOverlay.classList.remove('opacity-100');
+modal.classList.remove('opacity-100');
+setTimeout(() => {
+    modalOverlay.classList.add('hidden');
+    modal.classList.add('hidden');
+}, 300);
+document.body.style.overflow = '';
+}
+
+openModalBtn.addEventListener('click', openModal);
+closeModalBtn.addEventListener('click', closeModal);
+confirmModalBtn.addEventListener('click', closeModal);
+cancelModalBtn.addEventListener('click', closeModal);
+// ========= end of Course pop up js  ==================
+</script>
 {% endblock %}

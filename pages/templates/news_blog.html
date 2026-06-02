@@ -5,24 +5,26 @@
 
 <!-- 1.2 background -->
 <div class="relative h-[150px] bg-cover bg-center" 
-    style="background-image: url('./img/banner/news_banner.png');">
+    style="background-image: url('{% static "img/banner/news_banner.png" %}');">
 </div>
 
 <!-- 2. Page Content -->
 <div class="max-w-2xl mx-auto p-8">
 <!-- 標題與日期 -->
-<h1 class="text-3xl font-bold text-black mb-2">Title</h1>
-<p class="text-gray-400 mb-6">Published date</p>
+<h1 class="text-3xl font-bold text-black mb-2">{{obj_news.title}}</h1>
+<p class="text-gray-400 mb-6">{{obj_news.publish_date|date:"Y-m-d, l"}}</p>
 
 <!-- 描述文字 -->
-<p class="text-lg text-black mb-8">Description</p>
+<p class="text-lg text-black mb-8">{{obj_news.desc | linebreaks}}</p>
 
 
 <!-- 活動圖片 -->
-<div class="w-full max-w-sm mx-auto">
-    <img src="./img/blog/20260401_kid_caring_1.jpg" 
-        alt="2We Summer 活動海報" 
+<div class="w-full max-w-sm mx-auto mt-9">
+    {% if obj_news.list_photo %}
+    <img src="{{obj_news.list_photo.url}}" 
+        alt="{{obj_news.title}}" 
         class="w-full h-auto rounded-lg shadow-md">
+    {% endif %}
 </div>
 </div>
 {% endblock %}

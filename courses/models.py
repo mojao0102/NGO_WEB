@@ -1,8 +1,9 @@
 from django.db import models
 from colorfield.fields import ColorField
 from .choices import course_status
-from administration.models import Center, Room
+from administration.models import Center, Room, Staff
 from teachers.models import Teacher
+from students.models import Student
 
 class CourseMainCategory(models.Model):
 
@@ -107,6 +108,8 @@ class Course(models.Model):
     feature_7 = models.CharField(max_length=200, blank=True, null=True, verbose_name="詳情 7")
     feature_8 = models.CharField(max_length=200, blank=True, null=True, verbose_name="詳情 8")
     
+    age_group = models.CharField(max_length=200, blank=True, null=True, verbose_name="對象")
+
     total_lessons = models.DecimalField(max_digits=5, decimal_places=1, verbose_name="總上課堂數")
     hours_per_lesson = models.DecimalField(max_digits=5, decimal_places=1, blank=True, null=True, verbose_name="每堂上課時數")
     
@@ -115,7 +118,8 @@ class Course(models.Model):
     period_to = models.DateField(verbose_name="結束日期")
     time_from = models.TimeField(blank=True, null=True, verbose_name="上課開始時間", help_text="格式如 14:00") 
     time_to = models.TimeField(blank=True, null=True, verbose_name="上課結束時間", help_text="格式如 16:00")
-    
+    lesson_weekday_pattern = models.CharField(max_length=200, blank=True, null=True, verbose_name="課程日期安排模式", help_text="格式如 逢星期六")
+
     course_fee = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="學費") 
     max_no_student = models.IntegerField(verbose_name="人數上限")
     registation_expiry_date = models.DateTimeField(blank=True, null=True, verbose_name="截止時間")
@@ -136,8 +140,6 @@ class Course(models.Model):
         verbose_name_plural = "課程"
         ordering = ['-id']
 
-
-
     def __str__(self):
         return f"[{self.code}] {self.name}"
 
@@ -148,7 +150,6 @@ class CourseSchedule(models.Model):
     start_time = models.TimeField(verbose_name="開始時間")
     end_time = models.TimeField(verbose_name="結束時間")
 
-    # 內嵌 Audit Fields
     file_status = models.CharField(max_length=100, blank=True, null=True, verbose_name="存檔狀態")
     created_by = models.CharField(max_length=100, blank=True, null=True, verbose_name="建立者")
     created_datetime = models.DateTimeField(auto_now_add=True, verbose_name="建立日期時間")
@@ -160,3 +161,38 @@ class CourseSchedule(models.Model):
         verbose_name = "課程排班表"
         verbose_name_plural = "課程排班表"
         ordering = ['course', 'day_of_week', 'start_time']
+
+class SignUp(models.Model):
+    student = models.ForeignKey(Student, on_delete=models.DO_NOTHING, related_name='signups', verbose_name="學生")
+    course = models.ForeignKey(Course, on_delete=models.DO_NOTHING, related_name='signup_set', verbose_name="課程")
+    status = models.CharField(max_length=50, blank=True, null=True, verbose_name="狀態")
+    sign_up_date = models.CharField(max_length=50, blank=True, null=True, verbose_name="報名日期")
+    
+    # 審核/拒絕相關欄位
+    is_reject = models.BooleanField(default=False, verbose_name="審核:拒絕報名")
+    reject_date = models.DateTimeField(blank=True, null=True, verbose_name="拒絕時間")
+    reject_by = models.ForeignKey(Staff, on_delete=models.DO_NOTHING, blank=True, null=True, verbose_name="拒絕者")
+    reject_reason = models.CharField(max_length=200, blank=True, null=True, verbose_name="拒絕原因")
+    
+    # 金流/付款相關欄位
+    payment_date = models.DateTimeField(blank=True, null=True, verbose_name="付款時間")
+    payment_amount = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True, verbose_name="付款金額")
+    payment_method = models.CharField(max_length=50, blank=True, null=True, verbose_name="付款方式")
+    payment_ref = models.CharField(max_length=50, blank=True, verbose_name="付款參考編號") # 👈 Stripe pi_*** 存這裡！
+    payment_remarks = models.CharField(max_length=200, blank=True, null=True, verbose_name="付款備註")
+    
+    # 內嵌 Audit Fields (完全比照第一張圖的規格)
+    file_status = models.CharField(max_length=100, blank=True, null=True, verbose_name="檔案狀態")
+    created_by = models.CharField(max_length=100, blank=True, null=True, verbose_name="建立者")
+    created_datetime = models.DateTimeField(auto_now_add=True, verbose_name="建立日期時間")
+    last_updated_by = models.CharField(max_length=100, blank=True, null=True, verbose_name="最後更新者")
+    last_updated_datetime = models.DateTimeField(auto_now=True, verbose_name="最後更新日期時間")
+
+    class Meta:
+        db_table = 'sign_up'
+        verbose_name = "課程報名"
+        verbose_name_plural = "課程報名"
+        ordering = ['-id']
+
+    def __str__(self):
+        return f"{self.student} - {self.course}"
