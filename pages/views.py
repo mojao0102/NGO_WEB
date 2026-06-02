@@ -1,10 +1,12 @@
 from functools import wraps
 from django.utils import timezone
 from django.db.models import Q, F, Count, Case, When, Value, CharField
-from django.shortcuts import render, get_object_or_404, get_list_or_404
+from django.shortcuts import render, redirect, get_object_or_404, get_list_or_404
 from django.http import HttpResponse, Http404
+from django.contrib import messages
 from administration.models import Center
 from courses.models import CourseMainCategory, CourseSubCategory, Course
+from students.models import Student
 from web_contents.models import News
 
 #Decorator for load main category for nav bar
@@ -145,7 +147,63 @@ def course(request, course_id):
 def student_register(request):
 
     if request.method == "POST":
-        print("hi")
+        username = request.POST['username']
+        password = request.POST['password']
+        password2 = request.POST['confirm_password']
+
+        cn_name = request.POST['studentNameCh']
+        en_name = request.POST['studentNameEn']
+        dob = request.POST['studentDob']
+        email = request.POST['contactEmail']
+        school = request.POST['school']
+
+        contact1Name = request.POST['contact1Name']
+        contact1Phone = request.POST['contact1Phone']
+        contact1Relation = request.POST['contact1Relation']
+
+        contact2Name = request.POST['contact2Name']
+        contact2Phone = request.POST['contact2Phone']
+        contact2Relation = request.POST['contact2Relation']
+        
+        if password == password2:
+
+            if Student.objects.filter(username=username).exists():
+                messages.error(request,"User exist already")
+                return redirect("accounts:register")    
+
+            if Student.objects.filter(email=email.lower()).exists():
+                messages.error(request,"Email exist already")
+                return redirect("accounts:register")
+
+            current_time = timezone.localtime(timezone.now())
+            new_student = Student(
+                                student_no="",
+                                cn_name=cn_name,
+                                en_name=en_name,
+                                dob,
+                                email,
+                                contact1_name,
+                                contact1_relationship,
+                                contact1_phone,
+                                contact2_name,
+                                contact2_relationship,
+                                contact2_phone,
+                                remarks,
+                                username=username,
+                                password=password,
+                                is_active=True,
+                                register_date=current_time,
+                                file_status="created",
+                                created_by="web registation",
+                                created_datetime=current_time,
+                                last_updated_by="web registation",
+                                last_updated_datetime=current_time)
+            new_student.save()
+            messages.success(request, "account created")
+            return redirect("accounts:login")
+        else:
+            messages.error(request, "Password not match")
+            return redirect("accounts:register")
     else:
         context = {'list_mc' : request.list_mc}
         return render(request, "student_register.html", context)

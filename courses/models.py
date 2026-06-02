@@ -34,6 +34,7 @@ class CourseSubCategory(models.Model):
     name = models.CharField(max_length=50, null=True, verbose_name="子類別名稱")
     short_name = models.CharField(max_length=50, null=True, verbose_name="簡稱")
     desc = models.TextField(blank=True, null=True, verbose_name="描述")
+    list_photo = models.ImageField(upload_to='list_category/%Y/%m/%d/', blank=True, null=True, verbose_name="首頁展示圖片")
     is_active = models.BooleanField(default=True, verbose_name="是否啟用", help_text="是否可在用/顯示")
     file_status = models.CharField(max_length=100, blank=True, null=True, verbose_name="檔案狀態")
     created_by = models.CharField(max_length=100, blank=True, null=True, verbose_name="建立者")
