@@ -4,7 +4,7 @@ from django.db.models import Q, F, Count, Case, When, Value, CharField
 from django.shortcuts import render, get_object_or_404, get_list_or_404
 from django.http import HttpResponse, Http404
 from administration.models import Center
-from courses.models import CourseMainCategory, Course
+from courses.models import CourseMainCategory, CourseSubCategory, Course
 from web_contents.models import News
 
 #Decorator for load main category for nav bar
@@ -33,8 +33,6 @@ def home(request):
         'list_mc' : request.list_mc, 
         'list_news' : list_news, 
         'list_promote_course' : list_promote_course}  
-    
-    print(request.user)
 
     return render(request, "home.html", context)
 
@@ -65,10 +63,46 @@ def news(request, news_id):
 @load_main_category
 def course_list(request, mc_id):
 
+    #Get main category object by id & is_active
+    obj_mc = get_object_or_404(CourseMainCategory, id = mc_id, is_active = True)
 
+    #Get sub category list by mc_id & is_active
+    list_sc = CourseSubCategory.objects.filter(main_category_id = mc_id, is_active = True).order_by("-name")
 
-    
-    context = {'list_mc' : request.list_mc}
+    context = {'list_mc' : request.list_mc, 
+                "obj_mc" : obj_mc, 
+                "list_sc" : list_sc}
+
+    #check if is from sc button press at web page or page/mc button load
+    sc_id = int(request.GET['sc']) if 'sc' in request.GET else list_sc[0].id if list_sc else 0
+    print(sc_id)
+
+    #Get sub category object
+    if sc_id > 0 :
+
+        context["obj_sc"] = get_object_or_404(CourseSubCategory, id = sc_id, is_active = True)
+
+        #Get course list
+        course_queryset = Course.objects.annotate(
+        valid_signup_count=Count(
+            'signup_set', 
+            filter=~Q(signup_set__payment_ref="") & Q(signup_set__is_reject=False))
+        ).annotate(
+        #generate str_course_status base on valid_signup_count
+            str_course_status=Case(
+            When(
+                max_no_student__gt=0, 
+                valid_signup_count__gte=F('max_no_student'), 
+                then=Value('名額已滿')
+            ),
+            default=Value('收生中'),
+            output_field=CharField(),))
+        
+        #Only course with status "created", web published and not over registation expiry date allow to show
+        context["list_course"] = course_queryset.filter(sub_category_id = sc_id, 
+                                                is_web_publish = True, 
+                                                registation_expiry_date__gt=timezone.localtime(timezone.now()),
+                                                course_status = "created")
     return render(request, "course_list.html", context)
 
 @load_main_category
@@ -88,9 +122,9 @@ def course(request, course_id):
             When(
                 max_no_student__gt=0, 
                 valid_signup_count__gte=F('max_no_student'), 
-                then=Value('full')
+                then=Value('名額已滿')
             ),
-            default=Value('available'),
+            default=Value('收生中'),
             output_field=CharField(),))
         
         #Only course with status "created", web published and not over registation expiry date allow to show
@@ -98,7 +132,6 @@ def course(request, course_id):
                                     is_web_publish = True, 
                                     registation_expiry_date__gt=timezone.localtime(timezone.now()),
                                     course_status = "created")
-        #End get course object
 
         context = {'list_mc' : request.list_mc, "obj_course" : obj_course}
 
@@ -109,14 +142,18 @@ def course(request, course_id):
     
 #=======================Login/Register=======================#
 @load_main_category
-def student_login(request):
-    #switch to dashbroad when login success
-    context = {'list_mc' : request.list_mc}
-    return render(request, "member_login.html", context)
-
-@load_main_category
 def student_register(request):
 
-    #switch to login when register success
+    if request.method == "POST":
+        print("hi")
+    else:
+        context = {'list_mc' : request.list_mc}
+        return render(request, "student_register.html", context)
+
+
+@load_main_category
+def student_login(request):
+    #switch to home page when login success
     context = {'list_mc' : request.list_mc}
-    return render(request, "member_register.html", context)
+    return render(request, "student_login.html", context)
+

@@ -5,7 +5,7 @@
 
 <!-- 1.2 background -->
 <div class="relative h-[180px] bg-cover bg-center" 
-    style="background-image: url('{% statc "img/bg/course_infants.avif" %}')">
+    style="background-image: url('{% static "img/bg/course_infants.avif" %}')">
 </div>
 
 <!-- 2. Page Content -->
@@ -13,127 +13,72 @@
 
     <!-- 頂部課程分類導航 -->
     <div class="flex justify-center -space-x-2">
-        
-        <a href="#">
-            <div class="bg-yellow-400 hover:bg-yellow-200 text-center py-3 px-8 rounded-t-lg text-sm font-medium">
-            親子 Playgroup / 學前系列 課程
+    {% for mc in list_mc %}
+        <a href="{% url "pages:course_list" mc.id %}">
+            <div class="bg-[{{mc.theme_color}}] hover:bg-[{{mc.theme_color}}] text-center py-3 px-8 rounded-t-lg text-sm font-medium">
+            {{mc.name}}
             </div>
         </a>
-
-        <a href="#">
-            <div class="bg-green-400 hover:bg-green-200 text-center py-3 px-8 rounded-t-lg text-white text-sm font-medium">
-            幼兒及兒童課程
-            </div>
-        </a>
-
-        <a href="#">
-            <div class="bg-[#c7a4a0] hover:bg-pink-100 text-center py-3 px-8 rounded-t-lg text-sm font-medium">
-            成人課程
-            </div>
-        </a>
-
+    {% endfor %}
     </div>
 
     <!-- 主內容卡片 -->
-    <div class="border-4 border-green-400 rounded-2xl p-6">
+    <div class="border-4 border-[{{obj_mc.theme_color}}] rounded-2xl p-6">
+        {% if list_sc %}
         <!-- 課程模組標籤 -->
+        <form>
         <div class="flex flex-wrap justify-center gap-3 mb-8">
-            <!-- 在當前的sub cat會變 bg-green-400 -->
-            <a href="#">
-                <div class="bg-green-400 text-white text-center py-3 px-4 rounded-full text-sm font-medium transition-colors hover:bg-gray-200">
-                語言發展 · 普通話
+        {% for sc in list_sc %}
+            <button name="sc" value="{{sc.id}}" type="submit">
+                {% if sc.id == obj_sc.id %}
+                    <div class="bg-[{{obj_mc.theme_color}}] text-white text-center py-3 px-4 rounded-full text-sm font-medium transition-colors hover:bg-gray-200">
+                {% else %}
+                    <div class="bg-cyan-200 text-center py-3 px-4 rounded-full text-sm font-medium transition-colors hover:bg-gray-200">
+                {% endif %}            
+                {{sc.name}}
                 </div>
-            </a>
-            <a href="#">
-                <div class="bg-cyan-200 text-center py-3 px-4 rounded-full text-sm font-medium transition-colors hover:bg-gray-200">
-                STEM 系列
-                </div>
-            </a>
-            <a href="#">
-                <div class="bg-cyan-200 text-center py-3 px-4 rounded-full text-sm font-medium transition-colors hover:bg-gray-200">
-                舞蹈律動
-                </div>
-            </a>
-            <a href="#">
-                <div class="bg-cyan-200 text-center py-3 px-4 rounded-full text-sm font-medium transition-colors hover:bg-gray-200">
-                語言發展 · 普通話
-                </div>
-            </a>
-            <a href="#">
-                <div class="bg-cyan-200 text-center py-3 px-4 rounded-full text-sm font-medium transition-colors hover:bg-gray-200">
-                視覺感官
-                </div>
-            </a>
-            <a href="#">
-                <div class="bg-cyan-200 text-center py-3 px-4 rounded-full text-sm font-medium transition-colors hover:bg-gray-200">
-                運動技能
-                </div>
-            </a>
-            <a href="#">
-                <div class="bg-cyan-200 text-center py-3 px-4 rounded-full text-sm font-medium transition-colors hover:bg-gray-200">
-                學習效能
-                </div>
-            </a>
-            <a href="#">
-                <div class="bg-cyan-200 text-center py-3 px-4 rounded-full text-sm font-medium transition-colors hover:bg-gray-200">
-                音樂發展
-                </div>
-            </a>
+            </button>
+        {% endfor %}
+
         </div>
+        </form>
 
         <!-- 課程標題與描述 -->
         <div class="text-center mb-10">
-        <h2 class="text-2xl font-bold text-green-400 mb-4">語言發展 · 普通話</h2>
+        <h2 class="text-2xl font-bold text-[{{obj_mc.theme_color}}] mb-4">{{obj_sc.name}}</h2>
         <p class="text-gray-600 text-sm leading-relaxed">
-            一套循序漸進的學習安排<br>
-            一套全面的學前系列<br>
-            從初生嬰兒至入小學前<br>
-            助你的子女輕輕鬆鬆預備入學....
+            {{obj_sc.desc | linebreaks}}
         </p>
         </div>
 
+        {% if list_course %}
         <!-- 課程卡片 -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <!-- 課程 1：收生中 -->
-          <a href="#">
-            <div class="bg-white shadow-md rounded-lg p-6 text-center relative h-full">
-              <!-- 右上角標籤：收生中 -->
-              <div class="absolute top-4 right-4 bg-green-500 text-white text-sm font-medium px-4 py-2 rounded-full">
-                收生中
-              </div>
+        {% for course in list_course %}
+            <a href="{% url "pages:course" course.id %}">
+                <div class="bg-white shadow-md rounded-lg p-6 text-center relative h-full">
+                <!-- 右上角標籤：收生中 -->
+                <div class="absolute top-4 right-4 bg-green-500 text-white text-sm font-medium px-4 py-2 rounded-full">
+                    {{course.str_course_status}}
+                </div>
 
-              <div class="text-lg font-medium mb-4">
-                3 - 5 歲<br>
-                幼兒喜洋洋普通話唱遊<br>
-                及會話班
-              </div>
-              <!-- 小熊圖片 絕對定位 貼齊左下角 -->
-              <img src="./img/icon/Playgroup_bear.png" 
-                  class="absolute bottom-0 left-0 h-20 w-auto" 
-                  alt="">
-            </div>
-          </a>
+                <div class="text-lg font-medium mb-4">
+                    {% if course.age_group %}
+                    {{course.age_group}}<br>
+                    {% endif %}
+                    {{course.name | wordwrap:10}}
+                </div>
+                <!-- 小熊圖片 絕對定位 貼齊左下角 -->
+                <img src="./img/icon/Playgroup_bear.png" 
+                    class="absolute bottom-0 left-0 h-20 w-auto" 
+                    alt="">
+                </div>
+            </a>
+        {% endfor %}
 
-          <!-- 課程 2：名額已滿 -->
-          <a href="#">
-            <div class="bg-white shadow-md rounded-lg p-6 text-center relative h-full">
-              <!-- 右上角標籤：名額已滿 -->
-              <div class="absolute top-4 right-4 bg-red-500 text-white text-sm font-medium px-4 py-2 rounded-full">
-                名額已滿
-              </div>
-
-              <div class="text-lg font-medium mb-4">
-                3 - 5 歲<br>
-                幼兒普通話說故事唱遊<br>
-                班
-              </div>
-              <!-- 小熊圖片 絕對定位 貼齊左下角 -->
-              <img src="./img/icon/Playgroup_bear.png" 
-                  class="absolute bottom-0 left-0 h-20 w-auto" 
-                  alt="">
-            </div>
-          </a>
         </div>
+        {% endif %}
+        {% endif %}
     </div>
 </div>
 {% endblock %}
