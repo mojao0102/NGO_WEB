@@ -21,7 +21,7 @@
 
     {% for news in list_news %}     
     <!-- 卡片 1：2026 暑期活動 (looping) -->
-    <a href="{% url "pages:news" news.id %}">
+    <a href="{% url "front_web:news" news.id %}">
         <div class="bg-white rounded-xl shadow-lg overflow-hidden">
         <!-- 圖片區 -->
         <div class="w-full aspect-video bg-gray-100">

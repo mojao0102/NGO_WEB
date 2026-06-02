@@ -5,39 +5,39 @@ class Student(models.Model):
     student_no = models.CharField(max_length=50, unique=True, verbose_name="編號")
     cn_name = models.CharField(max_length=100, verbose_name="中文姓名")
     en_name = models.CharField(max_length=100, verbose_name="英文姓名")
-    dob = models.DateTimeField(blank=True, null=True, verbose_name="出生日期")
+    dob = models.DateField(blank=True, verbose_name="出生日期")
     email = models.EmailField(max_length=200, blank=True, verbose_name="Email")
     
     # v04 緊急聯絡人結構
-    contact1_name = models.CharField(max_length=200, blank=True, null=True, verbose_name="聯絡人1姓名")
-    contact1_relationship = models.CharField(max_length=100, blank=True, null=True, verbose_name="聯絡人1關係")
+    contact1_name = models.CharField(max_length=200, blank=True, verbose_name="聯絡人1姓名")
+    contact1_relationship = models.CharField(max_length=100, blank=True, verbose_name="聯絡人1關係")
     contact1_phone = models.CharField(max_length=100, verbose_name="聯絡人1電話")
     
-    contact2_name = models.CharField(max_length=200, blank=True, null=True, verbose_name="聯絡人2姓名")
-    contact2_relationship = models.CharField(max_length=100, blank=True, null=True, verbose_name="聯絡人2關係")
-    contact2_phone = models.CharField(max_length=100, blank=True, null=True, verbose_name="聯絡人2電話")
+    contact2_name = models.CharField(max_length=200, blank=True, verbose_name="聯絡人2姓名")
+    contact2_relationship = models.CharField(max_length=100, blank=True, verbose_name="聯絡人2關係")
+    contact2_phone = models.CharField(max_length=100, blank=True, verbose_name="聯絡人2電話")
     
-    remarks = models.TextField(blank=True, null=True, verbose_name="備註")
+    remarks = models.TextField(blank=True, verbose_name="備註")
 
     username = models.CharField(max_length=50, unique=True, verbose_name="登入帳號")
     password = models.CharField(max_length=50, verbose_name="密碼")
 
     is_active = models.BooleanField(default=True, verbose_name="啟用情況")
-    register_date = models.DateTimeField(blank=True, null=True, verbose_name="註冊日期")
+    register_date = models.DateTimeField(blank=True, verbose_name="註冊日期")
     expiry_date = models.DateTimeField(blank=True, null=True, verbose_name="帳號效期截止日")
     
     # 內嵌 Audit Fields
-    file_status = models.CharField(max_length=100, blank=True, null=True, verbose_name="存檔狀態")
-    created_by = models.CharField(max_length=100, blank=True, null=True, verbose_name="建立者")
+    file_status = models.CharField(max_length=100, blank=True, verbose_name="存檔狀態")
+    created_by = models.CharField(max_length=100, blank=True, verbose_name="建立者")
     created_datetime = models.DateTimeField(auto_now_add=True, verbose_name="建立日期時間")
-    last_updated_by = models.CharField(max_length=100, blank=True, null=True, verbose_name="最後更新者")
+    last_updated_by = models.CharField(max_length=100, blank=True, verbose_name="最後更新者")
     last_updated_datetime = models.DateTimeField(auto_now=True, verbose_name="最後更新日期時間")
 
     class Meta:
         db_table = 'student'
         verbose_name = "學生資料"
         verbose_name_plural = "學生資料"
-        ordering = ['student_no']
+        ordering = ['register_date', 'created_datetime']
 
     def __str__(self):
         return f"{self.cn_name} ({self.en_name}) - {self.student_no}"

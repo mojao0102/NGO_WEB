@@ -5,30 +5,31 @@
 
 <!-- 1.2 background -->
 <div class="relative min-h-screen bg-cover bg-center flex items-center justify-center" 
-    style="background-image: url('./img//banner/mainbanner.jpg');">
-
+    style="background-image: url('{% static "img//banner/mainbanner.jpg" %}');">
     <!-- login form -->
     <div class="bg-white shadow-lg rounded-lg p-10 w-full max-w-md mx-auto ">
+    {% include "partials/_alert.html" %}
     <h2 class="text-3xl font-bold text-gray-700 mb-8">登入</h2>
 
     <!-- 登入 Form -->
-    <form action="" id="loginForm">
+    <form action="{% url "front_web:student_login" %}" id="loginForm" method="POST">
+      {% csrf_token %}
       <!-- 帳號 -->
       <div class="mb-6">
         <label for="username" class="block text-gray-700 font-medium mb-2">帳號</label>
-        <input type="text" id="username" name="username" placeholder="Username" required
-               class="w-full border border-gray-300 rounded-md px-4 py-3 focus:outline-none focus:ring-2 focus:ring-green-400">
+        <input type="text" id="username" name="username" placeholder="Username" required value="{{input_data.username | default:''}}"
+        class="w-full border border-gray-300 rounded-md px-4 py-3 focus:outline-none focus:ring-2 focus:ring-green-400">
       </div>
 
       <!-- 密碼 -->
       <div class="mb-8">
         <label for="password" class="block text-gray-700 font-medium mb-2">密碼</label>
         <input type="password" id="password" name="password" placeholder="Password" required
-               class="w-full border border-gray-300 rounded-md px-4 py-3 focus:outline-none focus:ring-2 focus:ring-green-400">
+        class="w-full border border-gray-300 rounded-md px-4 py-3 focus:outline-none focus:ring-2 focus:ring-green-400">
       </div>
 
       <!-- 確定按鈕 -->
-      <button type="submit" 
+      <button type="submit" value="Login" name="btnLogin"
               class="bg-green-400 hover:bg-green-500 text-white font-bold py-3 px-8 rounded-full transition-colors">
         確定
       </button>
