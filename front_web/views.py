@@ -9,6 +9,7 @@ from courses.models import CourseMainCategory, CourseSubCategory, Course, SignUp
 from students.models import Student
 from students import app_func
 from web_contents.models import News
+from datetime import datetime
 
 import stripe
 from django.urls import reverse
@@ -266,7 +267,22 @@ def course(request, course_id):
 import stripe
 def course_payment(request, course_id):
     if request.method == "POST":
-        course = Course.objects.get(id=course_id)
+        #1. Get course and check if course still avaliable, Only course with status "created", web published and not over registation expiry date allow to sign_up
+        course_queryset = Course.objects.annotate(
+        valid_signup_count=Count('signup_set', filter=~Q(signup_set__payment_ref="") & Q(signup_set__is_reject=False)))      
+        obj_course = course_queryset.filter(id = course_id, is_web_publish = True, registation_expiry_date__gt=timezone.localtime(timezone.now()), 
+                                            course_status = "created").first()
+        if not obj_course:
+            messages.error(request, "Course not avaliable, please refresh page again")
+            return redirect('front_web:course', course_id=course_id)
+        #2. Check if student login already
+        if not request.session.get('student_id'):
+            messages.error(request, "please login before sign up")
+            return redirect('front_web:course', course_id=course_id)  
+        #3. Check if student signup already
+        if SignUp.objects.filter(course_id=obj_course.id, student_id=request.session['student_id']):
+            messages.error(request, "不合法的請求，請循正常管道付款")
+            return redirect('front_web:course', course_id=course_id)
         
         # 建立 Stripe 付款工作階段
         session = stripe.checkout.Session.create(
@@ -274,18 +290,18 @@ def course_payment(request, course_id):
             line_items=[{
                 'price_data': {
                     'currency': 'hkd',
-                    'product_data': {'name': course.name + '-' + course.code},
-                    'unit_amount': int(course.course_fee * 100), # 轉為 Stripe 單位：分
+                    'product_data': {'name': obj_course.name + '-' + obj_course.code},
+                    'unit_amount': int(obj_course.course_fee * 100), # 轉為 Stripe 單位：分
                 },
                 'quantity': 1,
             }],
             mode='payment',
             metadata={
-                    'course_id': course.id,
-                    'student_id': session["student_id"]
+                    'course_id': obj_course.id,
+                    'student_id': request.session.get('student_id')
                 },
-            success_url=request.build_absolute_uri(reverse('front_web:payment_success')) + f'?session_id={{CHECKOUT_SESSION_ID}}&course_id={course.id}',
-            cancel_url=request.build_absolute_uri(reverse('front_web:payment_cancel')) + f'?course_id={course_id}',
+            success_url=request.build_absolute_uri(reverse('front_web:payment_success')) + f'?session_id={{CHECKOUT_SESSION_ID}}&course_id={obj_course.id}',
+            cancel_url=request.build_absolute_uri(reverse('front_web:payment_cancel')) + f'?course_id={obj_course.id}',
         )
         return redirect(session.url, code=303)
     else:
@@ -303,13 +319,13 @@ def payment_success(request):
         return redirect('front_web:course', course_id=course_id)
         
     try:
-        # 2. 🎯 向 Stripe 總部對帳，撈出這筆交易的完整後端資料
+        # 2. 向 Stripe 總部對帳，撈出這筆交易的完整後端資料
         session = stripe.checkout.Session.retrieve(session_id)
         
         # 3. 嚴格檢查付款狀態是否真的為 "paid"
         if session.payment_status == "paid":
             
-            # 4. 🚀 成功解鎖包裹！從 metadata 拿出我們當初塞進去的 ID
+            # 4. 成功解鎖包裹！從 metadata 拿出我們當初塞進去的 ID
             course_id = session.metadata.get('course_id')
             student_id = session.metadata.get('student_id')
             
@@ -324,13 +340,14 @@ def payment_success(request):
             if not already_signup:
                 # 建立報名紀錄到資料庫
                 current_datetime = timezone.localtime(timezone.now())
-                obj_signup = SignUp.objects.create(student_id=student.id,
-                                                    course_id=course.id,
+
+                obj_signup = SignUp.objects.create(student=student,
+                                                    course=course,
                                                     status="signup success",
                                                     sign_up_date=timezone.localtime(timezone.now()),#server time
-                                                    payment_date=session.created,#stripe time
+                                                    payment_date=timezone.make_aware(datetime.fromtimestamp(session.created)),#stripe time
                                                     payment_amount=session.amount_total / 100,
-                                                    payment_method=session.session.payment_method_types[0],
+                                                    payment_method=session.payment_method_types[0],
                                                     payment_ref="Stripe",
                                                     online_payment_intent=session.payment_intent,
                                                     online_payment_session=session.id,
@@ -350,7 +367,7 @@ def payment_success(request):
                 'course_name': course.name,
                 'course_code': course.code,
                 'student_name': student.cn_name,
-                'student_code': student.cn_name,
+                'student_no': student.student_no,
                 'amount': session.amount_total / 100,
                 'payment_ref': session.payment_intent,
                 'payment_date': session.created
