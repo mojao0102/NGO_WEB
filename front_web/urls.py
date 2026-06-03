@@ -22,5 +22,5 @@ urlpatterns = [
     path('payment_fail', views.payment_fail, name='payment_fail'),
     path('stripe/webhook', views.stripe_webhook, name='stripe_webhook'),
 
-    path('dashboard', views.student_dashboard, name='student_dashboard'),
+    path('student_dashboard', views.student_dashboard, name='student_dashboard'),
 ]

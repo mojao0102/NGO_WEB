@@ -1,16 +1,12 @@
-# region Import library
-#From django
 from django.utils import timezone
 from django.db import transaction
-from django.db.models import Q, F, Count, Case, When, Value, CharField
+from django.db.models import Q, F, Count, Case, When, Value, CharField, ExpressionWrapper, DateTimeField
 from django.shortcuts import render, redirect, get_object_or_404, get_list_or_404
 from django.http import HttpResponse, Http404
 from django.contrib import messages
 from django.urls import reverse
 from django.views.decorators.csrf import csrf_exempt
 from django.conf import settings
-
-#From app
 from administration.models import Center
 from courses.models import CourseMainCategory, CourseSubCategory, Course, SignUp
 from students.models import Student
@@ -18,16 +14,13 @@ from students import app_func
 from web_contents.models import News
 from datetime import datetime
 from decimal import Decimal, ROUND_HALF_UP
-
-#From Others
 from functools import wraps
 import stripe
-# endregion
 
+# region Stripe Function
 stripe.api_key = settings.STRIPE_SECRET_KEY
 stripe.api_version = settings.STRIPE_API_VERSION
 
-# region Stripe
 def _money_to_stripe_amount(amount):
     return int((Decimal(amount) * Decimal("100")).quantize(Decimal("1"), rounding=ROUND_HALF_UP))
 
@@ -53,10 +46,6 @@ def _create_signup_from_checkout_session(session):
     course_id = _stripe_object_value(metadata, "course_id")
     student_id = _stripe_object_value(metadata, "student_id")
     session_id = _stripe_object_value(session, "id")
-
-    # course_id = metadata.get("course_id")
-    # student_id = metadata.get("student_id")
-    # session_id = _stripe_object_value(session, "id")
 
     if not course_id or not student_id or not session_id:
         raise ValueError("Stripe Checkout Session is missing course_id or student_id metadata.")
@@ -112,8 +101,7 @@ def _create_signup_from_checkout_session(session):
 # endregion
 
 # region Decorator
-# Decorator for load main category for nav bar
-def load_main_category(view_func):
+def load_main_category(view_func):# Decorator for load main category for nav bar
     @wraps(view_func)
     def _wrapped_view(request, *args, **kwargs):
         request.list_mc = CourseMainCategory.objects.filter(is_active=True)      
@@ -121,7 +109,7 @@ def load_main_category(view_func):
     return _wrapped_view
 # endregion
 
-# region Home/About
+# region View: Home/About
 @load_main_category
 def home(request):
 
@@ -148,7 +136,7 @@ def about(request):
     return render(request, "about.html", context)
 # endregion
 
-# region News
+# region View: News
 @load_main_category
 def newses(request):
     current_time = timezone.localtime(timezone.now())
@@ -165,7 +153,7 @@ def news(request, news_id):
     return render(request, "news_blog.html", context)
 # endregion
 
-# region Register/Login/LogOut
+# region View: Register/Login/LogOut
 @load_main_category
 def student_register(request):
 
@@ -283,7 +271,7 @@ def student_logout(request):
     return render(request, "home.html")
 # endregion
 
-# region Course/Category
+# region View: Course/Category
 @load_main_category
 def course_list(request, mc_id):
 
@@ -363,7 +351,7 @@ def course(request, course_id):
         return render(request, "course.html", context)
 # endregion
 
-# region Course SignUp/Payment
+# region View: Course SignUp/Payment
 def course_payment(request, course_id):
     if request.method == "POST":
         #1. Get course and check if course still avaliable, Only course with status "created", web published and not over registation expiry date allow to sign_up
@@ -501,9 +489,33 @@ def payment_fail(request):
     return render(request, "payment_fail.html", context)
 # endregion
 
-# region Dashboard
+# region View: Dashboard
 @load_main_category
 def student_dashboard(request):
-    context = {'list_mc' : request.list_mc}
+
+    #Check if login
+    if not request.session.get('student_id'):
+        messages.error(request, "請先登入")
+        return redirect('front_web:student_login')  
+
+    list_mode = "PastCourse" if request.GET.get("ListMode") == "PastCourse" else "CurrentCourse"
+
+    context = {'list_mc' : request.list_mc, "list_mode" : list_mode}
+
+    if list_mode == "CurrentCourse":
+        print("Get current course")
+        context["list_course"] = Course.objects.annotate(course_end_datetime=ExpressionWrapper(F('period_to') + F('time_to'), output_field=DateTimeField())
+        ).filter(signup__student_id=request.session.get('student_id'), 
+                                            signup__is_reject=False,
+                                            course_end_datetime__gte=timezone.localtime(timezone.now()),
+                                            course_status='created')
+    else:
+        print("Get past courses")
+        context["list_course"] = Course.objects.annotate(course_end_datetime=ExpressionWrapper(F('period_to') + F('time_to'), output_field=DateTimeField())
+        ).filter(signup__student_id=request.session.get('student_id'), 
+                                            signup__is_reject=False,
+                                            course_end_datetime__ste=timezone.localtime(timezone.now()),
+                                            course_status='created')
     return render(request, "student_dashboard.html", context)
 # endregion
+

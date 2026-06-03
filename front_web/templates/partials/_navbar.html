@@ -33,7 +33,7 @@
         </div>
 
         {% comment %} fix url {% endcomment %}
-        <a href="#" class="text-gray-600 hover:text-blue-500 ">
+        <a href="{% url "front_web:student_dashboard" %}" class="text-gray-600 hover:text-blue-500 ">
             <div class="flex items-center">
             <div class="w-8 h-8 bg-[#FF7400] rounded-full flex items-center justify-center">
                 <i class="fa-regular fa-calendar-days text-lg text-white"></i>
@@ -121,7 +121,7 @@
   {% if request.session.student_id %}
   <div class="flex justify-center gap-4 mt-6 w-full px-4">
     {% comment %} fix url {% endcomment %}
-    <a href="">
+    <a href="{% url "front_web:student_dashboard" %}">
       <button class="py-4 px-8 bg-[#FF7400] text-white rounded-full flex items-center gap-3 hover:bg-orange-400 transition-colors">
         <i class="fa-solid fa-calendar text-xl"></i>
         <span class="font-medium text-xl">我的課程</span>
