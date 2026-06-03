@@ -10,6 +10,7 @@
 
 <!-- 2. Page Content -->
 <div class="max-w-3xl mx-auto p-8">
+{% include "partials/_alert.html" %}
 <!-- 課程標題 -->
 <h1 class="text-[#70c1d6] text-3xl md:text-4xl font-light mb-6">
     {{obj_course.name}}
@@ -98,9 +99,12 @@
 
     <!-- 按鈕列 -->
     <div class="flex justify-center gap-6">
-        <button id="confirmModalBtn" class="bg-[#b4d26e] hover:bg-green-500 text-white px-8 py-4 rounded-full text-xl font-bold flex items-center gap-3">
-            <i class="fa-solid fa-check-circle text-2xl"></i> 確定報名
-        </button>
+        <form id="ConfirmSignUp" action="{% url "front_web:course_payment" obj_course.id %}" method="POST">
+        {% csrf_token %}
+            <button id="confirmModalBtn" class="bg-[#b4d26e] hover:bg-green-500 text-white px-8 py-4 rounded-full text-xl font-bold flex items-center gap-3">
+                <i class="fa-solid fa-check-circle text-2xl"></i> 確定報名
+            </button>
+        </form>
         <button id="cancelModalBtn" class="bg-gray-500 hover:bg-gray-600 text-white px-8 py-4 rounded-full text-xl font-bold">
             取消
         </button>

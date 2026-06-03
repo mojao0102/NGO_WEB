@@ -1,29 +1,37 @@
-from functools import wraps
+# region Import library
+#From django
 from django.utils import timezone
 from django.db.models import Q, F, Count, Case, When, Value, CharField
 from django.shortcuts import render, redirect, get_object_or_404, get_list_or_404
 from django.http import HttpResponse, Http404
 from django.contrib import messages
+from django.urls import reverse
+
+#From app
 from administration.models import Center
 from courses.models import CourseMainCategory, CourseSubCategory, Course, SignUp
 from students.models import Student
 from students import app_func
 from web_contents.models import News
 from datetime import datetime
+from config import settings
 
+#From Others
+from functools import wraps
 import stripe
-from django.urls import reverse
+# endregion
 
-#Decorator for load main category for nav bar
+# region Decorator
+# Decorator for load main category for nav bar
 def load_main_category(view_func):
     @wraps(view_func)
     def _wrapped_view(request, *args, **kwargs):
         request.list_mc = CourseMainCategory.objects.filter(is_active=True)      
         return view_func(request, *args, **kwargs)
     return _wrapped_view
+# endregion
 
-
-#=======================Home=======================#
+# region Home/About
 @load_main_category
 def home(request):
 
@@ -43,14 +51,14 @@ def home(request):
 
     return render(request, "home.html", context)
 
-#=======================About=======================#
 @load_main_category
 def about(request):
     list_center = get_list_or_404(Center)
     context = {'list_center': list_center, 'list_mc' : request.list_mc}
     return render(request, "about.html", context)
+# endregion
 
-#=======================News=======================#
+# region News
 @load_main_category
 def newses(request):
     current_time = timezone.localtime(timezone.now())
@@ -65,8 +73,9 @@ def news(request, news_id):
     obj_news = get_object_or_404(News, id = news_id)
     context = {'list_mc' : request.list_mc, "obj_news" : obj_news}
     return render(request, "news_blog.html", context)
-    
-#=======================Register/Login/LogOut=======================#
+# endregion
+
+# region Register/Login/LogOut
 @load_main_category
 def student_register(request):
 
@@ -182,8 +191,9 @@ def student_logout(request):
         return redirect("front_web:student_login")
     
     return render(request, "home.html")
+# endregion
 
-#=======================Course=======================#
+# region Course/Category
 @load_main_category
 def course_list(request, mc_id):
 
@@ -261,30 +271,29 @@ def course(request, course_id):
         context = {'list_mc' : request.list_mc, "obj_course" : obj_course}
 
         return render(request, "course.html", context)
+# endregion
 
-#=======================Course SignUp and Payment=======================#   
-
-import stripe
+# region Course SignUp/Payment
 def course_payment(request, course_id):
     if request.method == "POST":
         #1. Get course and check if course still avaliable, Only course with status "created", web published and not over registation expiry date allow to sign_up
         course_queryset = Course.objects.annotate(
         valid_signup_count=Count('signup_set', filter=~Q(signup_set__payment_ref="") & Q(signup_set__is_reject=False)))      
-        obj_course = course_queryset.filter(id = course_id, is_web_publish = True, registation_expiry_date__gt=timezone.localtime(timezone.now()), 
-                                            course_status = "created").first()
+        obj_course = course_queryset.filter(id = course_id, is_web_publish = True, registation_expiry_date__gt=timezone.localtime(timezone.now()), course_status = "created").first()
         if not obj_course:
-            messages.error(request, "Course not avaliable, please refresh page again")
+            messages.error(request, "課程狀態已更改，請刷新頁面")
             return redirect('front_web:course', course_id=course_id)
         #2. Check if student login already
         if not request.session.get('student_id'):
-            messages.error(request, "please login before sign up")
+            messages.error(request, "請先登入再報名")
             return redirect('front_web:course', course_id=course_id)  
         #3. Check if student signup already
         if SignUp.objects.filter(course_id=obj_course.id, student_id=request.session['student_id']):
-            messages.error(request, "不合法的請求，請循正常管道付款")
+            messages.error(request, "您已報名參加此課程")
             return redirect('front_web:course', course_id=course_id)
         
         # 建立 Stripe 付款工作階段
+        stripe.api_key = settings.STRIPE_SECRET_KEY
         session = stripe.checkout.Session.create(
             payment_method_types=['card'],
             line_items=[{
@@ -300,15 +309,15 @@ def course_payment(request, course_id):
                     'course_id': obj_course.id,
                     'student_id': request.session.get('student_id')
                 },
-            success_url=request.build_absolute_uri(reverse('front_web:payment_success')) + f'?session_id={{CHECKOUT_SESSION_ID}}&course_id={obj_course.id}',
-            cancel_url=request.build_absolute_uri(reverse('front_web:payment_cancel')) + f'?course_id={obj_course.id}',
+            success_url=request.build_absolute_uri(reverse('front_web:payment_successful')) + f'?session_id={{CHECKOUT_SESSION_ID}}&course_id={obj_course.id}',
+            cancel_url=request.build_absolute_uri(reverse('front_web:payment_fail')) + f'?course_id={obj_course.id}',
         )
         return redirect(session.url, code=303)
     else:
         return render(request, "payment_fail.html", {"course_id" : course_id})
 
 @load_main_category
-def payment_success(request):
+def payment_successful(request):
     # 1. 從網址列（GET 請求）撈出 Stripe 帶回來的 session_id
     session_id = request.GET.get('session_id')
     course_id = request.GET.get('course_id')
@@ -326,8 +335,8 @@ def payment_success(request):
         if session.payment_status == "paid":
             
             # 4. 成功解鎖包裹！從 metadata 拿出我們當初塞進去的 ID
-            course_id = session.metadata.get('course_id')
-            student_id = session.metadata.get('student_id')
+            course_id = session.metadata['course_id']
+            student_id = session.metadata['student_id']
             
             # 撈出對應的資料庫物件
             course = Course.objects.get(id=course_id)
@@ -364,15 +373,17 @@ def payment_success(request):
                 
             # 6. 把課程與付款資訊傳給前端網頁，做個漂亮的感謝收據
             context = {
+                'course_id' : course.id,
                 'course_name': course.name,
                 'course_code': course.code,
                 'student_name': student.cn_name,
                 'student_no': student.student_no,
                 'amount': session.amount_total / 100,
                 'payment_ref': session.payment_intent,
-                'payment_date': session.created
+                'payment_date': session.created,
+                'list_mc' : request.list_mc
             }
-            return render(request, "payment_success.html", context)
+            return render(request, "payment_successful.html", context)
             
         else:
             messages.error(request, "付款尚未成功，請確認扣款狀態")
@@ -388,3 +399,11 @@ def payment_fail(request):
     course_id = request.GET.get('course_id')
     context = {'list_mc' : request.list_mc, "course_id" : course_id}
     return render(request, "payment_fail.html", context)
+# endregion
+
+# region Dashboard
+@load_main_category
+def student_dashboard(request):
+    context = {'list_mc' : request.list_mc}
+    return render(request, "student_dashboard.html", context)
+# endregion
