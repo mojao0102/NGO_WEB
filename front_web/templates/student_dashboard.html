@@ -5,7 +5,7 @@
 
 <!-- 1.2 background -->
 <div class="relative h-[120px] bg-cover bg-center" 
-    style="background-image: url('./img/banner/news_banner.png');">
+    style="background-image: url('{% static "img/banner/news_banner.png" %}');">
 </div>
 
 <!-- 2. Page Content -->
@@ -14,28 +14,29 @@
   <div class="max-w-6xl mx-auto">
     <!-- 問候文字 -->
     <div class="mb-8">
-      <h1 class="text-4xl font-bold text-gray-900 mb-2">Hello, Student Name!</h1>
+      <h1 class="text-4xl font-bold text-gray-900 mb-2">Hello, {{request.session.student_name}}!</h1>
       <p class="text-gray-500">
         歡迎回來！準備好展開今日的學習旅程了嗎？
       </p>
     </div>
 
+    
     <!-- 標籤切換: 我的課堂 -->
     <div class="flex gap-4 mb-8">
-      <button class="tab-btn bg-gray-200 text-gray-800 font-medium px-8 py-3 rounded-full">
+      <button name="btnCurrentCourse" value="btnCurrentCourse" type="submit" class="tab-btn bg-gray-200 text-gray-800 font-medium px-8 py-3 rounded-full" >
         我的課堂
       </button>
-      <button class="tab-btn bg-white text-gray-600 font-medium px-8 py-3 rounded-full border">
+      <button name="btnPastCourse" value="btnPastCourse" type="submit" class="tab-btn bg-white text-gray-600 font-medium px-8 py-3 rounded-full border">
         我的歷史紀錄
       </button>
     </div>
 
     <!-- 標籤切換: 我的歷史紀錄 -->
     <div class="flex gap-4 mb-8">
-      <button class="tab-btn bg-white text-gray-600 font-medium px-8 py-3 rounded-full border">
+      <button name="btnCurrentCourse" value="btnCurrentCourse" type="submit" class="tab-btn bg-white text-gray-600 font-medium px-8 py-3 rounded-full border">
         我的課堂
       </button>
-      <button class="tab-btn bg-gray-200 text-gray-800 font-medium px-8 py-3 rounded-full">
+      <button name="btnPastCourse" value="btnPastCourse" type="submit" class="tab-btn bg-gray-200 text-gray-800 font-medium px-8 py-3 rounded-full">
         我的歷史紀錄
       </button>
     </div>

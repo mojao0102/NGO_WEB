@@ -172,15 +172,17 @@ class SignUp(models.Model):
     
     # 審核/拒絕相關欄位
     is_reject = models.BooleanField(default=False, verbose_name="審核:拒絕報名")
-    reject_date = models.DateTimeField(blank=True, verbose_name="拒絕時間")
+    reject_date = models.DateTimeField(blank=True, null=True, verbose_name="拒絕時間")
     reject_by = models.ForeignKey(Staff, on_delete=models.DO_NOTHING, null=True, blank=True, verbose_name="拒絕者")
     reject_reason = models.CharField(max_length=200, blank=True, verbose_name="拒絕原因")
     
     # 金流/付款相關欄位
     payment_date = models.DateTimeField(blank=True, verbose_name="付款時間")
     payment_amount = models.DecimalField(max_digits=10, decimal_places=2, blank=True, verbose_name="付款金額")
-    payment_method = models.CharField(max_length=50, blank=True, verbose_name="付款方式")
-    payment_ref = models.CharField(max_length=50, blank=True, verbose_name="付款參考編號") # 👈 Stripe pi_*** 存這裡！
+    payment_method = models.CharField(max_length=50, blank=True, verbose_name="付款方式")#Stripe or cash(by staff)
+    payment_ref = models.CharField(max_length=255, blank=True, verbose_name="付款參考")
+    online_payment_intent = models.CharField(max_length=255, blank=True, verbose_name="Stripe payment intent")
+    online_payment_session = models.CharField(max_length=255, blank=True, verbose_name="Stripe Session")
     payment_remarks = models.CharField(max_length=200, blank=True, verbose_name="付款備註")
     
     # 內嵌 Audit Fields (完全比照第一張圖的規格)

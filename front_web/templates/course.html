@@ -14,14 +14,16 @@
 <h1 class="text-[#70c1d6] text-3xl md:text-4xl font-light mb-6">
     {{obj_course.name}}
 </h1>
+<!-- 課程編號 -->
+<p class="text-gray-400 mb-6">課程編號: {{obj_course.code}}</p>
 
-{% if obj_course.str_course_status == "available" %}
+{% if obj_course.str_course_status == "收生中" %}
 <!-- 立即報名按鈕 -->
 <button id="openModalBtn" class="bg-[#70c1d6] text-white px-6 py-2 rounded-full flex items-center gap-2 mb-8 hover:opacity-90 transition-opacity">
     <i class="fa-brands fa-leanpub fa-xl" style="color: #fff;"></i>
     立即報名
 </button>
-{% elif obj_course.str_course_status == "full" %}
+{% elif obj_course.str_course_status == "名額已滿" %}
 <!-- 報名已滿 -->
 <div class="mb-6">
     <h3 class="font-bold text-lg mb-2 text-red-500">報名已滿！ 敬請留意下一期開始時間</h3>
@@ -32,7 +34,7 @@
 <div class="mb-6">
     <h3 class="font-bold text-lg mb-2">課程內容:</h3>
     <p class="text-gray-800 leading-relaxed">
-    {{obj_course.content}}
+    {{obj_course.content | linebreaks}}
     </p>
 </div>
 
@@ -67,7 +69,9 @@
 <div>
     <h3 class="font-bold text-lg mb-2">上課日期及時間</h3>
     <p class="text-gray-800">{{obj_course.period_from | date:"d/m/Y"}} – {{obj_course.period_to | date:"d/m/Y"}} ({{obj_course.time_from | date:"H:i"}}-{{obj_course.time_to | date:"H:i"}})</p>
-    <p class="text-gray-800">{{obj_course.lesson_weekday_pattern}}，共{{obj_course.total_lessons | floatformat:0}}堂</p>
+    <p class="text-gray-800">
+        {% if obj_course.lesson_weekday_pattern %}{{obj_course.lesson_weekday_pattern}}，{% endif %}共{{obj_course.total_lessons | floatformat:0}}堂
+    </p>
 </div>
 </div>
 
@@ -85,11 +89,11 @@
     <!-- 課程資訊 -->
     <div class="text-gray-700 text-lg space-y-2 mb-8">
         <p class="font-medium">已選擇課程:</p>
-        <p class="text-gray-900">Little Ones自理與學前分離預備 Playgroup</p>
-        <p>課程編號: 26PG311-02</p>
-        <p>日期: 25/04/2026 - 13/06/2026</p>
-        <p>時間: 12:30-13:30</p>
-        <p class="mt-4">逢星期六，共8堂</p>
+        <p class="text-gray-900">{{obj_course.name}}</p>
+        <p>課程編號: {{obj_course.code}}</p>
+        <p>日期: {{obj_course.period_from | date:"d/m/Y"}} – {{obj_course.period_to | date:"d/m/Y"}}</p>
+        <p>時間: {{obj_course.time_from | date:"H:i"}}-{{obj_course.time_to | date:"H:i"}}</p>
+        <p class="mt-4">{% if obj_course.lesson_weekday_pattern %}{{obj_course.lesson_weekday_pattern}}，{% endif %}共{{obj_course.total_lessons | floatformat:0}}堂</p>
     </div>
 
     <!-- 按鈕列 -->

@@ -5,10 +5,13 @@ from django.shortcuts import render, redirect, get_object_or_404, get_list_or_40
 from django.http import HttpResponse, Http404
 from django.contrib import messages
 from administration.models import Center
-from courses.models import CourseMainCategory, CourseSubCategory, Course
+from courses.models import CourseMainCategory, CourseSubCategory, Course, SignUp
 from students.models import Student
 from students import app_func
 from web_contents.models import News
+
+import stripe
+from django.urls import reverse
 
 #Decorator for load main category for nav bar
 def load_main_category(view_func):
@@ -61,86 +64,6 @@ def news(request, news_id):
     obj_news = get_object_or_404(News, id = news_id)
     context = {'list_mc' : request.list_mc, "obj_news" : obj_news}
     return render(request, "news_blog.html", context)
-
-#=======================Course=======================#
-@load_main_category
-def course_list(request, mc_id):
-
-    #Get main category object by id & is_active
-    obj_mc = get_object_or_404(CourseMainCategory, id = mc_id, is_active = True)
-
-    #Get sub category list by mc_id & is_active
-    list_sc = CourseSubCategory.objects.filter(main_category_id = mc_id, is_active = True).order_by("-name")
-
-    context = {'list_mc' : request.list_mc, 
-                "obj_mc" : obj_mc, 
-                "list_sc" : list_sc}
-
-    #check if is from sc button press at web page or page/mc button load
-    sc_id = int(request.GET['sc'] if 'sc' in request.GET else list_sc[0].id if list_sc else 0)
-
-    #Get sub category object
-    if sc_id > 0 :
-
-        context["obj_sc"] = get_object_or_404(CourseSubCategory, id = sc_id, is_active = True)
-
-        #Get course list
-        course_queryset = Course.objects.annotate(
-        valid_signup_count=Count(
-            'signup_set', 
-            filter=~Q(signup_set__payment_ref="") & Q(signup_set__is_reject=False))
-        ).annotate(
-        #generate str_course_status base on valid_signup_count
-            str_course_status=Case(
-            When(
-                max_no_student__gt=0, 
-                valid_signup_count__gte=F('max_no_student'), 
-                then=Value('名額已滿')
-            ),
-            default=Value('收生中'),
-            output_field=CharField(),))
-        
-        #Only course with status "created", web published and not over registation expiry date allow to show
-        context["list_course"] = course_queryset.filter(sub_category_id = sc_id, 
-                                                is_web_publish = True, 
-                                                registation_expiry_date__gt=timezone.localtime(timezone.now()),
-                                                course_status = "created")
-    return render(request, "course_list.html", context)
-
-@load_main_category
-def course(request, course_id):
-    
-    if request.method == "GET":
-        #Get course object
-        #Build custom field at course queryset
-        #Count valid signup
-        course_queryset = Course.objects.annotate(
-        valid_signup_count=Count(
-            'signup_set', 
-            filter=~Q(signup_set__payment_ref="") & Q(signup_set__is_reject=False))
-        ).annotate(
-        #generate str_course_status base on valid_signup_count
-            str_course_status=Case(
-            When(
-                max_no_student__gt=0, 
-                valid_signup_count__gte=F('max_no_student'), 
-                then=Value('名額已滿')
-            ),
-            default=Value('收生中'),
-            output_field=CharField(),))
-        
-        #Only course with status "created", web published and not over registation expiry date allow to show
-        obj_course = get_object_or_404(course_queryset, id = course_id, 
-                                    is_web_publish = True, 
-                                    registation_expiry_date__gt=timezone.localtime(timezone.now()),
-                                    course_status = "created")
-
-        context = {'list_mc' : request.list_mc, "obj_course" : obj_course}
-
-        return render(request, "course.html", context)
-    
-    else:
-        return render(request, "course.html", context)
     
 #=======================Register/Login/LogOut=======================#
 @load_main_category
@@ -231,7 +154,7 @@ def student_login(request):
                 return render(request, "student_login.html", context)
             
             request.session['student_id'] = student.id
-            request.session['student_username'] = student.username
+            request.session['student_name'] = student.cn_name
 
             messages.success(request, f"歡迎回來，{student.username}")
 
@@ -259,3 +182,192 @@ def student_logout(request):
     
     return render(request, "home.html")
 
+#=======================Course=======================#
+@load_main_category
+def course_list(request, mc_id):
+
+    #Get main category object by id & is_active
+    obj_mc = get_object_or_404(CourseMainCategory, id = mc_id, is_active = True)
+
+    #Get sub category list by mc_id & is_active
+    list_sc = CourseSubCategory.objects.filter(main_category_id = mc_id, is_active = True).order_by("-name")
+
+    context = {'list_mc' : request.list_mc, 
+                "obj_mc" : obj_mc, 
+                "list_sc" : list_sc}
+
+    #check if is from sc button press at web page or page/mc button load
+    sc_id = int(request.GET['sc'] if 'sc' in request.GET else list_sc[0].id if list_sc else 0)
+
+    #Get sub category object
+    if sc_id > 0 :
+
+        context["obj_sc"] = get_object_or_404(CourseSubCategory, id = sc_id, is_active = True)
+
+        #Get course list
+        course_queryset = Course.objects.annotate(
+        valid_signup_count=Count(
+            'signup_set', 
+            filter=~Q(signup_set__payment_ref="") & Q(signup_set__is_reject=False))
+        ).annotate(
+        #generate str_course_status base on valid_signup_count
+            str_course_status=Case(
+            When(
+                max_no_student__gt=0, 
+                valid_signup_count__gte=F('max_no_student'), 
+                then=Value('名額已滿')
+            ),
+            default=Value('收生中'),
+            output_field=CharField(),))
+        
+        #Only course with status "created", web published and not over registation expiry date allow to show
+        context["list_course"] = course_queryset.filter(sub_category_id = sc_id, 
+                                                is_web_publish = True, 
+                                                registation_expiry_date__gt=timezone.localtime(timezone.now()),
+                                                course_status = "created")
+    return render(request, "course_list.html", context)
+
+@load_main_category
+def course(request, course_id):
+    
+    if request.method == "POST":
+        print("POST here")
+    else:#GET
+        #Get course object
+        #Build custom field at course queryset
+        #Count valid signup
+        course_queryset = Course.objects.annotate(
+        valid_signup_count=Count(
+            'signup_set', 
+            filter=~Q(signup_set__payment_ref="") & Q(signup_set__is_reject=False))
+        ).annotate(
+        #generate str_course_status base on valid_signup_count
+            str_course_status=Case(
+            When(
+                max_no_student__gt=0, 
+                valid_signup_count__gte=F('max_no_student'), 
+                then=Value('名額已滿')
+            ),
+            default=Value('收生中'),
+            output_field=CharField(),))
+        
+        #Only course with status "created", web published and not over registation expiry date allow to show
+        obj_course = get_object_or_404(course_queryset, id = course_id, 
+                                    is_web_publish = True, 
+                                    registation_expiry_date__gt=timezone.localtime(timezone.now()),
+                                    course_status = "created")
+
+        context = {'list_mc' : request.list_mc, "obj_course" : obj_course}
+
+        return render(request, "course.html", context)
+
+#=======================Course SignUp and Payment=======================#   
+
+import stripe
+def course_payment(request, course_id):
+    if request.method == "POST":
+        course = Course.objects.get(id=course_id)
+        
+        # 建立 Stripe 付款工作階段
+        session = stripe.checkout.Session.create(
+            payment_method_types=['card'],
+            line_items=[{
+                'price_data': {
+                    'currency': 'hkd',
+                    'product_data': {'name': course.name + '-' + course.code},
+                    'unit_amount': int(course.course_fee * 100), # 轉為 Stripe 單位：分
+                },
+                'quantity': 1,
+            }],
+            mode='payment',
+            metadata={
+                    'course_id': course.id,
+                    'student_id': session["student_id"]
+                },
+            success_url=request.build_absolute_uri(reverse('front_web:payment_success')) + f'?session_id={{CHECKOUT_SESSION_ID}}&course_id={course.id}',
+            cancel_url=request.build_absolute_uri(reverse('front_web:payment_cancel')) + f'?course_id={course_id}',
+        )
+        return redirect(session.url, code=303)
+    else:
+        return render(request, "payment_fail.html", {"course_id" : course_id})
+
+@load_main_category
+def payment_success(request):
+    # 1. 從網址列（GET 請求）撈出 Stripe 帶回來的 session_id
+    session_id = request.GET.get('session_id')
+    course_id = request.GET.get('course_id')
+    
+    if not session_id:
+        # 如果使用者試圖直接輸入網址偷跑進來，直接踢走！
+        messages.error(request, "不合法的請求，請循正常管道付款")
+        return redirect('front_web:course', course_id=course_id)
+        
+    try:
+        # 2. 🎯 向 Stripe 總部對帳，撈出這筆交易的完整後端資料
+        session = stripe.checkout.Session.retrieve(session_id)
+        
+        # 3. 嚴格檢查付款狀態是否真的為 "paid"
+        if session.payment_status == "paid":
+            
+            # 4. 🚀 成功解鎖包裹！從 metadata 拿出我們當初塞進去的 ID
+            course_id = session.metadata.get('course_id')
+            student_id = session.metadata.get('student_id')
+            
+            # 撈出對應的資料庫物件
+            course = Course.objects.get(id=course_id)
+            student = Student.objects.get(id=student_id)
+            
+            # 5. 🛡️ 防重複機制：檢查資料庫是否已經有這筆「Stripe流水號」的報名紀錄
+            # 這樣就算使用者一直按重新整理（F5），也絕對不會重複建立紀錄！
+            already_signup = SignUp.objects.filter(online_payment_session=session_id).exists()
+            
+            if not already_signup:
+                # 建立報名紀錄到資料庫
+                current_datetime = timezone.localtime(timezone.now())
+                obj_signup = SignUp.objects.create(student_id=student.id,
+                                                    course_id=course.id,
+                                                    status="signup success",
+                                                    sign_up_date=timezone.localtime(timezone.now()),#server time
+                                                    payment_date=session.created,#stripe time
+                                                    payment_amount=session.amount_total / 100,
+                                                    payment_method=session.session.payment_method_types[0],
+                                                    payment_ref="Stripe",
+                                                    online_payment_intent=session.payment_intent,
+                                                    online_payment_session=session.id,
+                                                    payment_remarks="",
+                                                    file_status="created",
+                                                    created_by=f"student_id:{student.id}",
+                                                    created_datetime=current_datetime,
+                                                    last_updated_by=f"student_id:{student.id}",
+                                                    last_updated_datetime=current_datetime)
+                # 可選：在這裡觸發寄送上課憑證 Email 給學生
+                is_new_record = True
+            else:
+                is_new_record = False
+                
+            # 6. 把課程與付款資訊傳給前端網頁，做個漂亮的感謝收據
+            context = {
+                'course_name': course.name,
+                'course_code': course.code,
+                'student_name': student.cn_name,
+                'student_code': student.cn_name,
+                'amount': session.amount_total / 100,
+                'payment_ref': session.payment_intent,
+                'payment_date': session.created
+            }
+            return render(request, "payment_success.html", context)
+            
+        else:
+            messages.error(request, "付款尚未成功，請確認扣款狀態")
+            return redirect("front_web:student_dashboard")
+            
+    except stripe.error.StripeError as e:
+        # 萬一對帳失敗（例如黑客自己隨便編造假的 session_id 網址）
+        messages.error(request, "無效的交易代碼")
+        return redirect("front_web:course", course_id=course_id)
+
+@load_main_category
+def payment_fail(request):
+    course_id = request.GET.get('course_id')
+    context = {'list_mc' : request.list_mc, "course_id" : course_id}
+    return render(request, "payment_fail.html", context)
