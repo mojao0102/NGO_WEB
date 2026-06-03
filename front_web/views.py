@@ -27,7 +27,7 @@ import stripe
 stripe.api_key = settings.STRIPE_SECRET_KEY
 stripe.api_version = settings.STRIPE_API_VERSION
 
-
+# region Stripe
 def _money_to_stripe_amount(amount):
     return int((Decimal(amount) * Decimal("100")).quantize(Decimal("1"), rounding=ROUND_HALF_UP))
 
@@ -47,10 +47,16 @@ def _stripe_object_value(obj, key, default=None):
 
 
 def _create_signup_from_checkout_session(session):
+    
     metadata = _stripe_object_value(session, "metadata", {}) or {}
-    course_id = metadata.get("course_id")
-    student_id = metadata.get("student_id")
+
+    course_id = _stripe_object_value(metadata, "course_id")
+    student_id = _stripe_object_value(metadata, "student_id")
     session_id = _stripe_object_value(session, "id")
+
+    # course_id = metadata.get("course_id")
+    # student_id = metadata.get("student_id")
+    # session_id = _stripe_object_value(session, "id")
 
     if not course_id or not student_id or not session_id:
         raise ValueError("Stripe Checkout Session is missing course_id or student_id metadata.")
@@ -103,6 +109,7 @@ def _create_signup_from_checkout_session(session):
             last_updated_datetime=current_datetime,
         )
         return signup, True
+# endregion
 
 # region Decorator
 # Decorator for load main category for nav bar
