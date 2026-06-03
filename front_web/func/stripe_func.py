@@ -10,11 +10,11 @@ from django.db import transaction
 stripe.api_key = settings.STRIPE_SECRET_KEY
 stripe.api_version = settings.STRIPE_API_VERSION
 
-def _money_to_stripe_amount(amount):
+def money_to_stripe_amount(amount):
     return int((Decimal(amount) * Decimal("100")).quantize(Decimal("1"), rounding=ROUND_HALF_UP))
 
 
-def _stripe_value_id(value):
+def stripe_value_id(value):
     if not value:
         return ""
     if isinstance(value, str):
@@ -22,19 +22,19 @@ def _stripe_value_id(value):
     return value.get("id", "")
 
 
-def _stripe_object_value(obj, key, default=None):
+def stripe_object_value(obj, key, default=None):
     if hasattr(obj, "get"):
         return obj.get(key, default)
     return getattr(obj, key, default)
 
 
-def _create_signup_from_checkout_session(session):
+def create_signup_from_checkout_session(session):
     
-    metadata = _stripe_object_value(session, "metadata", {}) or {}
+    metadata = stripe_object_value(session, "metadata", {}) or {}
 
-    course_id = _stripe_object_value(metadata, "course_id")
-    student_id = _stripe_object_value(metadata, "student_id")
-    session_id = _stripe_object_value(session, "id")
+    course_id = stripe_object_value(metadata, "course_id")
+    student_id = stripe_object_value(metadata, "student_id")
+    session_id = stripe_object_value(session, "id")
 
     if not course_id or not student_id or not session_id:
         raise ValueError("Stripe Checkout Session is missing course_id or student_id metadata.")
@@ -57,13 +57,13 @@ def _create_signup_from_checkout_session(session):
 
         current_datetime = timezone.localtime(timezone.now())
         payment_method = ""
-        payment_method_types = _stripe_object_value(session, "payment_method_types", []) or []
+        payment_method_types = stripe_object_value(session, "payment_method_types", []) or []
         if payment_method_types:
             payment_method = payment_method_types[0]
 
-        payment_intent = _stripe_value_id(_stripe_object_value(session, "payment_intent"))
-        amount_total = _stripe_object_value(session, "amount_total", 0) or 0
-        created_timestamp = _stripe_object_value(session, "created")
+        payment_intent = stripe_value_id(stripe_object_value(session, "payment_intent"))
+        amount_total = stripe_object_value(session, "amount_total", 0) or 0
+        created_timestamp = stripe_object_value(session, "created")
         payment_date = current_datetime
         if created_timestamp:
             payment_date = datetime.fromtimestamp(created_timestamp, tz=timezone.get_current_timezone())

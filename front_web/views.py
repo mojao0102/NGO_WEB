@@ -1,5 +1,4 @@
 from django.utils import timezone
-from django.db import transaction
 from django.db.models import Q, F, Count, Case, When, Value, CharField, ExpressionWrapper, DateTimeField
 from django.shortcuts import render, redirect, get_object_or_404, get_list_or_404
 from django.http import HttpResponse, Http404
@@ -13,9 +12,6 @@ from courses.models import CourseMainCategory, CourseSubCategory, Course, SignUp
 from students.models import Student
 from students.func import app_func as student_app_func
 from web_contents.models import News
-from datetime import datetime
-from decimal import Decimal, ROUND_HALF_UP
-from functools import wraps
 import stripe
 from .func import app_func as frontweb_app_func, stripe_func
 
@@ -264,7 +260,7 @@ def course(request, course_id):
 # region View: Course SignUp/Payment
 def course_payment(request, course_id):
     if request.method == "POST":
-        #1. Get course and check if course still avaliable, Only course with status "created", web published and not over registation expiry date allow to sign_up
+        #1. Get course and check if course still avaliable, Only course with status "created", web published, signup number < max no and not over registation expiry date allow to sign_up
         course_queryset = Course.objects.annotate(
         valid_signup_count=Count('signup_set', filter=~Q(signup_set__payment_ref="") & Q(signup_set__is_reject=False)))      
         obj_course = course_queryset.filter(id = course_id, is_web_publish = True, registation_expiry_date__gt=timezone.localtime(timezone.now()), course_status = "created").first()
@@ -296,7 +292,7 @@ def course_payment(request, course_id):
                     'price_data': {
                         'currency': settings.STRIPE_CURRENCY,
                         'product_data': {'name': f"{obj_course.name}-{obj_course.code}"},
-                        'unit_amount': stripe_func._money_to_stripe_amount(obj_course.course_fee),
+                        'unit_amount': stripe_func.money_to_stripe_amount(obj_course.course_fee),
                     },
                     'quantity': 1,
                 }],
@@ -337,7 +333,7 @@ def payment_successful(request):
         # 3. 嚴格檢查付款狀態是否真的為 "paid"
         if session.payment_status == "paid":
             
-            signup, is_new_record = stripe_func._create_signup_from_checkout_session(session)
+            signup, is_new_record = stripe_func.create_signup_from_checkout_session(session)
             course = signup.course
             student = signup.student
                 
@@ -394,7 +390,7 @@ def stripe_webhook(request):
         session = event["data"]["object"]
         if session.get("payment_status") == "paid":
             try:
-                stripe_func._create_signup_from_checkout_session(session)
+                stripe_func.create_signup_from_checkout_session(session)
             except (Course.DoesNotExist, Student.DoesNotExist, ValueError):
                 return HttpResponse(status=400)
 
