@@ -20,6 +20,7 @@ urlpatterns = [
     path('course/<int:course_id>/pay', views.course_payment, name='course_payment'),
     path('payment_successful', views.payment_successful, name='payment_successful'),
     path('payment_fail', views.payment_fail, name='payment_fail'),
+    path('stripe/webhook', views.stripe_webhook, name='stripe_webhook'),
 
     path('dashboard', views.student_dashboard, name='student_dashboard'),
 ]

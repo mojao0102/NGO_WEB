@@ -1,11 +1,14 @@
 # region Import library
 #From django
 from django.utils import timezone
+from django.db import transaction
 from django.db.models import Q, F, Count, Case, When, Value, CharField
 from django.shortcuts import render, redirect, get_object_or_404, get_list_or_404
 from django.http import HttpResponse, Http404
 from django.contrib import messages
 from django.urls import reverse
+from django.views.decorators.csrf import csrf_exempt
+from django.conf import settings
 
 #From app
 from administration.models import Center
@@ -14,12 +17,92 @@ from students.models import Student
 from students import app_func
 from web_contents.models import News
 from datetime import datetime
-from config import settings
+from decimal import Decimal, ROUND_HALF_UP
 
 #From Others
 from functools import wraps
 import stripe
 # endregion
+
+stripe.api_key = settings.STRIPE_SECRET_KEY
+stripe.api_version = settings.STRIPE_API_VERSION
+
+
+def _money_to_stripe_amount(amount):
+    return int((Decimal(amount) * Decimal("100")).quantize(Decimal("1"), rounding=ROUND_HALF_UP))
+
+
+def _stripe_value_id(value):
+    if not value:
+        return ""
+    if isinstance(value, str):
+        return value
+    return value.get("id", "")
+
+
+def _stripe_object_value(obj, key, default=None):
+    if hasattr(obj, "get"):
+        return obj.get(key, default)
+    return getattr(obj, key, default)
+
+
+def _create_signup_from_checkout_session(session):
+    metadata = _stripe_object_value(session, "metadata", {}) or {}
+    course_id = metadata.get("course_id")
+    student_id = metadata.get("student_id")
+    session_id = _stripe_object_value(session, "id")
+
+    if not course_id or not student_id or not session_id:
+        raise ValueError("Stripe Checkout Session is missing course_id or student_id metadata.")
+
+    with transaction.atomic():
+        course = Course.objects.select_for_update().get(id=course_id)
+        student = Student.objects.get(id=student_id)
+
+        existing_signup = SignUp.objects.filter(online_payment_session=session_id).first()
+        if existing_signup:
+            return existing_signup, False
+
+        existing_paid_signup = SignUp.objects.filter(
+            course=course,
+            student=student,
+            is_reject=False,
+        ).exclude(payment_ref="").first()
+        if existing_paid_signup:
+            return existing_paid_signup, False
+
+        current_datetime = timezone.localtime(timezone.now())
+        payment_method = ""
+        payment_method_types = _stripe_object_value(session, "payment_method_types", []) or []
+        if payment_method_types:
+            payment_method = payment_method_types[0]
+
+        payment_intent = _stripe_value_id(_stripe_object_value(session, "payment_intent"))
+        amount_total = _stripe_object_value(session, "amount_total", 0) or 0
+        created_timestamp = _stripe_object_value(session, "created")
+        payment_date = current_datetime
+        if created_timestamp:
+            payment_date = datetime.fromtimestamp(created_timestamp, tz=timezone.get_current_timezone())
+
+        signup = SignUp.objects.create(
+            student=student,
+            course=course,
+            status="signup success",
+            sign_up_date=current_datetime.strftime("%Y-%m-%d %H:%M:%S"),
+            payment_date=payment_date,
+            payment_amount=Decimal(amount_total) / Decimal("100"),
+            payment_method=payment_method or "Stripe",
+            payment_ref=payment_intent or session_id,
+            online_payment_intent=payment_intent,
+            online_payment_session=session_id,
+            payment_remarks="",
+            file_status="created",
+            created_by=f"student_id:{student.id}",
+            created_datetime=current_datetime,
+            last_updated_by=f"student_id:{student.id}",
+            last_updated_datetime=current_datetime,
+        )
+        return signup, True
 
 # region Decorator
 # Decorator for load main category for nav bar
@@ -291,27 +374,38 @@ def course_payment(request, course_id):
         if SignUp.objects.filter(course_id=obj_course.id, student_id=request.session['student_id']):
             messages.error(request, "您已報名參加此課程")
             return redirect('front_web:course', course_id=course_id)
+
+        if not settings.STRIPE_SECRET_KEY:
+            messages.error(request, "付款系統尚未設定，請聯絡本中心")
+            return redirect('front_web:course', course_id=course_id)
+
+        student = get_object_or_404(Student, id=request.session['student_id'])
         
         # 建立 Stripe 付款工作階段
-        stripe.api_key = settings.STRIPE_SECRET_KEY
-        session = stripe.checkout.Session.create(
-            payment_method_types=['card'],
-            line_items=[{
-                'price_data': {
-                    'currency': 'hkd',
-                    'product_data': {'name': obj_course.name + '-' + obj_course.code},
-                    'unit_amount': int(obj_course.course_fee * 100), # 轉為 Stripe 單位：分
+        try:
+            session = stripe.checkout.Session.create(
+                line_items=[{
+                    'price_data': {
+                        'currency': settings.STRIPE_CURRENCY,
+                        'product_data': {'name': f"{obj_course.name}-{obj_course.code}"},
+                        'unit_amount': _money_to_stripe_amount(obj_course.course_fee),
+                    },
+                    'quantity': 1,
+                }],
+                mode='payment',
+                customer_email=student.email,
+                client_reference_id=f"course:{obj_course.id}:student:{student.id}",
+                metadata={
+                    'course_id': str(obj_course.id),
+                    'student_id': str(student.id),
                 },
-                'quantity': 1,
-            }],
-            mode='payment',
-            metadata={
-                    'course_id': obj_course.id,
-                    'student_id': request.session.get('student_id')
-                },
-            success_url=request.build_absolute_uri(reverse('front_web:payment_successful')) + f'?session_id={{CHECKOUT_SESSION_ID}}&course_id={obj_course.id}',
-            cancel_url=request.build_absolute_uri(reverse('front_web:payment_fail')) + f'?course_id={obj_course.id}',
-        )
+                success_url=request.build_absolute_uri(reverse('front_web:payment_successful')) + '?session_id={CHECKOUT_SESSION_ID}',
+                cancel_url=request.build_absolute_uri(reverse('front_web:payment_fail')) + f'?course_id={obj_course.id}',
+            )
+        except stripe.error.StripeError:
+            messages.error(request, "未能建立付款連結，請稍後再試")
+            return redirect('front_web:course', course_id=course_id)
+
         return redirect(session.url, code=303)
     else:
         return render(request, "payment_fail.html", {"course_id" : course_id})
@@ -320,12 +414,11 @@ def course_payment(request, course_id):
 def payment_successful(request):
     # 1. 從網址列（GET 請求）撈出 Stripe 帶回來的 session_id
     session_id = request.GET.get('session_id')
-    course_id = request.GET.get('course_id')
     
     if not session_id:
         # 如果使用者試圖直接輸入網址偷跑進來，直接踢走！
         messages.error(request, "不合法的請求，請循正常管道付款")
-        return redirect('front_web:course', course_id=course_id)
+        return redirect("front_web:home")
         
     try:
         # 2. 向 Stripe 總部對帳，撈出這筆交易的完整後端資料
@@ -334,53 +427,22 @@ def payment_successful(request):
         # 3. 嚴格檢查付款狀態是否真的為 "paid"
         if session.payment_status == "paid":
             
-            # 4. 成功解鎖包裹！從 metadata 拿出我們當初塞進去的 ID
-            course_id = session.metadata['course_id']
-            student_id = session.metadata['student_id']
-            
-            # 撈出對應的資料庫物件
-            course = Course.objects.get(id=course_id)
-            student = Student.objects.get(id=student_id)
-            
-            # 5. 🛡️ 防重複機制：檢查資料庫是否已經有這筆「Stripe流水號」的報名紀錄
-            # 這樣就算使用者一直按重新整理（F5），也絕對不會重複建立紀錄！
-            already_signup = SignUp.objects.filter(online_payment_session=session_id).exists()
-            
-            if not already_signup:
-                # 建立報名紀錄到資料庫
-                current_datetime = timezone.localtime(timezone.now())
-
-                obj_signup = SignUp.objects.create(student=student,
-                                                    course=course,
-                                                    status="signup success",
-                                                    sign_up_date=timezone.localtime(timezone.now()),#server time
-                                                    payment_date=timezone.make_aware(datetime.fromtimestamp(session.created)),#stripe time
-                                                    payment_amount=session.amount_total / 100,
-                                                    payment_method=session.payment_method_types[0],
-                                                    payment_ref="Stripe",
-                                                    online_payment_intent=session.payment_intent,
-                                                    online_payment_session=session.id,
-                                                    payment_remarks="",
-                                                    file_status="created",
-                                                    created_by=f"student_id:{student.id}",
-                                                    created_datetime=current_datetime,
-                                                    last_updated_by=f"student_id:{student.id}",
-                                                    last_updated_datetime=current_datetime)
-                # 可選：在這裡觸發寄送上課憑證 Email 給學生
-                is_new_record = True
-            else:
-                is_new_record = False
+            signup, is_new_record = _create_signup_from_checkout_session(session)
+            course = signup.course
+            student = signup.student
                 
             # 6. 把課程與付款資訊傳給前端網頁，做個漂亮的感謝收據
             context = {
                 'course_id' : course.id,
+                'course_list_id': course.sub_category.main_category_id,
                 'course_name': course.name,
                 'course_code': course.code,
                 'student_name': student.cn_name,
                 'student_no': student.student_no,
-                'amount': session.amount_total / 100,
-                'payment_ref': session.payment_intent,
-                'payment_date': session.created,
+                'amount': signup.payment_amount,
+                'payment_ref': signup.payment_ref,
+                'payment_date': signup.payment_date,
+                'is_new_record': is_new_record,
                 'list_mc' : request.list_mc
             }
             return render(request, "payment_successful.html", context)
@@ -392,7 +454,38 @@ def payment_successful(request):
     except stripe.error.StripeError as e:
         # 萬一對帳失敗（例如黑客自己隨便編造假的 session_id 網址）
         messages.error(request, "無效的交易代碼")
-        return redirect("front_web:course", course_id=course_id)
+        return redirect("front_web:home")
+    except (Course.DoesNotExist, Student.DoesNotExist, ValueError):
+        messages.error(request, "未能確認付款資料，請聯絡本中心")
+        return redirect("front_web:home")
+
+
+@csrf_exempt
+def stripe_webhook(request):
+    if request.method != "POST":
+        return HttpResponse(status=405)
+
+    webhook_secret = settings.STRIPE_WEBHOOK_SECRET
+    if not webhook_secret:
+        return HttpResponse(status=400)
+
+    payload = request.body
+    sig_header = request.META.get("HTTP_STRIPE_SIGNATURE")
+
+    try:
+        event = stripe.Webhook.construct_event(payload, sig_header, webhook_secret)
+    except (ValueError, stripe.error.SignatureVerificationError):
+        return HttpResponse(status=400)
+
+    if event["type"] in ["checkout.session.completed", "checkout.session.async_payment_succeeded"]:
+        session = event["data"]["object"]
+        if session.get("payment_status") == "paid":
+            try:
+                _create_signup_from_checkout_session(session)
+            except (Course.DoesNotExist, Student.DoesNotExist, ValueError):
+                return HttpResponse(status=400)
+
+    return HttpResponse(status=200)
 
 @load_main_category
 def payment_fail(request):
