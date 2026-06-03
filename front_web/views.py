@@ -7,110 +7,20 @@ from django.contrib import messages
 from django.urls import reverse
 from django.views.decorators.csrf import csrf_exempt
 from django.conf import settings
+from django.core.mail import send_mail
 from administration.models import Center
 from courses.models import CourseMainCategory, CourseSubCategory, Course, SignUp
 from students.models import Student
-from students import app_func
+from students.func import app_func as student_app_func
 from web_contents.models import News
 from datetime import datetime
 from decimal import Decimal, ROUND_HALF_UP
 from functools import wraps
 import stripe
-
-# region Stripe Function
-stripe.api_key = settings.STRIPE_SECRET_KEY
-stripe.api_version = settings.STRIPE_API_VERSION
-
-def _money_to_stripe_amount(amount):
-    return int((Decimal(amount) * Decimal("100")).quantize(Decimal("1"), rounding=ROUND_HALF_UP))
-
-
-def _stripe_value_id(value):
-    if not value:
-        return ""
-    if isinstance(value, str):
-        return value
-    return value.get("id", "")
-
-
-def _stripe_object_value(obj, key, default=None):
-    if hasattr(obj, "get"):
-        return obj.get(key, default)
-    return getattr(obj, key, default)
-
-
-def _create_signup_from_checkout_session(session):
-    
-    metadata = _stripe_object_value(session, "metadata", {}) or {}
-
-    course_id = _stripe_object_value(metadata, "course_id")
-    student_id = _stripe_object_value(metadata, "student_id")
-    session_id = _stripe_object_value(session, "id")
-
-    if not course_id or not student_id or not session_id:
-        raise ValueError("Stripe Checkout Session is missing course_id or student_id metadata.")
-
-    with transaction.atomic():
-        course = Course.objects.select_for_update().get(id=course_id)
-        student = Student.objects.get(id=student_id)
-
-        existing_signup = SignUp.objects.filter(online_payment_session=session_id).first()
-        if existing_signup:
-            return existing_signup, False
-
-        existing_paid_signup = SignUp.objects.filter(
-            course=course,
-            student=student,
-            is_reject=False,
-        ).exclude(payment_ref="").first()
-        if existing_paid_signup:
-            return existing_paid_signup, False
-
-        current_datetime = timezone.localtime(timezone.now())
-        payment_method = ""
-        payment_method_types = _stripe_object_value(session, "payment_method_types", []) or []
-        if payment_method_types:
-            payment_method = payment_method_types[0]
-
-        payment_intent = _stripe_value_id(_stripe_object_value(session, "payment_intent"))
-        amount_total = _stripe_object_value(session, "amount_total", 0) or 0
-        created_timestamp = _stripe_object_value(session, "created")
-        payment_date = current_datetime
-        if created_timestamp:
-            payment_date = datetime.fromtimestamp(created_timestamp, tz=timezone.get_current_timezone())
-
-        signup = SignUp.objects.create(
-            student=student,
-            course=course,
-            status="signup success",
-            sign_up_date=current_datetime.strftime("%Y-%m-%d %H:%M:%S"),
-            payment_date=payment_date,
-            payment_amount=Decimal(amount_total) / Decimal("100"),
-            payment_method=payment_method or "Stripe",
-            payment_ref=payment_intent or session_id,
-            online_payment_intent=payment_intent,
-            online_payment_session=session_id,
-            payment_remarks="",
-            file_status="created",
-            created_by=f"student_id:{student.id}",
-            created_datetime=current_datetime,
-            last_updated_by=f"student_id:{student.id}",
-            last_updated_datetime=current_datetime,
-        )
-        return signup, True
-# endregion
-
-# region Decorator
-def load_main_category(view_func):# Decorator for load main category for nav bar
-    @wraps(view_func)
-    def _wrapped_view(request, *args, **kwargs):
-        request.list_mc = CourseMainCategory.objects.filter(is_active=True)      
-        return view_func(request, *args, **kwargs)
-    return _wrapped_view
-# endregion
+from .func import app_func as frontweb_app_func, stripe_func
 
 # region View: Home/About
-@load_main_category
+@frontweb_app_func.load_main_category
 def home(request):
 
     current_time = timezone.localtime(timezone.now())
@@ -129,7 +39,7 @@ def home(request):
 
     return render(request, "home.html", context)
 
-@load_main_category
+@frontweb_app_func.load_main_category
 def about(request):
     list_center = get_list_or_404(Center)
     context = {'list_center': list_center, 'list_mc' : request.list_mc}
@@ -137,7 +47,7 @@ def about(request):
 # endregion
 
 # region View: News
-@load_main_category
+@frontweb_app_func.load_main_category
 def newses(request):
     current_time = timezone.localtime(timezone.now())
     #load newses
@@ -145,7 +55,7 @@ def newses(request):
     context = {'list_mc' : request.list_mc, "list_news" : list_news}
     return render(request, "news.html", context)
 
-@load_main_category
+@frontweb_app_func.load_main_category
 def news(request, news_id):
     #Get news object
     obj_news = get_object_or_404(News, id = news_id)
@@ -153,8 +63,8 @@ def news(request, news_id):
     return render(request, "news_blog.html", context)
 # endregion
 
-# region View: Register/Login/LogOut
-@load_main_category
+# region View: Register/Email Verification/Login/LogOut
+@frontweb_app_func.load_main_category
 def student_register(request):
 
     if request.method == "POST":
@@ -196,7 +106,7 @@ def student_register(request):
 
         #Create student
         current_time = timezone.localtime(timezone.now())
-        new_student = Student(student_no=app_func.generate_unique_student_number(),
+        new_student = Student(student_no=student_app_func.generate_unique_student_number(),
                             cn_name=cn_name,
                             en_name=en_name,
                             dob=dob,
@@ -225,7 +135,7 @@ def student_register(request):
         return render(request, "student_register.html", context)
 
 
-@load_main_category
+@frontweb_app_func.load_main_category
 def student_login(request):
 
     if request.method == "POST":
@@ -255,7 +165,7 @@ def student_login(request):
         context = {'list_mc' : request.list_mc}
         return render(request, "student_login.html", context)
     
-@load_main_category
+@frontweb_app_func.load_main_category
 def student_logout(request):
 
     if request.method == "POST":
@@ -272,7 +182,7 @@ def student_logout(request):
 # endregion
 
 # region View: Course/Category
-@load_main_category
+@frontweb_app_func.load_main_category
 def course_list(request, mc_id):
 
     #Get main category object by id & is_active
@@ -316,7 +226,7 @@ def course_list(request, mc_id):
                                                 course_status = "created")
     return render(request, "course_list.html", context)
 
-@load_main_category
+@frontweb_app_func.load_main_category
 def course(request, course_id):
     
     if request.method == "POST":
@@ -376,14 +286,17 @@ def course_payment(request, course_id):
 
         student = get_object_or_404(Student, id=request.session['student_id'])
         
-        # 建立 Stripe 付款工作階段
+        # stripe progress
         try:
+            stripe.api_key = settings.STRIPE_SECRET_KEY
+            stripe.api_version = settings.STRIPE_API_VERSION
+
             session = stripe.checkout.Session.create(
                 line_items=[{
                     'price_data': {
                         'currency': settings.STRIPE_CURRENCY,
                         'product_data': {'name': f"{obj_course.name}-{obj_course.code}"},
-                        'unit_amount': _money_to_stripe_amount(obj_course.course_fee),
+                        'unit_amount': stripe_func._money_to_stripe_amount(obj_course.course_fee),
                     },
                     'quantity': 1,
                 }],
@@ -405,7 +318,7 @@ def course_payment(request, course_id):
     else:
         return render(request, "payment_fail.html", {"course_id" : course_id})
 
-@load_main_category
+@frontweb_app_func.load_main_category
 def payment_successful(request):
     # 1. 從網址列（GET 請求）撈出 Stripe 帶回來的 session_id
     session_id = request.GET.get('session_id')
@@ -417,12 +330,14 @@ def payment_successful(request):
         
     try:
         # 2. 向 Stripe 總部對帳，撈出這筆交易的完整後端資料
+        stripe.api_key = settings.STRIPE_SECRET_KEY
+        stripe.api_version = settings.STRIPE_API_VERSION
         session = stripe.checkout.Session.retrieve(session_id)
         
         # 3. 嚴格檢查付款狀態是否真的為 "paid"
         if session.payment_status == "paid":
             
-            signup, is_new_record = _create_signup_from_checkout_session(session)
+            signup, is_new_record = stripe_func._create_signup_from_checkout_session(session)
             course = signup.course
             student = signup.student
                 
@@ -468,6 +383,9 @@ def stripe_webhook(request):
     sig_header = request.META.get("HTTP_STRIPE_SIGNATURE")
 
     try:
+        stripe.api_key = settings.STRIPE_SECRET_KEY
+        stripe.api_version = settings.STRIPE_API_VERSION
+
         event = stripe.Webhook.construct_event(payload, sig_header, webhook_secret)
     except (ValueError, stripe.error.SignatureVerificationError):
         return HttpResponse(status=400)
@@ -476,13 +394,13 @@ def stripe_webhook(request):
         session = event["data"]["object"]
         if session.get("payment_status") == "paid":
             try:
-                _create_signup_from_checkout_session(session)
+                stripe_func._create_signup_from_checkout_session(session)
             except (Course.DoesNotExist, Student.DoesNotExist, ValueError):
                 return HttpResponse(status=400)
 
     return HttpResponse(status=200)
 
-@load_main_category
+@frontweb_app_func.load_main_category
 def payment_fail(request):
     course_id = request.GET.get('course_id')
     context = {'list_mc' : request.list_mc, "course_id" : course_id}
@@ -490,7 +408,7 @@ def payment_fail(request):
 # endregion
 
 # region View: Dashboard
-@load_main_category
+@frontweb_app_func.load_main_category
 def student_dashboard(request):
 
     #Check if login
@@ -505,16 +423,16 @@ def student_dashboard(request):
     if list_mode == "CurrentCourse":
         print("Get current course")
         context["list_course"] = Course.objects.annotate(course_end_datetime=ExpressionWrapper(F('period_to') + F('time_to'), output_field=DateTimeField())
-        ).filter(signup__student_id=request.session.get('student_id'), 
-                                            signup__is_reject=False,
+        ).filter(signup_set__student_id=request.session.get('student_id'), 
+                                            signup_set__is_reject=False,
                                             course_end_datetime__gte=timezone.localtime(timezone.now()),
                                             course_status='created')
     else:
         print("Get past courses")
         context["list_course"] = Course.objects.annotate(course_end_datetime=ExpressionWrapper(F('period_to') + F('time_to'), output_field=DateTimeField())
-        ).filter(signup__student_id=request.session.get('student_id'), 
-                                            signup__is_reject=False,
-                                            course_end_datetime__ste=timezone.localtime(timezone.now()),
+        ).filter(signup_set__student_id=request.session.get('student_id'), 
+                                            signup_set__is_reject=False,
+                                            course_end_datetime__lte=timezone.localtime(timezone.now()),
                                             course_status='created')
     return render(request, "student_dashboard.html", context)
 # endregion

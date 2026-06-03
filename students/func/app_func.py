@@ -1,5 +1,5 @@
 import secrets
-from .models import Student
+from ..models import Student
 
 def generate_unique_student_number():
     while 1:
