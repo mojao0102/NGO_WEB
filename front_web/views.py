@@ -59,7 +59,7 @@ def news(request, news_id):
     return render(request, "news_blog.html", context)
 # endregion
 
-# region View: Register/Email Verification/Login/LogOut
+# region View: Register/EmailVerification/Login/LogOut
 @frontweb_app_func.load_main_category
 def student_register(request):
 
@@ -107,6 +107,8 @@ def student_register(request):
                             en_name=en_name,
                             dob=dob,
                             email=email,
+                            #For email verification
+                            is_email_verified=False,
                             contact1_name=contact1Name,
                             contact1_relationship=contact1Relation,
                             contact1_phone=contact1Phone,
@@ -123,8 +125,10 @@ def student_register(request):
                             last_updated_by="web registation",
                             last_updated_datetime=current_time)
         new_student.save()
-        messages.success(request, "註冊成功")
-        return redirect("front_web:student_login")
+        messages.success(request, "註冊成功，確認郵件已寄送至您的註冊信箱。請點擊郵件中的連結驗證您的郵箱地址")
+        frontweb_app_func.send_verification_email(request, new_student)
+        request.session['registered_email'] = new_student.email
+        return redirect("front_web:register_pending")
     
     else: #From GET
         context = {'list_mc' : request.list_mc}
@@ -258,28 +262,31 @@ def course(request, course_id):
 # endregion
 
 # region View: Course SignUp/Payment
+@frontweb_app_func.check_student_login
+@frontweb_app_func.check_student_active
+@frontweb_app_func.check_student_emailverified
 def course_payment(request, course_id):
     if request.method == "POST":
-        #1. Get course and check if course still avaliable, Only course with status "created", web published, signup number < max no and not over registation expiry date allow to sign_up
+
+        #1 Get course and check if course still avaliable, Only course with status "created", web published, signup number < max no and not over registation expiry date allow to sign_up
         course_queryset = Course.objects.annotate(
         valid_signup_count=Count('signup_set', filter=~Q(signup_set__payment_ref="") & Q(signup_set__is_reject=False)))      
         obj_course = course_queryset.filter(id = course_id, is_web_publish = True, registation_expiry_date__gt=timezone.localtime(timezone.now()), course_status = "created").first()
         if not obj_course:
             messages.error(request, "課程狀態已更改，請刷新頁面")
             return redirect('front_web:course', course_id=course_id)
-        #2. Check if student login already
-        if not request.session.get('student_id'):
-            messages.error(request, "請先登入再報名")
-            return redirect('front_web:course', course_id=course_id)  
-        #3. Check if student signup already
+        
+        #2. Check if student signup already
         if SignUp.objects.filter(course_id=obj_course.id, student_id=request.session['student_id']):
             messages.error(request, "您已報名參加此課程")
             return redirect('front_web:course', course_id=course_id)
 
+        #3. Check if stripe key define at setting
         if not settings.STRIPE_SECRET_KEY:
             messages.error(request, "付款系統尚未設定，請聯絡本中心")
             return redirect('front_web:course', course_id=course_id)
-
+        
+        #Get student object
         student = get_object_or_404(Student, id=request.session['student_id'])
         
         # stripe progress
@@ -405,26 +412,30 @@ def payment_fail(request):
 
 # region View: Dashboard
 @frontweb_app_func.load_main_category
+@frontweb_app_func.check_student_login
+@frontweb_app_func.check_student_active
+@frontweb_app_func.check_student_emailverified
 def student_dashboard(request):
-
     #Check if login
     if not request.session.get('student_id'):
         messages.error(request, "請先登入")
         return redirect('front_web:student_login')  
+
+    #Check if is active
+
+    #Check if email verified
 
     list_mode = "PastCourse" if request.GET.get("ListMode") == "PastCourse" else "CurrentCourse"
 
     context = {'list_mc' : request.list_mc, "list_mode" : list_mode}
 
     if list_mode == "CurrentCourse":
-        print("Get current course")
         context["list_course"] = Course.objects.annotate(course_end_datetime=ExpressionWrapper(F('period_to') + F('time_to'), output_field=DateTimeField())
         ).filter(signup_set__student_id=request.session.get('student_id'), 
                                             signup_set__is_reject=False,
                                             course_end_datetime__gte=timezone.localtime(timezone.now()),
                                             course_status='created')
     else:
-        print("Get past courses")
         context["list_course"] = Course.objects.annotate(course_end_datetime=ExpressionWrapper(F('period_to') + F('time_to'), output_field=DateTimeField())
         ).filter(signup_set__student_id=request.session.get('student_id'), 
                                             signup_set__is_reject=False,

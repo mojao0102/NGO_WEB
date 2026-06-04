@@ -6,7 +6,9 @@ class Student(models.Model):
     cn_name = models.CharField(max_length=100, verbose_name="中文姓名")
     en_name = models.CharField(max_length=100, verbose_name="英文姓名")
     dob = models.DateField(blank=True, verbose_name="出生日期")
+
     email = models.EmailField(max_length=200, blank=True, verbose_name="Email")
+    is_email_verified = models.BooleanField(default=False, verbose_name="Email是否已驗證?")
     
     # v04 緊急聯絡人結構
     contact1_name = models.CharField(max_length=200, blank=True, verbose_name="聯絡人1姓名")
@@ -22,7 +24,7 @@ class Student(models.Model):
     username = models.CharField(max_length=50, unique=True, verbose_name="登入帳號")
     password = models.CharField(max_length=50, verbose_name="密碼")
 
-    is_active = models.BooleanField(default=True, verbose_name="啟用情況")
+    is_active = models.BooleanField(default=True, verbose_name="是否啟用?")
     register_date = models.DateTimeField(blank=True, verbose_name="註冊日期")
     expiry_date = models.DateTimeField(blank=True, null=True, verbose_name="帳號效期截止日")
     
