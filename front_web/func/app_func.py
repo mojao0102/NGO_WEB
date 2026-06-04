@@ -1,4 +1,4 @@
-from courses.models import CourseMainCategory, CourseSubCategory, Course, SignUp
+from courses.models import CourseMainCategory
 from django.shortcuts import render, redirect, get_object_or_404, get_list_or_404
 from functools import wraps
 from students.models import Student
@@ -20,56 +20,73 @@ def load_main_category(view_func):# Decorator for load main category for nav bar
         return view_func(request, *args, **kwargs)
     return _wrapped_view
 
-def check_student_login(view_func):# Decorator for checking if student logged-in
-    @wraps(view_func)
-    def _wrapped_view(request, *args, **kwargs):
-        #request.IsStudentActive = False if not request.session['student_id'] else True if get_object_or_404(Student, id=request.session['student_id']).is_active else False 
-        if not request.session['student_id']:
-            messages.error(request, "請先登入")
-            return redirect("front_web:student_login")
-        else:
-            return view_func(request, *args, **kwargs)
-    return _wrapped_view
+def student_access_control(require_email_verification=True):
+    def decorator(view_func):
+        @wraps(view_func)
+        def _wrapped_view(request, *args, **kwargs):
 
-def check_student_active(view_func):# Decorator for checking student's is_active
-    @wraps(view_func)
-    def _wrapped_view(request, *args, **kwargs):
-        if not get_object_or_404(Student, id=request.session['student_id']).is_active:
-            messages.error(request, "帳號已被系統管理員停權，請聯絡中心。")
-            return redirect("front_web:student_login")
-        else:
-            return view_func(request, *args, **kwargs)
-    return _wrapped_view
+            #Check if login
+            if not request.session.get('student_id'):
+                messages.error(request, "請先登入帳號")
+                return redirect("front_web:student_login")
 
-def check_student_emailverified(view_func):# Decorator for checking student email is verified
-    @wraps(view_func)
-    def _wrapped_view(request, *args, **kwargs):
-        if not get_object_or_404(Student, id=request.session['student_id']).is_email_verified:
-            messages.error(request, "您的電子郵件尚未驗證，請先完成驗證。")
-            return redirect("front_web:register_pending")
-        else:
-            return view_func(request, *args, **kwargs)
-    return _wrapped_view
+            try:#Check if student_exist
+                obj_student = Student.objects.get(id=request.session.get('student_id'))
+            except Student.DoesNotExist:
+                messages.error(request, "帳號不存在，請聯絡中心")
+                return redirect("front_web:student_login")
+            
+            #Check if student active
+            if not obj_student.is_active:
+                clear_login_session(request)
+                messages.error(request, "帳號已被停權，請聯絡中心")
+                return redirect("front_web:student_login")
+            
+            #Check if email verified
+            if require_email_verification and not obj_student.is_email_verified:
+                messages.warning(request, "您的電子郵件尚未驗證，請先完成驗證。")
+                return redirect("front_web:student_register_pending")
+            
+            #For view's function to use
+            request.obj_student = obj_student
+            return view_func(request, *args, **kwargs)    
+        return _wrapped_view
+    return decorator
 # endregion
+
+# region clear login session
+def clear_login_session(request):
+    keys_to_clear = ['student_id', 'student_name']
+    for key in keys_to_clear:
+        if key in request.session:
+            del request.session[key]
 
 # region Email verification
 def send_verification_email(request, student):
-    #負責生成 Token、組裝網址並發信
-    uid = urlsafe_base64_encode(force_bytes(student.id))
-    token = token_generator.make_token(student)
+
+    try:
+        #負責生成 Token、組裝網址並發信
+        print("check 1")
+        uid = urlsafe_base64_encode(force_bytes(student.id))
+        print("check 2")
+        token = token_generator.make_token(student)
+        print("check 3")
+        activation_url = request.build_absolute_uri(
+        reverse('front_web:student_verifiy_email', kwargs={'uidb64': uid, 'token': token})
+        )
     
-    activation_url = request.build_absolute_uri(
-        reverse('front_web:activate_account', kwargs={'uidb64': uid, 'token': token})
-    )
-    
-    subject = "請啟用您的中心學生帳號"
-    email_body = f"""親愛的 {student.cn_name} 同學，您好：
+        subject = "請啟用您的學生帳號"
+        email_body = f"""親愛的 {student.cn_name} 同學，您好：
 請點擊下方連結以啟用您的帳號：
 {activation_url}
 中心管理團隊 敬上"""
-
-    send_mail(subject=subject, message=email_body, from_email=None, recipient_list=[student.email])
-
+        print("check 4")
+        send_mail(subject=subject, message=email_body, from_email=None, recipient_list=[student.email])
+        print("check 5")
+    except Exception as e:
+        # Code that runs if an error happens
+        print(f"An error occurred: {e}")
+    
 
 def verify_activation_token(student, token):
     #只負責驗證 Token 是否合法與過期，回傳 True/False

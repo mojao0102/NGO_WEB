@@ -1,19 +1,20 @@
 from django.utils import timezone
 from django.db.models import Q, F, Count, Case, When, Value, CharField, ExpressionWrapper, DateTimeField
 from django.shortcuts import render, redirect, get_object_or_404, get_list_or_404
-from django.http import HttpResponse, Http404
+from django.http import HttpResponse
 from django.contrib import messages
 from django.urls import reverse
 from django.views.decorators.csrf import csrf_exempt
 from django.conf import settings
-from django.core.mail import send_mail
+
 from administration.models import Center
 from courses.models import CourseMainCategory, CourseSubCategory, Course, SignUp
 from students.models import Student
 from students.func import app_func as student_app_func
 from web_contents.models import News
-import stripe
 from .func import app_func as frontweb_app_func, stripe_func
+
+import stripe
 
 # region View: Home/About
 @frontweb_app_func.load_main_category
@@ -25,9 +26,9 @@ def home(request):
     list_news = News.objects.filter(is_publish = True, expiry_date__gt=current_time).order_by("-publish_date", "-created_datetime")[:3]
     #load course
     list_promote_course = Course.objects.filter(is_web_publish = True, 
-                                            is_promote = True, 
-                                            registation_expiry_date__gt=current_time, 
-                                            course_status = 'created')
+                                                is_promote = True, 
+                                                registation_expiry_date__gt=current_time, 
+                                                course_status = 'created')
     context = {
         'list_mc' : request.list_mc, 
         'list_news' : list_news, 
@@ -102,7 +103,7 @@ def student_register(request):
 
         #Create student
         current_time = timezone.localtime(timezone.now())
-        new_student = Student(student_no=student_app_func.generate_unique_student_number(),
+        obj_new_student = Student(student_no=student_app_func.generate_unique_student_number(),
                             cn_name=cn_name,
                             en_name=en_name,
                             dob=dob,
@@ -124,16 +125,86 @@ def student_register(request):
                             created_datetime=current_time,
                             last_updated_by="web registation",
                             last_updated_datetime=current_time)
-        new_student.save()
+        obj_new_student.save()
+
+        #default as logged in
+        request.session['student_id'] = obj_new_student.id
+        request.session['student_name'] = obj_new_student.cn_name
+
+        try:
+            frontweb_app_func.send_verification_email(request, obj_new_student)
+        except Exception:
+            messages.warning(request, "帳號已建立，但驗證信發送失敗，請聯絡中心管理員啟用帳號")
+            return redirect("front_web:student_login")
+        
         messages.success(request, "註冊成功，確認郵件已寄送至您的註冊信箱。請點擊郵件中的連結驗證您的郵箱地址")
-        frontweb_app_func.send_verification_email(request, new_student)
-        request.session['registered_email'] = new_student.email
-        return redirect("front_web:register_pending")
+        return redirect("front_web:register_pending")  
     
-    else: #From GET
+    else: #FGET
         context = {'list_mc' : request.list_mc}
         return render(request, "student_register.html", context)
 
+@frontweb_app_func.load_main_category
+@frontweb_app_func.student_access_control(require_email_verification=False)
+def student_register_pending(request):
+    context = {"email": request.obj_student.email, "list_mc": request.list_mc}
+    return render(request, "student_register_pending.html", context)
+
+@frontweb_app_func.load_main_category
+@frontweb_app_func.student_access_control(require_email_verification=False)
+def student_change_email_and_resend(request):
+
+    student = request.obj_student
+
+    if student.is_email_verified:
+        messages.info(request, "您的電子郵件此前已驗證成功，無需重複驗證")
+        return redirect("front_web:student_dashboard")
+
+    if request.method == "POST":
+        new_email = request.POST.get('new_email', '').strip()
+        
+        if not new_email:
+            messages.error(request, "電子郵件欄位不可為空")
+            return render(request, "student_change_email.html", {"old_email": student.email, "list_mc": request.list_mc})
+            
+        #Check if new email addr be used by other student
+        if Student.objects.filter(email=new_email).exclude(id=student.id).exists():
+            messages.error(request, "此電子郵件已被其他帳號註冊，請更換其他郵件")
+            return render(request, "student_change_email.html", {"old_email": student.email, "list_mc": request.list_mc})
+            
+        student.email = new_email
+        student.save()
+        
+        #Send verification
+        try:
+            frontweb_app_func.send_verification_email(request, student)
+            messages.success(request, f"Email修改成功！全新的驗證信已成功寄送至：{new_email}")
+        except Exception:
+            messages.warning(request, "Email雖已修改，但新驗證信發送失敗，請聯絡中心管理員")
+            
+        #Switch to email pending
+        return redirect("front_web:student_register_pending")
+        
+    #GET
+    context={"old_email": student.email, "list_mc": request.list_mc}
+    return render(request, "student_change_email.html", context)
+
+def student_verifiy_email(request, uidb64, token):
+    #負責解密 uid 並檢查 Token 是否依然有效，有效則改為已驗證
+    try:
+        uid = frontweb_app_func.force_str(frontweb_app_func.urlsafe_base64_decode(uidb64))
+        student = Student.objects.get(id=uid)
+    except (TypeError, ValueError, OverflowError, Student.DoesNotExist):
+        student = None
+    # 核心安全驗證：檢查 Token 是否合法、是否過期、對象資料是否變動過
+    if student is not None and frontweb_app_func.verify_activation_token(student, token):
+        student.is_email_verified = True
+        student.save()
+        messages.success(request, "您的電子信箱已成功驗證！現在可以正常登入系統了")
+        return redirect('front_web:student_login')
+    else:
+        frontweb_app_func.clear_login_session(request)
+        return HttpResponse("<h3>此啟用連結已失效或過期，請重新嘗試註冊或聯絡中心</h3>")
 
 @frontweb_app_func.load_main_category
 def student_login(request):
@@ -143,20 +214,18 @@ def student_login(request):
         username = request.POST.get('username', '').strip()
         password = request.POST.get('password', '')
 
-        student = Student.objects.filter(username=username, password=password).first()
+        obj_student = Student.objects.filter(username=username, password=password).first()
 
-        if student:
-            if not student.is_active:
-                messages.error(request, "該帳號已被停用，請聯絡本中心")
-                context = {'list_mc': request.list_mc, 'input_data': request.POST}
-                return render(request, "student_login.html", context)
+        if obj_student:
+            if not obj_student.is_active:
+                frontweb_app_func.clear_login_session(request)
+                messages.error(request, "帳號已被停權，請聯絡中心")
+                return redirect("front_web:student_login")
             
-            request.session['student_id'] = student.id
-            request.session['student_name'] = student.cn_name
-
-            messages.success(request, f"歡迎回來，{student.username}")
-
-            return redirect("front_web:home")
+            request.session['student_id'] = obj_student.id
+            request.session['student_name'] = obj_student.cn_name
+            messages.success(request, f"歡迎回來，{obj_student.username}")
+            return redirect("front_web:student_dashboard")
         else:
             messages.error(request, "帳號或密碼錯誤，請重新輸入")        
             context = {'list_mc': request.list_mc, 'input_data': request.POST}
@@ -167,17 +236,10 @@ def student_login(request):
     
 @frontweb_app_func.load_main_category
 def student_logout(request):
-
     if request.method == "POST":
-        if 'student_id' in request.session:
-            del request.session['student_id']
-
-        if 'student_username' in request.session:
-            del request.session['student_username']
-        
+        frontweb_app_func.clear_login_session(request)      
         messages.success(request, "你已成功登出")
-        return redirect("front_web:student_login")
-    
+        return redirect("front_web:student_login")  
     return render(request, "home.html")
 # endregion
 
@@ -262,9 +324,7 @@ def course(request, course_id):
 # endregion
 
 # region View: Course SignUp/Payment
-@frontweb_app_func.check_student_login
-@frontweb_app_func.check_student_active
-@frontweb_app_func.check_student_emailverified
+@frontweb_app_func.student_access_control()
 def course_payment(request, course_id):
     if request.method == "POST":
 
@@ -283,11 +343,8 @@ def course_payment(request, course_id):
 
         #3. Check if stripe key define at setting
         if not settings.STRIPE_SECRET_KEY:
-            messages.error(request, "付款系統尚未設定，請聯絡本中心")
+            messages.error(request, "付款系統出錯，請聯絡本中心")
             return redirect('front_web:course', course_id=course_id)
-        
-        #Get student object
-        student = get_object_or_404(Student, id=request.session['student_id'])
         
         # stripe progress
         try:
@@ -304,15 +361,15 @@ def course_payment(request, course_id):
                     'quantity': 1,
                 }],
                 mode='payment',
-                customer_email=student.email,
-                client_reference_id=f"course:{obj_course.id}:student:{student.id}",
+                customer_email=request.obj_student.email,
+                client_reference_id=f"course:{obj_course.id}:student:{request.obj_student.id}",
                 metadata={
                     'course_id': str(obj_course.id),
-                    'student_id': str(student.id),
+                    'student_id': str(request.obj_student.id),
                 },
                 success_url=request.build_absolute_uri(reverse('front_web:payment_successful')) + '?session_id={CHECKOUT_SESSION_ID}',
-                cancel_url=request.build_absolute_uri(reverse('front_web:payment_fail')) + f'?course_id={obj_course.id}',
-            )
+                cancel_url=request.build_absolute_uri(reverse('front_web:payment_fail')) + f'?course_id={obj_course.id}',)
+            
         except stripe.error.StripeError:
             messages.error(request, "未能建立付款連結，請稍後再試")
             return redirect('front_web:course', course_id=course_id)
@@ -412,19 +469,8 @@ def payment_fail(request):
 
 # region View: Dashboard
 @frontweb_app_func.load_main_category
-@frontweb_app_func.check_student_login
-@frontweb_app_func.check_student_active
-@frontweb_app_func.check_student_emailverified
+@frontweb_app_func.student_access_control()
 def student_dashboard(request):
-    #Check if login
-    if not request.session.get('student_id'):
-        messages.error(request, "請先登入")
-        return redirect('front_web:student_login')  
-
-    #Check if is active
-
-    #Check if email verified
-
     list_mode = "PastCourse" if request.GET.get("ListMode") == "PastCourse" else "CurrentCourse"
 
     context = {'list_mc' : request.list_mc, "list_mode" : list_mode}
