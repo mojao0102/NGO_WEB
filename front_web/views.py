@@ -8,7 +8,6 @@ from django.views.decorators.csrf import csrf_exempt
 from django.conf import settings
 from django.utils.encoding import force_str
 from django.utils.http import urlsafe_base64_decode
-from django.contrib.auth.hashers import make_password
 
 from administration.models import Center
 from courses.models import CourseMainCategory, CourseSubCategory, Course, SignUp
@@ -182,7 +181,8 @@ def student_change_email_and_resend(request):
         
         #Send verification
         try:
-            frontweb_app_func.send_verification_email(request, obj_student)
+            #frontweb_app_func.send_verification_email(request, obj_student, "activation")
+            frontweb_app_func.send_student_security_email(request, obj_student, "activation")
             messages.success(request, f"Email修改成功！全新的驗證信已成功寄送至：{new_email}")
         except Exception:
             messages.warning(request, "Email雖已修改，但新驗證信發送失敗，請聯絡中心管理員")
@@ -253,7 +253,8 @@ def student_forget_password(request):
         email = request.POST.get("email", "").strip()     
         obj_student = Student.objects.filter(email=email).first()
         if obj_student:
-            frontweb_app_func.send_password_reset_email(request, obj_student)
+            #frontweb_app_func.send_password_reset_email(request, obj_student, "reset_password")
+            frontweb_app_func.send_student_security_email(request, obj_student, "reset_password")
         messages.success(request, "重設驗證連結已成功寄出，請至您的電子信箱查收")
         return redirect("front_web:student_login")
     
@@ -284,7 +285,6 @@ def student_reset_password(request, uidb64, token):
                 return render(request, "student_reset_password.html", {"uidb64": uidb64, "token": token, 'list_mc' : request.list_mc})
 
             obj_student.password = password
-            obj_student.is_email_verified = True
             obj_student.save()
             
             frontweb_app_func.clear_login_session(request)          
@@ -523,7 +523,7 @@ def payment_fail(request):
 @frontweb_app_func.load_main_category
 @frontweb_app_func.student_access_control()
 def student_dashboard(request):
-    list_mode = "PastCourse" if request.GET.get("ListMode") == "PastCourse" else "CurrentCourse"
+    list_mode = "PastCourse" if request.GET.get("ListMode") == "PastCourse" else "PaymentHistory" if request.GET.get("ListMode") == "PaymentHistory" else "CurrentCourse"
 
     context = {'list_mc' : request.list_mc, "list_mode" : list_mode}
 
@@ -533,7 +533,7 @@ def student_dashboard(request):
                                             signup_set__is_reject=False,
                                             course_end_datetime__gte=timezone.localtime(timezone.now()),
                                             course_status='created')
-    else:
+    elif list_mode == "PastCourse":
         context["list_course"] = Course.objects.annotate(course_end_datetime=ExpressionWrapper(F('period_to') + F('time_to'), output_field=DateTimeField())
         ).filter(signup_set__student_id=request.session.get('student_id'), 
                                             signup_set__is_reject=False,

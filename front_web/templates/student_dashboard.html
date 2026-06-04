@@ -22,31 +22,32 @@
     
     <!-- 標籤切換: 我的課堂 -->
     <form>
-    {% if list_mode == "CurrentCourse" %}
     <div class="flex gap-4 mb-8">
-      <button name="ListMode" value="CurrentCourse" type="submit" class="tab-btn bg-gray-200 text-gray-800 font-medium px-8 py-3 rounded-full" >
-        我的課堂
-      </button>
-      <button name="ListMode" value="PastCourse" type="submit" class="tab-btn bg-white text-gray-600 font-medium px-8 py-3 rounded-full border">
-        我的歷史紀錄
-      </button>
+      <button name="ListMode" value="CurrentCourse" type="submit" 
+      {% if list_mode == "CurrentCourse" %}
+      class="tab-btn bg-gray-200 text-gray-800 font-medium px-8 py-3 rounded-full" 
+      {% else %}
+      class="tab-btn bg-white text-gray-600 font-medium px-8 py-3 rounded-full border"
+      {% endif %}>我的課堂</button>
+
+      <button name="ListMode" value="PastCourse" type="submit" 
+      {% if list_mode == "PastCourse" %}
+      class="tab-btn bg-gray-200 text-gray-800 font-medium px-8 py-3 rounded-full" 
+      {% else %}
+      class="tab-btn bg-white text-gray-600 font-medium px-8 py-3 rounded-full border"
+      {% endif %}>我的歷史紀錄</button>
+
+      <button name="ListMode" value="PaymentHistory" type="submit" 
+      {% if list_mode == "PaymentHistory" %}
+      class="tab-btn bg-gray-200 text-gray-800 font-medium px-8 py-3 rounded-full" 
+      {% else %}
+      class="tab-btn bg-white text-gray-600 font-medium px-8 py-3 rounded-full border"
+      {% endif %}>我的付款紀錄</button>
     </div>
-    </from>
-    {% endif %}
-    {% if list_mode == "PastCourse" %}
-    <!-- 標籤切換: 我的歷史紀錄 -->
-    <div class="flex gap-4 mb-8">
-      <button name="ListMode" value="CurrentCourse" type="submit" class="tab-btn bg-white text-gray-600 font-medium px-8 py-3 rounded-full border">
-        我的課堂
-      </button>
-      <button name="ListMode" value="PastCourse" type="submit" class="tab-btn bg-gray-200 text-gray-800 font-medium px-8 py-3 rounded-full">
-        我的歷史紀錄
-      </button>
-    </div>
-    {% endif %}
     </from>
 
-    <!-- 我的課堂： 課程卡片列表 -->
+  <!-- 我的課堂： 課程卡片列表 -->
+  {% if list_mode == "CurrentCourse" or list_mode == "PastCourse" %}
     <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-5">
     {% if list_course %}
       {% for course in list_course %}
@@ -70,7 +71,40 @@
         </div>
       </div>
       {% endfor %}
-    {% endif %} 
+    {% endif %}  
+  {% else %}
+    <div class="bg-white shadow-sm rounded-xl border border-gray-200 overflow-hidden mb-5">
+    <div class="overflow-x-auto">
+    <table class="w-full text-left border-collapse">
+      <thead>
+        <tr class="bg-gray-50 text-gray-600 border-b border-gray-200 text-sm">
+          <th class="p-4 font-medium">訂單編號</th>
+          <th class="p-4 font-medium">課程名稱</th>
+          <th class="p-4 font-medium">報名日期</th>
+          <th class="p-4 font-medium">實付金額</th>
+          <th class="p-4 font-medium text-center">操作</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-100 text-gray-700">
+        {% comment %} loop start {% endcomment %}
+        <tr class="hover:bg-gray-50 transition-colors">
+          <td class="p-4 font-mono text-sm text-gray-500">#[訂單編號]</td>
+          <td class="p-4 font-bold text-gray-900">[課程名稱]</td>
+          <td class="p-4">[YYYY-MM-DD HH:MM]</td>
+          <td class="p-4 font-medium text-[#2ec4b6]">TWD $[金額]</td>
+          <td class="p-4 text-center">
+            <a href="[收據網址]" target="_blank" class="text-blue-500 hover:text-blue-700 font-medium text-sm inline-flex items-center gap-1">
+              <i class="fa-solid fa-file-invoice"></i> 收據
+            </a>
+          </td>
+        </tr>     
+        {% comment %} loop end {% endcomment %}
+        </tbody>
+    </table>
+    </div>
+    </div>
+  {% endif %}
+
   </div>
 </section>
 {% endblock %}
