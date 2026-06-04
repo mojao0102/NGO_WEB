@@ -1,4 +1,5 @@
 from courses.models import CourseMainCategory
+from django.utils import timezone
 from django.shortcuts import render, redirect, get_object_or_404, get_list_or_404
 from functools import wraps
 from students.models import Student
@@ -54,23 +55,29 @@ def student_access_control(require_email_verification=True):
     return decorator
 # endregion
 
+# region create login session and update last login
+def create_login_session(request, obj_student):
+    request.session['student_id'] = obj_student.id
+    request.session['student_name'] = obj_student.cn_name
+    obj_student.last_login = timezone.localtime(timezone.now())
+    obj_student.save()
+
 # region clear login session
 def clear_login_session(request):
-    keys_to_clear = ['student_id', 'student_name']
-    for key in keys_to_clear:
-        if key in request.session:
-            del request.session[key]
+    del request.session['student_id']
+    del request.session['student_name']
 
 # region Email verification
-def send_verification_email(request, student):
+def verify_activation_token(student, token):
+    #只負責驗證 Token 是否合法與過期，回傳 True/False
+    if student is None:
+        return False
+    return token_generator.check_token(student, token)
 
+def send_verification_email(request, student):
     try:
-        #負責生成 Token、組裝網址並發信
-        print("check 1")
         uid = urlsafe_base64_encode(force_bytes(student.id))
-        print("check 2")
         token = token_generator.make_token(student)
-        print("check 3")
         activation_url = request.build_absolute_uri(
         reverse('front_web:student_verifiy_email', kwargs={'uidb64': uid, 'token': token})
         )
@@ -80,20 +87,25 @@ def send_verification_email(request, student):
 請點擊下方連結以啟用您的帳號：
 {activation_url}
 中心管理團隊 敬上"""
-        print("check 4")
         send_mail(subject=subject, message=email_body, from_email=None, recipient_list=[student.email])
-        print("check 5")
     except Exception as e:
-        # Code that runs if an error happens
         print(f"An error occurred: {e}")
+
+def send_password_reset_email(request, student):
+    try:    
+        uid = urlsafe_base64_encode(force_bytes(student.id))
+        token = token_generator.make_token(student)
+        reset_url = request.build_absolute_uri(
+        reverse('front_web:student_reset_password', kwargs={'uidb64': uid, 'token': token})
+        )
     
-
-def verify_activation_token(student, token):
-    #只負責驗證 Token 是否合法與過期，回傳 True/False
-    if student is None:
-        return False
-    return token_generator.check_token(student, token)
-# endregion
-
-# Region reset password
+        subject = "【中心管理團隊】重設您的帳號密碼通知"
+        email_body = f"""親愛的 {student.cn_name} 同學，您好：
+系統收到您提出的重設密碼申請。請點擊或複製下方連結至瀏覽器以設定您的新密碼：
+{reset_url}
+(提示：此連結將於發信後 3 天內失效。如果您並未申請重設密碼，請直接忽略此郵件，您的密碼將保持不變。)
+中心管理團隊 敬上"""
+        send_mail(subject=subject, message=email_body, from_email=None, recipient_list=[student.email])
+    except Exception as e:
+        print(f"An error occurred: {e}")
 # endregion

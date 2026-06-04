@@ -14,6 +14,9 @@ urlpatterns = [
     path('logout/', views.student_logout, name='student_logout'),
     path('register/', views.student_register, name='student_register'),
 
+    path('forget_password/', views.student_forget_password, name='student_forget_password'),
+    path('reset_password/<str:uidb64>/<str:token>/', views.student_reset_password, name='student_reset_password'),
+
     path('register/pending/', views.student_register_pending, name='student_register_pending'),
     path('register/change-email/', views.student_change_email_and_resend, name='student_change_email_and_resend'),
     path('emailverify/<str:uidb64>/<str:token>/', views.student_verifiy_email, name='student_verifiy_email'),

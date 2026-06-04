@@ -16,6 +16,9 @@ class Teacher(models.Model):
     password = models.CharField(max_length=50, blank=True, verbose_name="密碼")
     remarks = models.TextField(blank=True, verbose_name="備註")
     is_active = models.BooleanField(default=True, verbose_name="是否啟用")
+
+    last_login = models.DateTimeField(null=True, blank=True)
+
     file_status = models.CharField(max_length=100, blank=True, verbose_name="檔案狀態")
     created_by = models.CharField(max_length=100, blank=True, verbose_name="建立者")
     created_datetime = models.DateTimeField(blank=True, verbose_name="建立時間", auto_now_add=True)
@@ -29,3 +32,6 @@ class Teacher(models.Model):
 
     def __str__(self):
         return f"{self.teacher_no} - {self.first_name} {self.last_name}"
+    
+    def get_email_field_name(self):
+        return "email"

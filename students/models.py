@@ -28,6 +28,8 @@ class Student(models.Model):
     register_date = models.DateTimeField(blank=True, verbose_name="註冊日期")
     expiry_date = models.DateTimeField(blank=True, null=True, verbose_name="帳號效期截止日")
     
+    last_login = models.DateTimeField(null=True, blank=True)
+
     # 內嵌 Audit Fields
     file_status = models.CharField(max_length=100, blank=True, verbose_name="存檔狀態")
     created_by = models.CharField(max_length=100, blank=True, verbose_name="建立者")
@@ -43,3 +45,6 @@ class Student(models.Model):
 
     def __str__(self):
         return f"{self.cn_name} ({self.en_name}) - {self.student_no}"
+    
+    def get_email_field_name(self):
+        return "email"

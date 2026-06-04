@@ -14,6 +14,9 @@ class Staff(models.Model):
     remarks = models.TextField(blank=True, null=True, verbose_name="備註")
     is_active = models.BooleanField(default=True, verbose_name="是否啟用")
     is_admin = models.BooleanField(default=False, verbose_name="是否為管理員")
+
+    last_login = models.DateTimeField(null=True, blank=True)
+
     file_status = models.CharField(max_length=100, blank=True, null=True, verbose_name="檔案狀態")
     created_by = models.CharField(max_length=100, blank=True, null=True, verbose_name="建立者")
     created_datetime = models.DateTimeField(blank=True, null=True, verbose_name="建立時間", auto_now_add=True)
@@ -28,7 +31,9 @@ class Staff(models.Model):
     def __str__(self):
         return f"{self.staff_no} - {self.first_name} {self.last_name}"
 
-
+    def get_email_field_name(self):
+        return "email"
+    
 class Center(models.Model):
     name = models.CharField(max_length=200, null=True, verbose_name="中心名稱")
     addr = models.CharField(max_length=200, blank=True, null=True, verbose_name="中心地址")

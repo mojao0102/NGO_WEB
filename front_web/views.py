@@ -6,6 +6,9 @@ from django.contrib import messages
 from django.urls import reverse
 from django.views.decorators.csrf import csrf_exempt
 from django.conf import settings
+from django.utils.encoding import force_str
+from django.utils.http import urlsafe_base64_decode
+from django.contrib.auth.hashers import make_password
 
 from administration.models import Center
 from courses.models import CourseMainCategory, CourseSubCategory, Course, SignUp
@@ -67,8 +70,8 @@ def student_register(request):
     if request.method == "POST":
         #Load data from POST
         username = request.POST['username']
-        password = request.POST['password']
-        password2 = request.POST['confirm_password']
+        password = request.POST.get("password", "")
+        password2 = request.POST.get("confirm_password", "")
 
         cn_name = request.POST['studentNameCh']
         en_name = request.POST['studentNameEn']
@@ -87,6 +90,9 @@ def student_register(request):
         #Error Checking
         blnInputError = False
 
+        if not password or len(password) < 6:
+            messages.error(request, "密碼長度至少需要6個字元以上")
+            blnInputError = True                
         if password != password2:
             messages.error(request, "密碼不匹配")
             blnInputError = True          
@@ -128,8 +134,7 @@ def student_register(request):
         obj_new_student.save()
 
         #default as logged in
-        request.session['student_id'] = obj_new_student.id
-        request.session['student_name'] = obj_new_student.cn_name
+        frontweb_app_func.create_login_session(request, obj_new_student)
 
         try:
             frontweb_app_func.send_verification_email(request, obj_new_student)
@@ -140,7 +145,7 @@ def student_register(request):
         messages.success(request, "註冊成功，確認郵件已寄送至您的註冊信箱。請點擊郵件中的連結驗證您的郵箱地址")
         return redirect("front_web:register_pending")  
     
-    else: #FGET
+    else: #GET
         context = {'list_mc' : request.list_mc}
         return render(request, "student_register.html", context)
 
@@ -154,9 +159,9 @@ def student_register_pending(request):
 @frontweb_app_func.student_access_control(require_email_verification=False)
 def student_change_email_and_resend(request):
 
-    student = request.obj_student
+    obj_student = request.obj_student
 
-    if student.is_email_verified:
+    if obj_student.is_email_verified:
         messages.info(request, "您的電子郵件此前已驗證成功，無需重複驗證")
         return redirect("front_web:student_dashboard")
 
@@ -165,19 +170,19 @@ def student_change_email_and_resend(request):
         
         if not new_email:
             messages.error(request, "電子郵件欄位不可為空")
-            return render(request, "student_change_email.html", {"old_email": student.email, "list_mc": request.list_mc})
+            return render(request, "student_change_email.html", {"old_email": obj_student.email, "list_mc": request.list_mc})
             
         #Check if new email addr be used by other student
-        if Student.objects.filter(email=new_email).exclude(id=student.id).exists():
+        if Student.objects.filter(email=new_email).exclude(id=obj_student.id).exists():
             messages.error(request, "此電子郵件已被其他帳號註冊，請更換其他郵件")
-            return render(request, "student_change_email.html", {"old_email": student.email, "list_mc": request.list_mc})
+            return render(request, "student_change_email.html", {"old_email": obj_student.email, "list_mc": request.list_mc})
             
-        student.email = new_email
-        student.save()
+        obj_student.email = new_email
+        obj_student.save()
         
         #Send verification
         try:
-            frontweb_app_func.send_verification_email(request, student)
+            frontweb_app_func.send_verification_email(request, obj_student)
             messages.success(request, f"Email修改成功！全新的驗證信已成功寄送至：{new_email}")
         except Exception:
             messages.warning(request, "Email雖已修改，但新驗證信發送失敗，請聯絡中心管理員")
@@ -186,20 +191,20 @@ def student_change_email_and_resend(request):
         return redirect("front_web:student_register_pending")
         
     #GET
-    context={"old_email": student.email, "list_mc": request.list_mc}
+    context={"old_email": obj_student.email, "list_mc": request.list_mc}
     return render(request, "student_change_email.html", context)
 
 def student_verifiy_email(request, uidb64, token):
     #負責解密 uid 並檢查 Token 是否依然有效，有效則改為已驗證
     try:
-        uid = frontweb_app_func.force_str(frontweb_app_func.urlsafe_base64_decode(uidb64))
-        student = Student.objects.get(id=uid)
+        uid = force_str(urlsafe_base64_decode(uidb64))
+        obj_student = Student.objects.get(id=uid)
     except (TypeError, ValueError, OverflowError, Student.DoesNotExist):
-        student = None
+        obj_student = None
     # 核心安全驗證：檢查 Token 是否合法、是否過期、對象資料是否變動過
-    if student is not None and frontweb_app_func.verify_activation_token(student, token):
-        student.is_email_verified = True
-        student.save()
+    if obj_student is not None and frontweb_app_func.verify_activation_token(obj_student, token):
+        obj_student.is_email_verified = True
+        obj_student.save()
         messages.success(request, "您的電子信箱已成功驗證！現在可以正常登入系統了")
         return redirect('front_web:student_login')
     else:
@@ -222,8 +227,8 @@ def student_login(request):
                 messages.error(request, "帳號已被停權，請聯絡中心")
                 return redirect("front_web:student_login")
             
-            request.session['student_id'] = obj_student.id
-            request.session['student_name'] = obj_student.cn_name
+            frontweb_app_func.create_login_session(request, obj_student)
+
             messages.success(request, f"歡迎回來，{obj_student.username}")
             return redirect("front_web:student_dashboard")
         else:
@@ -241,6 +246,54 @@ def student_logout(request):
         messages.success(request, "你已成功登出")
         return redirect("front_web:student_login")  
     return render(request, "home.html")
+
+@frontweb_app_func.load_main_category
+def student_forget_password(request):
+    if request.method == "POST":
+        email = request.POST.get("email", "").strip()     
+        obj_student = Student.objects.filter(email=email).first()
+        if obj_student:
+            frontweb_app_func.send_password_reset_email(request, obj_student)
+        messages.success(request, "重設驗證連結已成功寄出，請至您的電子信箱查收")
+        return redirect("front_web:student_login")
+    
+    context = {'list_mc' : request.list_mc}
+    return render(request, "student_forget_password.html", context)
+
+@frontweb_app_func.load_main_category
+def student_reset_password(request, uidb64, token):
+    try:
+        uid = force_str(urlsafe_base64_decode(uidb64))
+        obj_student = Student.objects.get(id=uid)
+    except (TypeError, ValueError, OverflowError, Student.DoesNotExist):
+        obj_student = None
+
+    # 核心安全驗證：檢查 Token 是否有效
+    if obj_student is not None and frontweb_app_func.verify_activation_token(obj_student, token):
+        
+        if request.method == "POST":
+            password = request.POST.get("password", "")
+            password_confirm = request.POST.get("confirm_password", "")
+            
+            if not password or len(password) < 6:
+                messages.error(request, "密碼長度至少需要6個字元以上")
+                return render(request, "student_reset_password.html", {"uidb64": uidb64, "token": token, 'list_mc' : request.list_mc})
+                
+            if password != password_confirm:
+                messages.error(request, "密碼不匹配")
+                return render(request, "student_reset_password.html", {"uidb64": uidb64, "token": token, 'list_mc' : request.list_mc})
+
+            obj_student.password = password
+            obj_student.is_email_verified = True
+            obj_student.save()
+            
+            frontweb_app_func.clear_login_session(request)          
+            messages.success(request, "密碼已成功更新, 請使用新密碼進行登入")
+            return redirect("front_web:student_login")
+        
+        return render(request, "student_reset_password.html", {"uidb64": uidb64, "token": token, 'list_mc' : request.list_mc})
+    else:
+        return HttpResponse("<h3>該密碼重設連結已失效、過期或已被使用, 請重新申請</h3>")
 # endregion
 
 # region View: Course/Category
@@ -428,7 +481,6 @@ def payment_successful(request):
     except (Course.DoesNotExist, Student.DoesNotExist, ValueError):
         messages.error(request, "未能確認付款資料，請聯絡本中心")
         return redirect("front_web:home")
-
 
 @csrf_exempt
 def stripe_webhook(request):
