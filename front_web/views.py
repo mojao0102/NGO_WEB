@@ -230,10 +230,10 @@ def student_login(request):
                 return redirect("front_web:student_login")
             
             frontweb_app_func.create_login_session(request, obj_student)
-
             messages.success(request, f"歡迎回來，{obj_student.username}")
-            return redirect("front_web:student_dashboard")
+            return redirect("front_web:home")
         else:
+            frontweb_app_func.clear_login_session(request)
             messages.error(request, "帳號或密碼錯誤，請重新輸入")        
             context = {'list_mc': request.list_mc, 'input_data': request.POST}
             return render(request, "student_login.html", context)
