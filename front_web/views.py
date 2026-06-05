@@ -204,6 +204,8 @@ def student_verifiy_email(request, uidb64, token):
     # 核心安全驗證：檢查 Token 是否合法、是否過期、對象資料是否變動過
     if obj_student is not None and frontweb_app_func.verify_activation_token(obj_student, token):
         obj_student.is_email_verified = True
+        #Update last_login for killing the token
+        obj_student.last_login = timezone.localtime(timezone.now())
         obj_student.save()
         messages.success(request, "您的電子信箱已成功驗證！現在可以正常登入系統了")
         return redirect('front_web:student_login')
