@@ -27,10 +27,13 @@
     <!-- Private User Top - My Course / Logout -->
     <div class="hidden md:flex gap-6">
         <div class="flex items-center gap-5">
-        <div class="flex items-center">
+        
+        <a href="{% url "front_web:student_edit_info" %}" class="text-gray-600 hover:text-blue-500 ">
+          <div class="flex items-center">
             <i class="fa-solid fa-circle-user text-xl" style="color: rgb(30, 48, 80);"></i>
             <span class="text-md font-medium">{{request.session.student_name}}</span>
-        </div>
+          </div>
+        </a>
 
         {% comment %} fix url {% endcomment %}
         <a href="{% url "front_web:student_dashboard" %}" class="text-gray-600 hover:text-blue-500 ">

@@ -1,8 +1,9 @@
 from django.db import models
+from core.models import AuditBaseModel
 
 # Create your models here.
 
-class Staff(models.Model):
+class Staff(AuditBaseModel):
     staff_no = models.CharField(max_length=50, blank=True, null=True, verbose_name="員工編號")
     first_name = models.CharField(max_length=50, null=True, verbose_name="名字")
     last_name = models.CharField(max_length=50, null=True, verbose_name="姓氏")
@@ -14,14 +15,7 @@ class Staff(models.Model):
     remarks = models.TextField(blank=True, null=True, verbose_name="備註")
     is_active = models.BooleanField(default=True, verbose_name="是否啟用")
     is_admin = models.BooleanField(default=False, verbose_name="是否為管理員")
-
     last_login = models.DateTimeField(null=True, blank=True)
-
-    file_status = models.CharField(max_length=100, blank=True, null=True, verbose_name="檔案狀態")
-    created_by = models.CharField(max_length=100, blank=True, null=True, verbose_name="建立者")
-    created_datetime = models.DateTimeField(blank=True, null=True, verbose_name="建立時間", auto_now_add=True)
-    last_updated_by = models.CharField(max_length=100, blank=True, null=True, verbose_name="最後更新者")
-    last_updated_datetime = models.DateTimeField(blank=True, null=True, verbose_name="最後更新時間", auto_now=True)
 
     class Meta:
         db_table = 'staff'
@@ -34,7 +28,7 @@ class Staff(models.Model):
     def get_email_field_name(self):
         return "email"
     
-class Center(models.Model):
+class Center(AuditBaseModel):
     name = models.CharField(max_length=200, null=True, verbose_name="中心名稱")
     addr = models.CharField(max_length=200, blank=True, null=True, verbose_name="中心地址")
     addr_desc = models.CharField(max_length=200, blank=True, null=True, verbose_name="地址描述")
@@ -43,11 +37,6 @@ class Center(models.Model):
     email = models.CharField(max_length=100, blank=True, null=True, verbose_name="電子郵件")
     map_url = models.TextField(blank=True, null=True, verbose_name="地圖連結")
     intro = models.TextField(blank=True, null=True, verbose_name="中心簡介")
-    file_status = models.CharField(max_length=100, blank=True, null=True, verbose_name="檔案狀態")
-    created_by = models.CharField(max_length=100, blank=True, null=True, verbose_name="建立者")
-    created_datetime = models.DateTimeField(blank=True, null=True, verbose_name="建立時間", auto_now_add=True)
-    last_updated_by = models.CharField(max_length=100, blank=True, null=True, verbose_name="最後更新者")
-    last_updated_datetime = models.DateTimeField(blank=True, null=True, verbose_name="最後更新時間", auto_now=True)
 
     class Meta:
         db_table = 'center'
@@ -58,15 +47,10 @@ class Center(models.Model):
         return self.name or f"Center {self.id}"
 
 
-class Room(models.Model):
+class Room(AuditBaseModel):
     center = models.ForeignKey('Center', on_delete=models.CASCADE, db_column='center_id', blank=True, null=True, verbose_name="所屬中心")
     name = models.CharField(max_length=200, blank=True, null=True, verbose_name="房間/教室名稱")
     desc = models.CharField(max_length=200, blank=True, null=True, verbose_name="描述")
-    file_status = models.CharField(max_length=100, blank=True, null=True, verbose_name="檔案狀態")
-    created_by = models.CharField(max_length=100, blank=True, null=True, verbose_name="建立者")
-    created_datetime = models.DateTimeField(blank=True, null=True, verbose_name="建立時間", auto_now_add=True)
-    last_updated_by = models.CharField(max_length=100, blank=True, null=True, verbose_name="最後更新者")
-    last_updated_datetime = models.DateTimeField(blank=True, null=True, verbose_name="最後更新時間", auto_now=True)
 
     class Meta:
         db_table = 'room'

@@ -45,6 +45,7 @@ DJANGO_APPS = [
 ]
 
 APPLICATION_APPS = [
+    'core.apps.CoreConfig',
     'front_web.apps.FrontWebConfig',
     'courses.apps.CoursesConfig',
     'administration.apps.AdministrationConfig',

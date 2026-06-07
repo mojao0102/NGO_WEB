@@ -10,10 +10,6 @@ from django.db import transaction
 stripe.api_key = settings.STRIPE_SECRET_KEY
 stripe.api_version = settings.STRIPE_API_VERSION
 
-def money_to_stripe_amount(amount):
-    return int((Decimal(amount) * Decimal("100")).quantize(Decimal("1"), rounding=ROUND_HALF_UP))
-
-
 def stripe_value_id(value):
     if not value:
         return ""
@@ -21,6 +17,13 @@ def stripe_value_id(value):
         return value
     return value.get("id", "")
 
+def money_to_stripe_amount(amount):
+
+    decimal_amount = Decimal(str(amount))
+    
+    stripe_amount = (decimal_amount * Decimal("100")).quantize(Decimal("1"), rounding=ROUND_HALF_UP)
+    
+    return int(stripe_amount)
 
 def stripe_object_value(obj, key, default=None):
     if hasattr(obj, "get"):
@@ -50,7 +53,8 @@ def create_signup_from_checkout_session(session):
         existing_paid_signup = SignUp.objects.filter(
             course=course,
             student=student,
-            is_reject=False,
+            sign_up_status="success",
+            cancel_date__isnull=True,
         ).exclude(payment_ref="").first()
         if existing_paid_signup:
             return existing_paid_signup, False
@@ -71,19 +75,15 @@ def create_signup_from_checkout_session(session):
         signup = SignUp.objects.create(
             student=student,
             course=course,
-            status="signup success",
+            sign_up_status="success",
             sign_up_date=current_datetime.strftime("%Y-%m-%d %H:%M:%S"),
             payment_date=payment_date,
             payment_amount=Decimal(amount_total) / Decimal("100"),
             payment_method=payment_method or "Stripe",
-            payment_ref=payment_intent or session_id,
-            online_payment_intent=payment_intent,
+            payment_ref=payment_intent,
             online_payment_session=session_id,
             payment_remarks="",
-            file_status="created",
             created_by=f"student_id:{student.id}",
-            created_datetime=current_datetime,
             last_updated_by=f"student_id:{student.id}",
-            last_updated_datetime=current_datetime,
         )
         return signup, True

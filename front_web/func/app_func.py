@@ -1,4 +1,5 @@
 from courses.models import CourseMainCategory
+from administration.models import Center
 from django.utils import timezone
 from django.shortcuts import redirect
 from functools import wraps
@@ -10,6 +11,9 @@ from django.utils.encoding import force_bytes
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from django.template.loader import render_to_string
 from django.urls import reverse
+from django.core.mail import EmailMultiAlternatives
+from django.urls import reverse
+from courses.func import app_func as courses_app_func
 
 # 初始化 Django 內建的安全 Token 產生器 (會自動處理過期與防重複點擊)
 token_generator = PasswordResetTokenGenerator()
@@ -82,17 +86,19 @@ def send_student_security_email(request, student, email_type):
         #生成安全加密的 uid 與 token
         uid = urlsafe_base64_encode(force_bytes(student.id))
         token = token_generator.make_token(student)
-        
+
+        obj_center = Center.objects.first()
+
         if email_type == "activation":
             url_name = 'front_web:student_verifiy_email'
-            subject = "【中心管理團隊】請啟用您的帳號"
+            subject = f"【{obj_center.name}】請啟用您的帳號"
             template_name = 'email_templates/student_security_email.html'
             cta_text = "啟用我的學生帳號"
             notice_text = "如果您並未註冊此帳號，請直接忽略本郵件"
             
         elif email_type == "reset_password":
             url_name = 'front_web:student_reset_password'
-            subject = "【中心管理團隊】重設您的帳號密碼通知"
+            subject = f"【{obj_center.name}】重設您的帳號密碼通知"
             template_name = 'email_templates/student_security_email.html'
             cta_text = "重設我的帳號密碼"
             notice_text = "提示：此重設連結將於 3 天後自動失效。如果您並未提交此申請，請直接忽略本郵件，您的現有密碼將保持安全不變"
@@ -108,7 +114,8 @@ def send_student_security_email(request, student, email_type):
             'student': student,
             'target_url': target_url,
             'cta_text': cta_text,
-            'notice_text': notice_text
+            'notice_text': notice_text,
+            'obj_center' : obj_center
         })
         msg = EmailMultiAlternatives(
             subject=subject,
@@ -122,38 +129,43 @@ def send_student_security_email(request, student, email_type):
     except Exception as e:
         print(f"sending {email_type} with error: {e}")
 
-# def send_verification_email(request, student):
-#     try:
-#         uid = urlsafe_base64_encode(force_bytes(student.id))
-#         token = token_generator.make_token(student)
-#         activation_url = request.build_absolute_uri(
-#         reverse('front_web:student_verifiy_email', kwargs={'uidb64': uid, 'token': token})
-#         )
-    
-#         subject = "請啟用您的學生帳號"
-#         email_body = f"""親愛的 {student.cn_name} 同學，您好：
-# 請點擊下方連結以啟用您的帳號：
-# {activation_url}
-# 中心管理團隊 敬上"""
-#         send_mail(subject=subject, message=email_body, from_email=None, recipient_list=[student.email])
-#     except Exception as e:
-#         print(f"An error occurred: {e}")
+def send_signup_success_email(request, obj_signup):
+    try:
+        obj_center = Center.objects.first()
+        obj_student = obj_signup.student
+        obj_course = obj_signup.course
 
-# def send_password_reset_email(request, student):
-#     try:    
-#         uid = urlsafe_base64_encode(force_bytes(student.id))
-#         token = token_generator.make_token(student)
-#         reset_url = request.build_absolute_uri(
-#         reverse('front_web:student_reset_password', kwargs={'uidb64': uid, 'token': token})
-#         )
-    
-#         subject = "【中心管理團隊】重設您的帳號密碼通知"
-#         email_body = f"""親愛的 {student.cn_name} 同學，您好：
-# 系統收到您提出的重設密碼申請。請點擊或複製下方連結至瀏覽器以設定您的新密碼：
-# {reset_url}
-# (提示：此連結將於發信後 3 天內失效。如果您並未申請重設密碼，請直接忽略此郵件，您的密碼將保持不變。)
-# 中心管理團隊 敬上"""
-#         send_mail(subject=subject, message=email_body, from_email=None, recipient_list=[student.email])
-#     except Exception as e:
-#         print(f"An error occurred: {e}")
-# endregion
+        pdf_bytes = courses_app_func.generate_payment_receipt_pdf(obj_signup)
+
+        subject = f"【{obj_center.name}】報名成功確認信 - {obj_center.name}"
+        target_url = request.build_absolute_uri(reverse('front_web:student_dashboard'))
+        text_content = f"""親愛的 {obj_student.cn_name} 同學，您好：
+        \n\n感謝您的報名！您已成功完成「{obj_course.name}」的報名與付款手續。
+        \n\n交易單號：{obj_signup.payment_ref}
+        \n實付金額：${obj_signup.payment_amount}
+        \n\n您可以隨時登入您的學生儀表板查看課程與收據詳情：\n{target_url}\n\n{obj_center.name} 敬上"""
+
+        html_content = render_to_string('email_templates/signup_success_email.html', {
+            'student': obj_student,
+            'signup': obj_signup,
+            'course': obj_course,
+            'target_url': target_url,
+            'center': obj_center,
+        })
+
+        msg = EmailMultiAlternatives(
+            subject=subject,
+            body=text_content,
+            to=[obj_student.email]
+        )
+        msg.attach_alternative(html_content, "text/html")
+
+        # 將拿到的 PDF 掛載到 Email 上
+        file_name = f"Receipt_{obj_signup.payment_ref}.pdf"
+        msg.attach(file_name, pdf_bytes, 'application/pdf')
+
+        msg.send()
+        print(f"報名確認信已成功發送至: {obj_student.email}")
+
+    except Exception as e:
+        print(f"報名確認信發送失敗: {e}")

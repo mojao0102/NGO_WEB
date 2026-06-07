@@ -21,10 +21,9 @@ class SignUpAdmin(admin.ModelAdmin):
 
     # 2. 右側篩選過濾器（快速分類）
     list_filter = (
-        'status', 
+        'sign_up_status', 
         'payment_method', 
         'file_status', 
-        'is_reject', 
         ('course', admin.RelatedOnlyFieldListFilter), # 只顯示目前有人報名的課程供篩選
     )
 
@@ -37,13 +36,13 @@ class SignUpAdmin(admin.ModelAdmin):
         'course__name', 
         'course__code', 
         'payment_ref', 
-        'online_payment_intent'
+        'online_payment_session'
     )
 
     # 4. 詳細頁面的欄位分組佈局（Fieldsets）
     fieldsets = (
         ('基本報名資訊', {
-            'fields': ('student', 'course', 'status', 'is_reject')
+            'fields': ('student', 'course', 'sign_up_status')
         }),
         ('金流與付款細節', {
             'fields': ('payment_amount', 'payment_method', 'payment_date', 'payment_ref', 'payment_remarks')
@@ -51,7 +50,7 @@ class SignUpAdmin(admin.ModelAdmin):
         ('Stripe 線上串接核心（唯讀）', {
             'classes': ('collapse',), # 預設折疊收納，避免佔空間
             'description': '此區塊為系統自動對接 Stripe 產生的紀錄，請勿隨意修改。',
-            'fields': ('online_payment_session', 'online_payment_intent')
+            'fields': ('online_payment_session',)
         }),
         ('系統稽核紀錄', {
             'fields': ('file_status', 'created_by', 'created_datetime', 'last_updated_by', 'last_updated_datetime')
@@ -62,7 +61,7 @@ class SignUpAdmin(admin.ModelAdmin):
     readonly_fields = (
         'created_by', 'created_datetime', 
         'last_updated_by', 'last_updated_datetime',
-        'online_payment_session', 'online_payment_intent'
+        'online_payment_session'
     )
 
     # 6. 每頁顯示筆數
@@ -99,16 +98,11 @@ class SignUpAdmin(admin.ModelAdmin):
     def status_badge(self, obj):
         """ 為不同的報名狀態渲染漂亮的小圓點標籤 """
         status_colors = {
-            'signup success': ('#dcfce7', '#166534', '報名成功'), # 綠色
-            'pending': ('#fef3c7', '#92400e', '等待審核'),        # 橙色
-            'rejected': ('#fee2e2', '#991b1b', '已被拒絕'),       # 紅色
+            'success': ('#dcfce7', '#166534', '報名成功'), # 綠色
+            'cncel': ('#fee2e2', '#991b1b', '已被拒絕'),       # 紅色
         }
         # 取得狀態，若找不到則給予預設灰色
-        bg, text, label = status_colors.get(obj.status, ('#f3f4f6', '#374151', obj.status))
-        
-        # 萬一勾選了被退回拒絕 (is_reject)
-        if obj.is_reject:
-            bg, text, label = ('#fee2e2', '#991b1b', '已退回')
+        bg, text, label = status_colors.get(obj.sign_up_status, ('#f3f4f6', '#374151', obj.sign_up_status))
 
         return format_html(
             '<span style="background-color: {}; color: {}; padding: 4px 10px; border-radius: 9999px; font-size: 12px; font-weight: bold; display: inline-block;">'

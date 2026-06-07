@@ -1,7 +1,8 @@
 from django.db import models
+from core.models import AuditBaseModel
 
 # Create your models here.
-class Student(models.Model):
+class Student(AuditBaseModel):
     student_no = models.CharField(max_length=50, unique=True, verbose_name="編號")
     cn_name = models.CharField(max_length=100, verbose_name="中文姓名")
     en_name = models.CharField(max_length=100, verbose_name="英文姓名")
@@ -19,6 +20,8 @@ class Student(models.Model):
     contact2_relationship = models.CharField(max_length=100, blank=True, verbose_name="聯絡人2關係")
     contact2_phone = models.CharField(max_length=100, blank=True, verbose_name="聯絡人2電話")
     
+    school = models.CharField(max_length=200, blank=True, verbose_name="學校")
+
     remarks = models.TextField(blank=True, verbose_name="備註")
 
     username = models.CharField(max_length=50, unique=True, verbose_name="登入帳號")
@@ -29,13 +32,6 @@ class Student(models.Model):
     expiry_date = models.DateTimeField(blank=True, null=True, verbose_name="帳號效期截止日")
     
     last_login = models.DateTimeField(null=True, blank=True)
-
-    # 內嵌 Audit Fields
-    file_status = models.CharField(max_length=100, blank=True, verbose_name="存檔狀態")
-    created_by = models.CharField(max_length=100, blank=True, verbose_name="建立者")
-    created_datetime = models.DateTimeField(auto_now_add=True, verbose_name="建立日期時間")
-    last_updated_by = models.CharField(max_length=100, blank=True, verbose_name="最後更新者")
-    last_updated_datetime = models.DateTimeField(auto_now=True, verbose_name="最後更新日期時間")
 
     class Meta:
         db_table = 'student'

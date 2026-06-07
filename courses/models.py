@@ -1,11 +1,13 @@
 from django.db import models
+from core.models import AuditBaseModel
 from colorfield.fields import ColorField
 from .choices import course_status
 from administration.models import Center, Room, Staff
 from teachers.models import Teacher
 from students.models import Student
+from django.utils import timezone
 
-class CourseMainCategory(models.Model):
+class CourseMainCategory(AuditBaseModel):
 
     name = models.CharField(max_length=50, verbose_name="主類別名稱")
     short_name = models.CharField(max_length=50, verbose_name="簡稱")
@@ -15,11 +17,6 @@ class CourseMainCategory(models.Model):
     list_photo = models.ImageField(upload_to='sub_category/%Y/%m/%d/', blank=True, null=True, verbose_name="課程列表圖片")
     theme_color = ColorField(default="", blank=True, null=True)
     is_active = models.BooleanField(default=True, verbose_name="是否啟用", help_text="是否可在用/顯示")
-    file_status = models.CharField(max_length=100, blank=True, verbose_name="檔案狀態")
-    created_by = models.CharField(max_length=100, blank=True, verbose_name="建立者")
-    created_datetime = models.DateTimeField(blank=True, verbose_name="建立時間", auto_now_add=True)
-    last_updated_by = models.CharField(max_length=100, blank=True, verbose_name="最後更新者")
-    last_updated_datetime = models.DateTimeField(blank=True, verbose_name="最後更新時間", auto_now=True)
 
     class Meta:
         db_table = 'course_main_category'
@@ -30,18 +27,13 @@ class CourseMainCategory(models.Model):
         return self.name or f"MainCategory {self.id}"
 
 
-class CourseSubCategory(models.Model):
+class CourseSubCategory(AuditBaseModel):
     main_category = models.ForeignKey(CourseMainCategory, on_delete=models.CASCADE, db_column='main_category_id', verbose_name="所屬主類別")
     name = models.CharField(max_length=50, verbose_name="子類別名稱")
     short_name = models.CharField(max_length=50, verbose_name="簡稱")
     desc = models.TextField(blank=True, verbose_name="描述")
     list_photo = models.ImageField(upload_to='sub_category/%Y/%m/%d/', blank=True, verbose_name="課程列表圖片")
     is_active = models.BooleanField(default=True, verbose_name="是否啟用", help_text="是否可在用/顯示")
-    file_status = models.CharField(max_length=100, blank=True, verbose_name="檔案狀態")
-    created_by = models.CharField(max_length=100, blank=True, verbose_name="建立者")
-    created_datetime = models.DateTimeField(blank=True, verbose_name="建立時間", auto_now_add=True)
-    last_updated_by = models.CharField(max_length=100, blank=True, verbose_name="最後更新者")
-    last_updated_datetime = models.DateTimeField(blank=True, verbose_name="最後更新時間", auto_now=True)
 
     class Meta:
         db_table = 'course_sub_category'
@@ -51,7 +43,7 @@ class CourseSubCategory(models.Model):
     def __str__(self):
         return self.name or f"SubCategory {self.id}"
     
-class CourseTemplate(models.Model):
+class CourseTemplate(AuditBaseModel):
     teacher = models.ForeignKey(Teacher, null=True, blank=True, on_delete=models.DO_NOTHING, related_name='templates', verbose_name="老師")
     sub_category = models.ForeignKey(CourseSubCategory, on_delete=models.DO_NOTHING, blank=True,  verbose_name="分類")   
     name = models.CharField(max_length=50, verbose_name="課程名稱")
@@ -72,13 +64,6 @@ class CourseTemplate(models.Model):
     total_hours = models.DecimalField(max_digits=5, decimal_places=1, blank=True, verbose_name="總時數")
     course_fee = models.DecimalField(max_digits=10, decimal_places=2, blank=True, verbose_name="預設學費")
     is_active = models.BooleanField(default=True, verbose_name="是否啟用", help_text="控制此範本是否可在開課時被選用")
-    
-    # 內嵌 Audit Fields
-    file_status = models.CharField(max_length=100, blank=True, verbose_name="狀態")
-    created_by = models.CharField(max_length=100, blank=True, verbose_name="建立者")
-    created_datetime = models.DateTimeField(auto_now_add=True, verbose_name="建立日期時間")
-    last_updated_by = models.CharField(max_length=100, blank=True, verbose_name="最後更新者")
-    last_updated_datetime = models.DateTimeField(auto_now=True, verbose_name="最後更新日期時間")
 
     class Meta:
         db_table = 'course_template'
@@ -89,7 +74,7 @@ class CourseTemplate(models.Model):
     def __str__(self):
         return self.name
 
-class Course(models.Model):
+class Course(AuditBaseModel):
     template = models.ForeignKey(CourseTemplate, null=True, blank=True, on_delete=models.DO_NOTHING, verbose_name="範本")
     sub_category = models.ForeignKey(CourseSubCategory, on_delete=models.DO_NOTHING, verbose_name="分類")
     teacher = models.ForeignKey(Teacher, on_delete=models.DO_NOTHING, verbose_name="老師")
@@ -129,13 +114,6 @@ class Course(models.Model):
     is_web_publish = models.BooleanField(default=False, verbose_name="是否公開發布?")
     course_status = models.CharField(max_length=50, choices=course_status.items(), default="", verbose_name="課程狀態")
 
-    # 內嵌 Audit Fields
-    file_status = models.CharField(max_length=100, blank=True, verbose_name="狀態")
-    created_by = models.CharField(max_length=100, blank=True, verbose_name="建立者")
-    created_datetime = models.DateTimeField(auto_now_add=True, verbose_name="建立日期時間")
-    last_updated_by = models.CharField(max_length=100, blank=True, verbose_name="最後更新者")
-    last_updated_datetime = models.DateTimeField(auto_now=True, verbose_name="最後更新日期時間")
-
     class Meta:
         db_table = 'course'
         verbose_name = "課程"
@@ -146,17 +124,15 @@ class Course(models.Model):
         return f"[{self.code}] {self.name}"
 
 
-class CourseSchedule(models.Model):
+class CourseSchedule(AuditBaseModel):
     course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='schedules', verbose_name="課程")
     day_of_week = models.IntegerField(verbose_name="毎星期", help_text="1=星期一, 2=星期二, ..., 7=星期日")
     start_time = models.TimeField(verbose_name="開始時間")
     end_time = models.TimeField(verbose_name="結束時間")
 
-    file_status = models.CharField(max_length=100, blank=True, verbose_name="存檔狀態")
-    created_by = models.CharField(max_length=100, blank=True, verbose_name="建立者")
-    created_datetime = models.DateTimeField(auto_now_add=True, verbose_name="建立日期時間")
-    last_updated_by = models.CharField(max_length=100, blank=True, verbose_name="最後更新者")
-    last_updated_datetime = models.DateTimeField(auto_now=True, verbose_name="最後更新日期時間")
+    lesson_title = models.CharField(max_length=200, blank=True, verbose_name="課堂標題")
+    lesson_content = models.TextField(blank=True, verbose_name="課堂內容")
+    remarks = models.TextField(blank=True, verbose_name="備註")
 
     class Meta:
         db_table = 'course_schedule'
@@ -164,33 +140,22 @@ class CourseSchedule(models.Model):
         verbose_name_plural = "課程排班表"
         ordering = ['course', 'day_of_week', 'start_time']
 
-class SignUp(models.Model):
+class SignUp(AuditBaseModel):
     student = models.ForeignKey(Student, on_delete=models.DO_NOTHING, related_name='signups', verbose_name="學生")
     course = models.ForeignKey(Course, on_delete=models.DO_NOTHING, related_name='signup_set', verbose_name="課程")
-    status = models.CharField(max_length=50, blank=True, verbose_name="狀態")
+    sign_up_status = models.CharField(max_length=50, blank=True, verbose_name="狀態")
     sign_up_date = models.CharField(max_length=50, blank=True, verbose_name="報名日期")
     
-    # 審核/拒絕相關欄位
-    is_reject = models.BooleanField(default=False, verbose_name="審核:拒絕報名")
-    reject_date = models.DateTimeField(blank=True, null=True, verbose_name="拒絕時間")
-    reject_by = models.ForeignKey(Staff, on_delete=models.DO_NOTHING, null=True, blank=True, verbose_name="拒絕者")
-    reject_reason = models.CharField(max_length=200, blank=True, verbose_name="拒絕原因")
-    
-    # 金流/付款相關欄位
-    payment_date = models.DateTimeField(blank=True, verbose_name="付款時間")
+    cancel_date = models.DateTimeField(blank=True, null=True, verbose_name="取消時間")
+    cancel_by = models.ForeignKey(Staff, on_delete=models.DO_NOTHING, null=True, blank=True, verbose_name="取消者")
+    cancel_reason = models.CharField(max_length=200, blank=True, verbose_name="取消原因")
+
+    payment_date = models.DateTimeField(default=timezone.now, verbose_name="付款時間")
     payment_amount = models.DecimalField(max_digits=10, decimal_places=2, blank=True, verbose_name="付款金額")
     payment_method = models.CharField(max_length=50, blank=True, verbose_name="付款方式")#Stripe or cash(by staff)
     payment_ref = models.CharField(max_length=255, blank=True, verbose_name="付款參考")
-    online_payment_intent = models.CharField(max_length=255, blank=True, verbose_name="Stripe payment intent")
     online_payment_session = models.CharField(max_length=255, blank=True, verbose_name="Stripe Session")
     payment_remarks = models.CharField(max_length=200, blank=True, verbose_name="付款備註")
-    
-    # 內嵌 Audit Fields (完全比照第一張圖的規格)
-    file_status = models.CharField(max_length=100, blank=True, verbose_name="檔案狀態")
-    created_by = models.CharField(max_length=100, blank=True, verbose_name="建立者")
-    created_datetime = models.DateTimeField(auto_now_add=True, verbose_name="建立日期時間")
-    last_updated_by = models.CharField(max_length=100, blank=True, verbose_name="最後更新者")
-    last_updated_datetime = models.DateTimeField(auto_now=True, verbose_name="最後更新日期時間")
 
     class Meta:
         db_table = 'sign_up'
@@ -200,3 +165,20 @@ class SignUp(models.Model):
 
     def __str__(self):
         return f"{self.student} - {self.course}"
+    
+class SignUpRefund(AuditBaseModel):
+    sign_up = models.ForeignKey(SignUp, on_delete=models.CASCADE, related_name='refunds', verbose_name="報名紀錄")
+    refund_date = models.DateTimeField(default=timezone.now, verbose_name="退款日期")
+    refund_method = models.CharField(max_length=100, blank=True, verbose_name="退款方式")
+    refund_amount = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True, verbose_name="退款金額")
+    refund_ref = models.CharField(max_length=255, blank=True, verbose_name="退款參考")
+    refund_by = models.ForeignKey(Staff, on_delete=models.DO_NOTHING, null=True, blank=True, verbose_name="處理人")
+
+    class Meta:
+        db_table = 'sign_up_refund'
+        verbose_name = "報名退款"
+        verbose_name_plural = "報名退款"
+        ordering = ['-id']
+
+    def __str__(self):
+        return f"Refund for SignUp #{self.sign_up.id}"    

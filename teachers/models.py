@@ -1,9 +1,10 @@
 from django.db import models
+from core.models import AuditBaseModel
 
 # Create your models here.
 from django.db import models
 
-class Teacher(models.Model):
+class Teacher(AuditBaseModel):
     teacher_no = models.CharField(max_length=50, blank=True, verbose_name="導師編號")
     title = models.CharField(max_length=50, blank=True, verbose_name="稱謂/職稱")
     first_name = models.CharField(max_length=50, verbose_name="名字")
@@ -18,12 +19,6 @@ class Teacher(models.Model):
     is_active = models.BooleanField(default=True, verbose_name="是否啟用")
 
     last_login = models.DateTimeField(null=True, blank=True)
-
-    file_status = models.CharField(max_length=100, blank=True, verbose_name="檔案狀態")
-    created_by = models.CharField(max_length=100, blank=True, verbose_name="建立者")
-    created_datetime = models.DateTimeField(blank=True, verbose_name="建立時間", auto_now_add=True)
-    last_updated_by = models.CharField(max_length=100, blank=True, verbose_name="最後更新者")
-    last_updated_datetime = models.DateTimeField(blank=True, verbose_name="最後更新時間", auto_now=True)
 
     class Meta:
         db_table = 'teacher'

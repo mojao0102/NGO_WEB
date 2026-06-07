@@ -14,6 +14,9 @@ urlpatterns = [
     path('logout/', views.student_logout, name='student_logout'),
     path('register/', views.student_register, name='student_register'),
 
+    path('edit_userinfo/', views.student_edit_info, name='student_edit_info'),
+    path('change_password/', views.student_change_password, name='student_change_password'),
+
     path('forget_password/', views.student_forget_password, name='student_forget_password'),
     path('reset_password/<str:uidb64>/<str:token>/', views.student_reset_password, name='student_reset_password'),
 
@@ -30,4 +33,6 @@ urlpatterns = [
     path('stripe/webhook/', views.stripe_webhook, name='stripe_webhook'),
 
     path('student_dashboard/', views.student_dashboard, name='student_dashboard'),
+    path('student_dashboard/payment_receipt/<int:signup_id>/', views.download_payment_receipt, name='download_payment_receipt'),
+    path('student_dashboard/refund_receipt/<int:refund_id>/', views.download_refund_receipt, name='download_refund_receipt'),
 ]

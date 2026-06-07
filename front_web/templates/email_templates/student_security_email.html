@@ -29,7 +29,17 @@
             <p style="color: #94a3b8; font-size: 14px; line-height: 1.5;">{{ notice_text }}</p>
         </div>
         
-        <div class="footer"><p>© 中心管理團隊 敬上</p></div>
+        <div class="footer">
+            <p style="margin-bottom: 5px; font-weight: bold;">© {{ obj_center.name }} 敬上</p>
+            
+            {% if obj_center %}
+            <p style="margin-top: 5px; font-size: 12px; line-height: 1.6;">
+                {% if obj_center.addr %}📍 {{ obj_center.addr }}{% if obj_center.addr_desc %} ({{ obj_center.addr_desc }}){% endif %}<br>{% endif %}
+                {% if obj_center.phone %}📞 {{ obj_center.phone }}{% endif %}
+                {% if obj_center.email %} | ✉️ {{ obj_center.email }}{% endif %}
+            </p>
+            {% endif %}
+        </div>
     </div>
 </body>
 </html>

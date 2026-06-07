@@ -10,11 +10,12 @@ from django.utils.encoding import force_str
 from django.utils.http import urlsafe_base64_decode
 
 from administration.models import Center
-from courses.models import CourseMainCategory, CourseSubCategory, Course, SignUp
+from courses.models import CourseMainCategory, CourseSubCategory, Course, SignUp, SignUpRefund
 from students.models import Student
 from students.func import app_func as student_app_func
 from web_contents.models import News
 from .func import app_func as frontweb_app_func, stripe_func
+from courses.func import app_func as courses_app_func
 
 import stripe
 
@@ -121,6 +122,7 @@ def student_register(request):
                             contact2_name=contact2Name,
                             contact2_relationship=contact2Relation,
                             contact2_phone=contact2Phone,
+                            school=school,
                             username=username,
                             password=password,
                             is_active=True,
@@ -135,14 +137,17 @@ def student_register(request):
         #default as logged in
         frontweb_app_func.create_login_session(request, obj_new_student)
 
+        #Make sure last_login up to date
+        obj_new_student.refresh_from_db()
+
         try:
-            frontweb_app_func.send_verification_email(request, obj_new_student)
+            frontweb_app_func.send_student_security_email(request, obj_new_student, "activation")
         except Exception:
             messages.warning(request, "帳號已建立，但驗證信發送失敗，請聯絡中心管理員啟用帳號")
             return redirect("front_web:student_login")
         
         messages.success(request, "註冊成功，確認郵件已寄送至您的註冊信箱。請點擊郵件中的連結驗證您的郵箱地址")
-        return redirect("front_web:register_pending")  
+        return redirect("front_web:student_register_pending")  
     
     else: #GET
         context = {'list_mc' : request.list_mc}
@@ -298,6 +303,24 @@ def student_reset_password(request, uidb64, token):
         return HttpResponse("<h3>該密碼重設連結已失效、過期或已被使用, 請重新申請</h3>")
 # endregion
 
+# region Edit user info/Change password
+@frontweb_app_func.load_main_category
+@frontweb_app_func.student_access_control()
+def student_edit_info(request):
+
+    if request.method == "POST":
+        print("Post")
+    else:    
+        context = {'list_mc' : request.list_mc, "student" : request.obj_student}
+        return render(request, "student_edit_info.html", context)
+
+@frontweb_app_func.load_main_category
+@frontweb_app_func.student_access_control()
+def student_change_password(request):   
+    context = {'list_mc' : request.list_mc}
+    return render(request, "student_change_password.html", context)
+# endregion
+
 # region View: Course/Category
 @frontweb_app_func.load_main_category
 def course_list(request, mc_id):
@@ -322,9 +345,7 @@ def course_list(request, mc_id):
 
         #Get course list
         course_queryset = Course.objects.annotate(
-        valid_signup_count=Count(
-            'signup_set', 
-            filter=~Q(signup_set__payment_ref="") & Q(signup_set__is_reject=False))
+        valid_signup_count=Count('signup_set', filter=~Q(signup_set__payment_ref="") & Q(signup_set__sign_up_status="success") & Q(signup_set__cancel_date__isnull=True))
         ).annotate(
         #generate str_course_status base on valid_signup_count
             str_course_status=Case(
@@ -353,9 +374,7 @@ def course(request, course_id):
         #Build custom field at course queryset
         #Count valid signup
         course_queryset = Course.objects.annotate(
-        valid_signup_count=Count(
-            'signup_set', 
-            filter=~Q(signup_set__payment_ref="") & Q(signup_set__is_reject=False))
+        valid_signup_count=Count('signup_set', filter=~Q(signup_set__payment_ref="") & Q(signup_set__sign_up_status="success") & Q(signup_set__cancel_date__isnull=True))
         ).annotate(
         #generate str_course_status base on valid_signup_count
             str_course_status=Case(
@@ -385,14 +404,14 @@ def course_payment(request, course_id):
 
         #1 Get course and check if course still avaliable, Only course with status "created", web published, signup number < max no and not over registation expiry date allow to sign_up
         course_queryset = Course.objects.annotate(
-        valid_signup_count=Count('signup_set', filter=~Q(signup_set__payment_ref="") & Q(signup_set__is_reject=False)))      
+        valid_signup_count=Count('signup_set', filter=~Q(signup_set__payment_ref="") & Q(signup_set__sign_up_status="success") & Q(signup_set__cancel_date__isnull=True)))     
         obj_course = course_queryset.filter(id = course_id, is_web_publish = True, registation_expiry_date__gt=timezone.localtime(timezone.now()), course_status = "created").first()
         if not obj_course:
             messages.error(request, "課程狀態已更改，請刷新頁面")
             return redirect('front_web:course', course_id=course_id)
         
         #2. Check if student signup already
-        if SignUp.objects.filter(course_id=obj_course.id, student_id=request.session['student_id']):
+        if SignUp.objects.filter(course_id=obj_course.id, student_id=request.session['student_id'], sign_up_status="success", cancel_date__isnull=True):
             messages.error(request, "您已報名參加此課程")
             return redirect('front_web:course', course_id=course_id)
 
@@ -452,11 +471,19 @@ def payment_successful(request):
         # 3. 嚴格檢查付款狀態是否真的為 "paid"
         if session.payment_status == "paid":
             
-            signup, is_new_record = stripe_func.create_signup_from_checkout_session(session)
+            try:
+                signup, is_new_record = stripe_func.create_signup_from_checkout_session(session)
+
+                if is_new_record:
+                    frontweb_app_func.send_signup_success_email(request, signup)
+
+            except (Course.DoesNotExist, Student.DoesNotExist, ValueError):
+                print("fail to create sign up")
+                return HttpResponse(status=400)
+            
             course = signup.course
             student = signup.student
                 
-            # 6. 把課程與付款資訊傳給前端網頁，做個漂亮的感謝收據
             context = {
                 'course_id' : course.id,
                 'course_list_id': course.sub_category.main_category_id,
@@ -467,7 +494,6 @@ def payment_successful(request):
                 'amount': signup.payment_amount,
                 'payment_ref': signup.payment_ref,
                 'payment_date': signup.payment_date,
-                'is_new_record': is_new_record,
                 'list_mc' : request.list_mc
             }
             return render(request, "payment_successful.html", context)
@@ -486,6 +512,9 @@ def payment_successful(request):
 
 @csrf_exempt
 def stripe_webhook(request):
+
+    print("in webhook now")
+
     if request.method != "POST":
         return HttpResponse(status=405)
 
@@ -511,6 +540,29 @@ def stripe_webhook(request):
                 stripe_func.create_signup_from_checkout_session(session)
             except (Course.DoesNotExist, Student.DoesNotExist, ValueError):
                 return HttpResponse(status=400)
+    #Refund handling(enable later if needed)
+    # elif event["type"] == "charge.refunded":
+    #     charge = event["data"]["object"]
+    #     payment_intent_id = charge.get("payment_intent")
+    #     refund_amount = Decimal(charge.get("amount_refunded", 0)) / Decimal("100")
+        
+    #     refunds = charge.get("refunds", {}).get("data", [])
+    #     refund_id = refunds[0].get("id") if refunds else ""
+
+    #     try:
+    #         signup_record = SignUp.objects.get(payment_ref=payment_intent_id)         
+    #         SignUpRefund.objects.create(
+    #             sign_up=signup_record,
+    #             refund_method="stripe",
+    #             refund_amount=refund_amount,
+    #             refund_ref=refund_id,
+    #             created_by="System Webhook",
+    #             last_updated_by="System Webhook",
+    #         )
+    #         print(f"退款紀錄已自動建立: 訂單 #{signup_record.id}")
+            
+    #     except SignUp.DoesNotExist:
+    #         print(f"找不到對應的報名紀錄: {payment_intent_id}")
 
     return HttpResponse(status=200)
 
@@ -525,22 +577,92 @@ def payment_fail(request):
 @frontweb_app_func.load_main_category
 @frontweb_app_func.student_access_control()
 def student_dashboard(request):
-    list_mode = "PastCourse" if request.GET.get("ListMode") == "PastCourse" else "PaymentHistory" if request.GET.get("ListMode") == "PaymentHistory" else "CurrentCourse"
-
+    list_mode = "CurrentCourse" if (request.GET.get("ListMode") != "PastCourse" and request.GET.get("ListMode") != "PaymentHistory") else "PastCourse" if request.GET.get("ListMode") == "PastCourse" else "PaymentHistory"
+    print(list_mode)
     context = {'list_mc' : request.list_mc, "list_mode" : list_mode}
 
     if list_mode == "CurrentCourse":
         context["list_course"] = Course.objects.annotate(course_end_datetime=ExpressionWrapper(F('period_to') + F('time_to'), output_field=DateTimeField())
         ).filter(signup_set__student_id=request.session.get('student_id'), 
-                                            signup_set__is_reject=False,
-                                            course_end_datetime__gte=timezone.localtime(timezone.now()),
-                                            course_status='created')
+                signup_set__sign_up_status='success',
+                signup_set__cancel_date__isnull=True,
+                course_end_datetime__gte=timezone.localtime(timezone.now()),
+                course_status='created')
+        
     elif list_mode == "PastCourse":
         context["list_course"] = Course.objects.annotate(course_end_datetime=ExpressionWrapper(F('period_to') + F('time_to'), output_field=DateTimeField())
         ).filter(signup_set__student_id=request.session.get('student_id'), 
-                                            signup_set__is_reject=False,
-                                            course_end_datetime__lte=timezone.localtime(timezone.now()),
-                                            course_status='created')
+                signup_set__sign_up_status='success',
+                signup_set__cancel_date__isnull=True,
+                course_end_datetime__lte=timezone.localtime(timezone.now()),
+                course_status='created')
+        
+    elif list_mode == "PaymentHistory":
+        #Get Payment
+        payment_list = SignUp.objects.filter(student_id=request.session.get('student_id'), payment_date__isnull=False).exclude(file_status="deleted").annotate(
+            record_type=Value('payment', output_field=CharField()),
+            record_id=F('id'),
+            display_course_name=F('course__name'),
+            display_date=F('payment_date'),
+            display_amount=F('payment_amount'),
+            display_method=F('payment_method'),
+            display_ref=F('payment_ref'),
+            display_status=F('sign_up_status')
+            ).values(
+            'record_type', 
+            'record_id',
+            'display_course_name', 
+            'display_date', 
+            'display_amount', 
+            'display_method', 
+            'display_ref', 
+            'display_status')
+
+        #Get Refunds
+        refund_list = SignUpRefund.objects.filter(sign_up__student_id=request.session.get('student_id'), refund_date__isnull=False).exclude(file_status="deleted").annotate(
+            record_type=Value('refund', output_field=CharField()),
+            record_id=F('id'),
+            display_course_name=F('sign_up__course__name'),
+            display_date=F('refund_date'),
+            display_amount=F('refund_amount'),
+            display_method=F('refund_method'),
+            display_ref=F('refund_ref'),
+            display_status=Value('refunded', output_field=CharField())
+            ).values(
+            'record_type', 
+            'record_id',
+            'display_course_name', 
+            'display_date', 
+            'display_amount', 
+            'display_method', 
+            'display_ref', 
+            'display_status')
+
+        #Union and sort by display date desc
+        context["list_trans"] = payment_list.union(refund_list)
+
     return render(request, "student_dashboard.html", context)
+
+@frontweb_app_func.student_access_control()
+def download_payment_receipt(request, signup_id):
+    obj_signup = get_object_or_404(SignUp, id=signup_id)
+    
+    pdf_bytes = courses_app_func.generate_payment_receipt_pdf(obj_signup)
+
+    response = HttpResponse(pdf_bytes, content_type='application/pdf')
+    response['Content-Disposition'] = f'inline; filename="Receipt_{obj_signup.payment_ref}.pdf"'
+    
+    return response
+
+@frontweb_app_func.student_access_control()
+def download_refund_receipt(request, refund_id):
+    obj_refund = get_object_or_404(SignUpRefund, id=refund_id)
+    
+    pdf_bytes = courses_app_func.generate_refund_receipt_pdf(obj_refund)
+
+    response = HttpResponse(pdf_bytes, content_type='application/pdf')
+    response['Content-Disposition'] = f'inline; filename="Receipt_{obj_refund.refund_ref}.pdf"'
+    
+    return response
 # endregion
 
