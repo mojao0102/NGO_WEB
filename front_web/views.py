@@ -127,11 +127,8 @@ def student_register(request):
                             password=password,
                             is_active=True,
                             register_date=current_time,
-                            file_status="created",
                             created_by="web registation",
-                            created_datetime=current_time,
-                            last_updated_by="web registation",
-                            last_updated_datetime=current_time)
+                            last_updated_by="web registation",)
         obj_new_student.save()
 
         #default as logged in
@@ -309,7 +306,48 @@ def student_reset_password(request, uidb64, token):
 def student_edit_info(request):
 
     if request.method == "POST":
-        print("Post")
+        cn_name = request.POST.get('studentNameCh')
+        en_name = request.POST.get('studentNameEn')
+        dob = request.POST.get('studentDob')
+        school = request.POST.get('school')
+
+        contact1Name = request.POST.get('contact1Name')
+        contact1Phone = request.POST.get('contact1Phone')
+        contact1Relation = request.POST.get('contact1Relation')
+
+        contact2Name = request.POST.get('contact2Name')
+        contact2Phone = request.POST.get('contact2Phone')
+        contact2Relation = request.POST.get('contact2Relation')
+
+        try:
+            #Get student
+            obj_student = Student.objects.get(id=request.session.get('student_id'))
+
+            obj_student.cn_name=cn_name
+            obj_student.en_name=en_name
+            obj_student.dob=dob
+            obj_student.school=school
+
+            obj_student.contact1_name=contact1Name
+            obj_student.contact1_relationship=contact1Relation
+            obj_student.contact1_phone=contact1Phone
+
+            obj_student.contact2_name=contact2Name
+            obj_student.contact2_relationship=contact2Relation
+            obj_student.contact2_phone=contact2Phone
+
+            obj_student.last_updated_by=f"student_id:{obj_student.id}"
+
+            obj_student.save()
+
+            messages.success(request, "成功修改")
+            return redirect("front_web:student_edit_info")
+
+        except Exception as e:
+            print(f"An error occurred: {e}")
+            messages.error(request, "系統錯誤, 請聯絡中心管理員")
+            context = {'list_mc' : request.list_mc, "student" : request.obj_student, "input_data" : request.POST}
+            return render(request, "student_edit_info.html", context)   
     else:    
         context = {'list_mc' : request.list_mc, "student" : request.obj_student}
         return render(request, "student_edit_info.html", context)
@@ -317,8 +355,47 @@ def student_edit_info(request):
 @frontweb_app_func.load_main_category
 @frontweb_app_func.student_access_control()
 def student_change_password(request):   
-    context = {'list_mc' : request.list_mc}
-    return render(request, "student_change_password.html", context)
+
+    if request.method == "POST":
+        old_password = request.POST.get('old_password', "")
+        new_password = request.POST.get('new_password', "")
+        confirm_new_password = request.POST.get('confirm_new_password', "")
+
+        try:
+            #GEt student
+            obj_student = Student.objects.get(id=request.session.get('student_id'))
+
+            #check input
+            blnInputError = False
+            if old_password != obj_student.password:
+                messages.error(request, "目前密碼不正確")
+                blnInputError = True  
+            elif not new_password or len(new_password) < 6:
+                messages.error(request, "新密碼長度至少需要6個字元以上")
+                blnInputError = True                
+            elif new_password != confirm_new_password:
+                messages.error(request, "新密碼不匹配")
+                blnInputError = True          
+
+            if blnInputError:
+                context = {'list_mc' : request.list_mc, "student" : request.obj_student}
+                return render(request, "student_change_password.html", context)
+
+            obj_student.password=new_password
+            obj_student.last_updated_by=f"student_id:{obj_student.id}"
+            obj_student.save()
+
+            messages.success(request, "成功修改密碼")
+            return redirect("front_web:student_change_password")
+
+        except Exception as e:
+            print(f"An error occurred: {e}")
+            messages.error(request, "系統錯誤, 請聯絡中心管理員")
+            context = {'list_mc' : request.list_mc, "student" : request.obj_student}
+            return render(request, "student_change_password.html", context)   
+    else:  
+        context = {'list_mc' : request.list_mc, "student" : request.obj_student}
+        return render(request, "student_change_password.html", context)
 # endregion
 
 # region View: Course/Category

@@ -122,15 +122,22 @@
   <!-- *** Here need to set condition between public account vs private account *** -->
   <!-- Public User Footer -->
   {% if request.session.student_id %}
-  <div class="flex justify-center gap-4 mt-6 w-full px-4">
-    {% comment %} fix url {% endcomment %}
+  <div class="flex justify-center gap-4 mt-6 w-full px-2">
     <a href="{% url "front_web:student_dashboard" %}">
       <button class="py-4 px-8 bg-[#FF7400] text-white rounded-full flex items-center gap-3 hover:bg-orange-400 transition-colors">
         <i class="fa-solid fa-calendar text-xl"></i>
         <span class="font-medium text-xl">我的課程</span>
       </button>
     </a>
-    {% comment %} fix url {% endcomment %}
+    <a href="{% url "front_web:student_edit_info" %}">
+      <button class="py-4 px-8 bg-[#FCD82A] text-white rounded-full flex items-center gap-3 hover:bg-orange-400 transition-colors">
+        <i class="fa-solid fa-calendar text-xl"></i>
+        <span class="font-medium text-xl">我的資料</span>
+      </button>
+    </a>
+  </div>
+
+  <div class="flex justify-center gap-4 mt-3 w-full px-2">
     <a href="javascript:{document.getElementById('logout').submit()}">
       <form action="{% url "front_web:student_logout" %}" method="Post" id="logout">
         {% csrf_token %}<input type="hidden">
@@ -143,7 +150,7 @@
   </div>
   {% else %}
   <!-- Private User Footer -->
-  <div class="flex justify-center gap-4 mt-6 w-full px-4">
+  <div class="flex justify-center gap-4 mt-3 w-full px-4">
 
     <a href="{% url "front_web:student_login" %}">
       <button class="py-4 px-8 bg-green-400 text-white rounded-full flex items-center gap-3 hover:bg-green-500 transition-colors">

@@ -75,41 +75,45 @@
     {% else %}
     {% comment %} Payment History {% endcomment %}
     <div class="bg-white shadow-sm rounded-xl border border-gray-200 overflow-hidden mb-5">
-    <div class="overflow-x-auto">
-    <table class="w-full text-left border-collapse">
-      <thead>
-        <tr class="bg-gray-50 text-gray-600 border-b border-gray-200 text-sm">
-          <th class="p-4 font-medium">訂單編號</th>
-          <th class="p-4 font-medium">課程名稱</th>
-          <th class="p-4 font-medium">付款日期</th>
-          <th class="p-4 font-medium">實付金額</th>
-          <th class="p-4 font-medium text-center">操作</th>
-        </tr>
-      </thead>
-      <tbody class="divide-y divide-gray-100 text-gray-700">
-        {% for trans in list_trans %}
-        <tr class="hover:bg-gray-50 transition-colors">
-          <td class="p-4 font-mono text-sm text-gray-500">#{{trans.display_ref}}</td>
-          <td class="p-4 font-bold text-gray-900">{{trans.display_course_name}}</td>
-          <td class="p-4">{{trans.display_date | date:"d/m/Y"}}</td>
+    <div class="overflow-x-auto w-full pb-4">
+  <table class="w-full text-left border-collapse">
+    <thead>
+      <tr class="bg-gray-50 text-gray-600 border-b border-gray-200 text-sm">
+        <th class="p-4 font-medium whitespace-nowrap min-w-[80px]">訂單編號</th>
+        <th class="p-4 font-medium min-w-[180px]">課程名稱</th>
+        <th class="p-4 font-medium whitespace-nowrap min-w-[100px]">付款日期</th>
+        <th class="p-4 font-medium whitespace-nowrap min-w-[100px]">實付金額</th>
+        <th class="p-4 font-medium text-center whitespace-nowrap min-w-[100px]">操作</th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-gray-100 text-gray-700">
+      {% for trans in list_trans %}
+      <tr class="hover:bg-gray-50 transition-colors">
+        <td class="p-4 font-mono text-sm text-gray-500 whitespace-nowrap max-w-[180px] overflow-hidden text-ellipsis">#{{trans.display_ref}}</td>
+        <td class="p-4 font-bold text-sm text-gray-900 whitespace-nowrap max-w-[180px] overflow-hidden text-ellipsis">{{trans.display_course_name}}</td>
+        <td class="p-4 text-sm whitespace-nowrap">{{trans.display_date | date:"d/m/Y"}}</td>
 
-          <td class="p-4 font-medium {% if trans.record_type == "payment" %}text-[#2ec4b6]{% else %}text-[#FF5D42]{% endif %}">${{trans.display_amount}}</td>
-          <td class="p-4 text-center">
-            {% if trans.record_type == "payment" %}
-            <a href="{% url 'front_web:download_payment_receipt' trans.record_id %}" target="_blank" class="btn btn-sm btn-outline-primary mt-2">
-              <i class="fa-solid fa-file-invoice"></i> 收據
-            </a>
-            {% else %}
-            <a href="{% url 'front_web:download_refund_receipt' trans.record_id %}" target="_blank" class="btn btn-sm btn-outline-primary mt-2">
-              <i class="fa-solid fa-file-invoice"></i> 收據
-            </a>
-            {% endif %}
-          </td>
-        </tr>
-        {% endfor %}
-        </tbody>
-    </table>
-    </div>
+        <td class="p-4 text-sm font-medium whitespace-nowrap {% if trans.record_type == 'payment' %}text-[#2ec4b6]{% else %}text-[#FF5D42]{% endif %}">
+          ${{trans.display_amount}}
+        </td>
+        <td class="p-4 text-center whitespace-nowrap">
+          {% if trans.record_type == "payment" %}
+          <a href="{% url 'front_web:download_payment_receipt' trans.record_id %}" target="_blank" 
+            class="inline-block border border-blue-500 text-blue-500 hover:bg-blue-500 hover:text-white px-4 py-1.5 rounded-md text-sm transition-colors">
+            <i class="fa-solid fa-file-invoice"></i> 收據
+          </a>
+          {% else %}
+          <a href="{% url 'front_web:download_refund_receipt' trans.record_id %}" target="_blank" 
+            class="inline-block border border-red-500 text-red-500 hover:bg-red-500 hover:text-white px-4 py-1.5 rounded-md text-sm transition-colors">
+            <i class="fa-solid fa-file-invoice"></i> 退款單
+          </a>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
     </div>
   {% endif %}
 

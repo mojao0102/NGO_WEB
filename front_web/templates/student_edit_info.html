@@ -11,7 +11,7 @@
     <div class="flex justify-between items-center mb-6">
         <h2 class="text-3xl font-bold text-gray-700">修改個人資料</h2>
         <a href="{% url 'front_web:student_dashboard' %}" class="text-gray-500 hover:text-gray-700 transition-colors">
-            <i class="fa-solid fa-arrow-left mr-1"></i>返回儀表板
+            <i class="fa-solid fa-arrow-left mr-1"></i>返回我的課程
         </a>
     </div>
 
@@ -92,14 +92,14 @@
             </div>
             <div>
                 <label for="contact2Phone" class="block text-gray-700 font-medium mb-2">聯絡人2電話*</label>
-                <input type="tel" id="contact2Phone" name="contact2Phone" required
+                <input type="tel" id="contact2Phone" name="contact2Phone"
                     value="{{ input_data.contact2Phone|default:student.contact2_phone }}"
                     class="w-full border border-gray-300 rounded-md px-4 py-3 focus:outline-none focus:ring-2 focus:ring-amber-400">
             </div>
             <div>
                 <label for="contact2Relationship" class="block text-gray-700 font-medium mb-2">聯絡人2關係</label>
                 <input type="text" id="contact2Relation" name="contact2Relation" placeholder="母親/父親/其他" 
-                    value="{{ input_data.contact2Relationship|default:student.contact2_relationship }}"
+                    value="{{ input_data.contact2Relation|default:student.contact2_relationship }}"
                     class="w-full border border-gray-300 rounded-md px-4 py-3 focus:outline-none focus:ring-2 focus:ring-amber-400">
             </div>
         </div>
@@ -111,7 +111,7 @@
             </button>
     
             <a href="{% url 'front_web:student_change_password' %}" class="text-blue-500 hover:underline font-medium">
-            想要修改密碼？
+            修改密碼
             </a>
         </div>
     </form>
