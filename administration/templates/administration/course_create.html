@@ -1,0 +1,208 @@
+{% extends 'administration/staff_base.html' %}
+
+{% block title %}Create New Course{% endblock %}
+
+{% block content %}
+<main class="md:ml-[200px] flex-1 p-8 pt-16 md:pt-8 max-w-3xl">
+    <h1 class="text-2xl font-normal text-gray-800 mb-8">Create New <span class="font-bold">Course</span></h1>
+
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+
+        <div class="flex flex-col gap-5">
+
+            <!-- Center Name -->
+            <div>
+                <label class="block text-sm text-gray-700 mb-1.5">Center Name</label>
+                <select name="center" class="w-full border border-gray-300 rounded px-3 py-2 text-sm text-gray-400 focus:outline-none focus:border-gray-400">
+                    <option value="">--seletct--</option>
+                    {% for center in centers %}
+                    <option value="{{ center.id }}">{{ center.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Course code -->
+            <div>
+                <label class="block text-sm text-gray-700 mb-1.5">Course code</label>
+                <input type="text" name="code" placeholder="26PG311-02"
+                    class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-gray-400">
+            </div>
+
+            <!-- Course name -->
+            <div>
+                <label class="block text-sm text-gray-700 mb-1.5">Course name</label>
+                <input type="text" name="name" placeholder="Little Ones 自理與學前分離預備 Playgroup"
+                    class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-gray-400">
+            </div>
+
+            <!-- Banner -->
+            <div>
+                <label class="block text-sm text-gray-700 mb-1.5">Banner</label>
+                <label class="inline-flex items-center gap-2 border border-gray-300 rounded px-4 py-2 text-sm text-gray-600 cursor-pointer hover:bg-gray-50">
+                    <i class="fa-solid fa-plus text-gray-500"></i> 上傳圖片
+                    <input type="file" name="banner" accept="image/*" class="hidden">
+                </label>
+            </div>
+
+            <!-- Content -->
+            <div>
+                <label class="block text-sm text-gray-700 mb-1.5">Content</label>
+                <textarea name="content" rows="6"
+                    class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-gray-400 resize-none"></textarea>
+            </div>
+
+            <!-- Category -->
+            <div>
+                <label class="block text-sm text-gray-700 mb-1.5">Category</label>
+                <select name="category" class="w-full border border-gray-300 rounded px-3 py-2 text-sm text-gray-400 focus:outline-none focus:border-gray-400">
+                    <option value="">--seletct--</option>
+                    {% for cat in categories %}
+                    <option value="{{ cat.id }}">{{ cat.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Teacher Name -->
+            <div>
+                <label class="block text-sm text-gray-700 mb-1.5">Teacher Name</label>
+                <select name="teacher" class="w-full border border-gray-300 rounded px-3 py-2 text-sm text-gray-400 focus:outline-none focus:border-gray-400">
+                    <option value="">--seletct--</option>
+                    {% for teacher in teachers %}
+                    <option value="{{ teacher.id }}">{{ teacher.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Feature (dynamic) -->
+            <div>
+                <label class="block text-sm text-gray-700 mb-1.5">Feature</label>
+                <div id="featureList" class="flex flex-col gap-2">
+                    <input type="text" name="feature[]"
+                        class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-gray-400"
+                        placeholder="循序漸進學習自理，減少依賴，最終能獨立上課及與人群體相處">
+                </div>
+                <button type="button" id="addFeature"
+                    class="mt-2 inline-flex items-center gap-1.5 border border-gray-300 rounded px-4 py-1.5 text-sm text-gray-600 hover:bg-gray-50">
+                    <i class="fa-solid fa-plus text-xs"></i> 增添
+                </button>
+            </div>
+
+            <!-- Fee -->
+            <div>
+                <label class="block text-sm text-gray-700 mb-1.5">Fee</label>
+                <input type="number" name="fee" placeholder="1480"
+                    class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-gray-400">
+            </div>
+
+            <!-- Start Date / End Date -->
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm text-gray-700 mb-1.5">Start Date</label>
+                    <input type="date" name="start_date"
+                        class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-gray-400">
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-700 mb-1.5">End Date</label>
+                    <input type="date" name="end_date"
+                        class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-gray-400">
+                </div>
+            </div>
+
+            <!-- Start Time / End Time -->
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm text-gray-700 mb-1.5">Start Time</label>
+                    <input type="time" name="start_time"
+                        class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-gray-400">
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-700 mb-1.5">End Time</label>
+                    <input type="time" name="end_time"
+                        class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-gray-400">
+                </div>
+            </div>
+
+            <!-- Day of week -->
+            <div>
+                <label class="block text-sm text-gray-700 mb-1.5">Day of week</label>
+                <input type="text" name="day_of_week" placeholder="六"
+                    class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-gray-400">
+            </div>
+
+            <!-- Total Lesson -->
+            <div>
+                <label class="block text-sm text-gray-700 mb-1.5">Total Lesson</label>
+                <input type="number" name="total_lesson" placeholder="8"
+                    class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-gray-400">
+            </div>
+
+            <!-- Hours per lesson -->
+            <div>
+                <label class="block text-sm text-gray-700 mb-1.5">Hours per lesson</label>
+                <input type="text" name="hours_per_lesson" placeholder="13:00"
+                    class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-gray-400">
+            </div>
+
+            <!-- Registration expiry date -->
+            <div>
+                <label class="block text-sm text-gray-700 mb-1.5">Registation expiry date</label>
+                <input type="date" name="registration_expiry_date"
+                    class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-gray-400">
+            </div>
+
+            <!-- Max number of student -->
+            <div>
+                <label class="block text-sm text-gray-700 mb-1.5">Max number of student</label>
+                <input type="number" name="max_students" placeholder="30"
+                    class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-gray-400">
+            </div>
+
+            <!-- Room -->
+            <div>
+                <label class="block text-sm text-gray-700 mb-1.5">Room</label>
+                <input type="text" name="room" placeholder="101"
+                    class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-gray-400">
+            </div>
+
+            <!-- Publish + Hot Course -->
+            <div class="flex items-center gap-8">
+                <div class="flex items-center gap-2">
+                    <label class="text-sm text-gray-700">Publish?</label>
+                    <input type="checkbox" name="is_published" class="w-5 h-5 rounded border-gray-300 accent-green-500">
+                </div>
+                <div class="flex items-center gap-2">
+                    <label class="text-sm text-gray-700">Hot Course?</label>
+                    <input type="checkbox" name="is_hot" class="w-5 h-5 rounded border-gray-300 accent-green-500">
+                </div>
+            </div>
+
+            <!-- Buttons -->
+            <div class="flex items-center gap-3 pt-2 pb-8">
+                <button type="submit"
+                    class="bg-[#8cb33a] hover:bg-[#7a9e30] text-white px-8 py-2.5 rounded text-sm font-medium">
+                    Create
+                </button>
+                <a href="{% url 'administration:course_list' %}"
+                    class="bg-gray-800 hover:bg-gray-700 text-white px-8 py-2.5 rounded text-sm font-medium">
+                    Back
+                </a>
+            </div>
+
+        </div>
+    </form>
+</main>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.getElementById('addFeature').addEventListener('click', () => {
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.name = 'feature[]';
+    input.placeholder = '循序漸進學習自理，減少依賴，最終能獨立上課及與人群體相處';
+    input.className = 'w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-gray-400';
+    document.getElementById('featureList').appendChild(input);
+});
+</script>
+{% endblock %}

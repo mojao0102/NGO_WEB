@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>德昌五金</title>
+  <!-- 載入 Tailwind -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- 載入 Icon -->
+  <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-50">
+  <div class="min-h-screen bg-gray-50">
+
+    <!-- HEADER / NAVBAR -->
+    <header class="sticky top-0 z-20 bg-white border-b shadow-sm">
+      <div class="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
+        <h2 class="text-xl font-semibold">德昌五金</h2>
+        
+        <div class="flex flex-col items-end gap-1">
+          <div class="flex items-center gap-4">
+            <a href="/login" class="px-3 py-1 text-sm border rounded outline-none hover:bg-gray-100">登入</a>
+            <a href="/register" class="px-3 py-1 text-sm bg-black text-white rounded hover:bg-gray-800">註冊</a>
+          </div>
+          <!-- COPYRIGHT 放在按鈕下方 -->
+          <p class="text-xs text-gray-400">九龍深水埗大南街67號地下B舖</p>
+          <p class="text-xs text-gray-400">@ 2026 Tak Cheong. All rights reserved.</p>
+        </div>
+      </div>
+    </header>
+
+    <!-- 主要內容 -->
+    <div class="max-w-7xl mx-auto px-4 py-8">
+
+      <!-- 搜尋欄 -->
+      <div class="mb-8">
+        <div class="relative max-w-xl">
+          <i class="fa fa-search absolute left-3 top-3 h-5 w-5 text-gray-400"></i>
+          <input 
+            type="text" 
+            placeholder="搜尋商品名稱..." 
+            class="w-full pl-10 px-3 py-2 border rounded"
+          >
+        </div>
+      </div>
+
+      <div class="grid lg:grid-cols-4 gap-8">
+        
+        <!-- 側邊欄 -->
+        <div class="lg:col-span-1">
+          <div class="space-y-8">
+            
+            <!-- 分類 -->
+            <div>
+              <h3 class="font-semibold mb-4">商品分類</h3>
+              <div class="space-y-2">
+                <button class="w-full text-left px-3 py-1 border rounded bg-black text-white">全部商品</button>
+                <button class="w-full text-left px-3 py-1 border rounded">電動工具</button>
+                <button class="w-full text-left px-3 py-1 border rounded">手工具</button>
+                <button class="w-full text-left px-3 py-1 border rounded">五金配件</button>
+              </div>
+            </div>
+
+            <!-- 材質 -->
+            <div>
+              <h3 class="font-semibold mb-4">材質</h3>
+              <div class="space-y-2">
+                <button class="w-full text-left px-3 py-1 border rounded">金屬</button>
+                <button class="w-full text-left px-3 py-1 border rounded">塑膠</button>
+                <button class="w-full text-left px-3 py-1 border rounded">不鏽鋼</button>
+              </div>
+            </div>
+
+            <!-- 已選條件 -->
+            <div>
+              <h3 class="font-semibold mb-4">已選條件</h3>
+              <div class="flex flex-wrap gap-2">
+                <span class="bg-gray-100 px-2 py-1 rounded text-xs flex items-center gap-1">
+                  電動工具 <i class="fa fa-times text-xs"></i>
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 商品列表 -->
+        <div class="lg:col-span-3">
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+
+            <!-- 單一商品 -->
+            <div class="group relative">
+              <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                <div class="bg-black/75 text-white px-4 py-2 rounded text-sm">請登入才可以買</div>
+              </div>
+
+              <div class="border rounded overflow-hidden hover:shadow-xl transition-shadow h-full flex flex-col">
+                <div class="aspect-square bg-gray-100 relative">
+                  <div class="w-full h-full flex items-center justify-center text-gray-400">無圖片</div>
+                </div>
+
+                <div class="p-4 pb-3">
+                  <h3 class="text-lg line-clamp-2 group-hover:text-blue-600 transition-colors">電鑽 高功率工業級</h3>
+                </div>
+
+                <div class="p-4 flex-1 flex flex-col justify-between">
+                  <div class="space-y-3">
+                    <p class="text-2xl font-bold text-blue-600">$1299</p>
+                    <p class="text-sm text-gray-600">單位：個</p>
+                    <span class="bg-gray-100 px-2 py-1 rounded text-xs">電動工具</span>
+                    <div class="flex flex-wrap gap-1 mt-2">
+                      <span class="border px-2 py-1 rounded text-xs">金屬</span>
+                    </div>
+                  </div>
+
+                  <button class="mt-4 p-2 border rounded hover:bg-gray-100">
+                    <i class="fa fa-heart-o"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+            <!-- 商品 END -->
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
