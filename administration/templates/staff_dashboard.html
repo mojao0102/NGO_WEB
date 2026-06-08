@@ -1,0 +1,91 @@
+{% extends "staff_base.html" %} 
+{% load static %}
+{% load humanize %}
+{% block content %}
+
+<!-- 主內容 -->
+<main class="md:ml-[200px] flex-1 p-8 pt-16 md:pt-8">
+    <!-- Page Title -->
+    <h1 class="text-[2rem] text-gray-700 font-semibold mb-6">Dashboard</h1>
+
+    <!-- Month Select -->
+    <div class="mb-6">
+        <button class="px-3 py-2 bg-gray-100 rounded border flex items-center gap-2">
+            <i class="fa-solid fa-calendar-days text-gray-500"></i>
+            <span>March 2025</span>
+            <i class="fa-solid fa-chevron-down text-xs"></i>
+        </button>
+    </div>
+
+    <!-- Top Stat Cards Row -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <!-- Daily Revenue -->
+        <div class="bg-white rounded-xl shadow-md p-5">
+            <div class="text-gray-500 mb-2">
+                <i class="fa-solid fa-credit-card text-2xl"></i>
+            </div>
+            <p class="text-sm text-gray-500">Daily Revenue</p>
+            <p class="text-[2rem] font-bold mt-2">$9990</p>
+        </div>
+        <!-- Monthly Revenue -->
+        <div class="bg-white rounded-xl shadow-md p-5">
+            <div class="text-gray-500 mb-2">
+                <i class="fa-solid fa-credit-card text-2xl"></i>
+            </div>
+            <p class="text-sm text-gray-500">Monthly Revenue</p>
+            <p class="text-[2rem] font-bold mt-2">$39990</p>
+        </div>
+        <!-- Intake students -->
+        <div class="bg-white rounded-xl shadow-md p-5">
+            <div class="text-gray-500 mb-2">
+                <i class="fa-solid fa-users text-2xl"></i>
+            </div>
+            <p class="text-sm text-gray-500">[Month] Intake students</p>
+            <p class="text-[2rem] font-bold mt-2">30</p>
+        </div>
+    </div>
+
+    <!-- Empty Chart Block (留白待Bar Chart後續接入) -->
+    <div class="mb-10">
+        <h2 class="text-xl text-gray-700 font-medium mb-4">Dashboard</h2>
+        <div class="bg-[#f8f8ff] rounded border min-h-[280px] w-full">
+            <!-- 圖表位置空白，後續放bar chart -->
+        </div>
+    </div>
+
+    <!-- Bottom Table: The student with the most registrations -->
+    <div>
+        <h2 class="text-xl text-gray-700 font-medium mb-5">The student with the most registrations</h2>
+        <div class="overflow-x-auto">
+            <table class="table-fixed w-full border-collapse">
+                <thead>
+                    <tr class="border-b border-gray-300">
+                        <th class="w-[18%] py-3 text-left text-gray-600 text-sm font-medium">Student no.</th>
+                        <th class="w-[18%] py-3 text-left text-gray-600 text-sm font-medium">Name (Chi)</th>
+                        <th class="w-[26%] py-3 text-left text-gray-600 text-sm font-medium">Name (Eng)</th>
+                        <th class="w-[22%] py-3 text-left text-gray-600 text-sm font-medium">birthday</th>
+                        <th class="w-[16%] py-3 text-left text-gray-600 text-sm font-medium">Number of registrations</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr class="border-b border-gray-200 text-sm">
+                        <td class="py-3">S143095</td>
+                        <td class="py-3">陳大文</td>
+                        <td class="py-3">Chan Tai Man</td>
+                        <td class="py-3">2016-01-01</td>
+                        <td class="py-3">5</td>
+                    </tr>
+                    <tr class="text-sm">
+                        <td class="py-3">S143123</td>
+                        <td class="py-3">陳小文</td>
+                        <td class="py-3">Chan Siu Man</td>
+                        <td class="py-3">2018-01-01</td>
+                        <td class="py-3">3</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</main>
+{% endblock %}
+

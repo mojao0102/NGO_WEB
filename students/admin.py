@@ -1,5 +1,5 @@
 from django.contrib import admin
-from administration.helper_funcs import ModelAdminOverride
+from core.admin import ModelAdminOverride
 from .models import Student
 
 admin.__name__ = "hihi"

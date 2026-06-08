@@ -1,5 +1,5 @@
 from django.contrib import admin
-from administration.helper_funcs import ModelAdminOverride
+from core.admin import ModelAdminOverride
 from .models import CourseMainCategory, CourseSubCategory, Course, CourseTemplate, CourseSchedule
 from django.utils.html import format_html
 from django.utils.timezone import localtime

@@ -223,22 +223,29 @@ def student_login(request):
         username = request.POST.get('username', '').strip()
         password = request.POST.get('password', '')
 
-        obj_student = Student.objects.filter(username=username, password=password).first()
+        try:
+            obj_student = Student.objects.get(Q(username=username) & Q(password=password) & ~Q(file_status="deleted"))  
 
-        if obj_student:
             if not obj_student.is_active:
                 frontweb_app_func.clear_login_session(request)
                 messages.error(request, "帳號已被停權，請聯絡中心")
                 return redirect("front_web:student_login")
+            else:
+                frontweb_app_func.create_login_session(request, obj_student)
+                messages.success(request, f"歡迎回來，{obj_student.username}")
+                return redirect("front_web:home")
             
-            frontweb_app_func.create_login_session(request, obj_student)
-            messages.success(request, f"歡迎回來，{obj_student.username}")
-            return redirect("front_web:home")
-        else:
+        except Student.DoesNotExist:
             frontweb_app_func.clear_login_session(request)
             messages.error(request, "帳號或密碼錯誤，請重新輸入")        
             context = {'list_mc': request.list_mc, 'input_data': request.POST}
             return render(request, "student_login.html", context)
+        
+        except Exception as e:
+            print(f"student login error, username:{username}, error:{e}")
+            messages.error(request, "系統帳號異常，請聯絡中心管理員")
+            return render(request, "student_login.html", context)
+        
     else:#Get
         context = {'list_mc' : request.list_mc}
         return render(request, "student_login.html", context)
