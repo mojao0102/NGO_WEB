@@ -29,8 +29,14 @@ def staff_login(request):
         return render(request, 'staff_login.html')
 
 
+@admin_app_func.staff_access_control
 def staff_logout(request):
-    return redirect('administration:staff_login')
+    if request.method == 'POST':
+        admin_app_func.clear_login_session(request)
+        messages.success(request, '登出成功')
+        return redirect('administration:staff_login')
+    else:    
+        return redirect('administration:staff_dashboard')
 
 
 @admin_app_func.staff_access_control

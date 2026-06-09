@@ -1,13 +1,19 @@
-from django.shortcuts import render, get_list_or_404, get_object_or_404
+from administration.func import app_func as admin_app_func
 
+from django.shortcuts import render
+
+@admin_app_func.staff_access_control
 def course_list(request):
-    return render(request, "course_list.html")
+    return render(request, "courses/course_list.html")
 
+@admin_app_func.staff_access_control
 def course_create(request):
-    return render(request, "course_edit.html")
+    return render(request, "courses/course_edit.html")
 
+@admin_app_func.staff_access_control
 def course_edit(request, course_id):
-    return render(request, "course_edit.html")
+    return render(request, "courses/course_edit.html")
 
+@admin_app_func.staff_access_control
 def course_view(request, course_id):
-    return render(request, "course_view.html")
+    return render(request, "courses/ourse_view.html")
