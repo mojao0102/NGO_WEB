@@ -10,12 +10,12 @@
 </head>
 <body class="bg-gray-50 min-h-screen flex items-center justify-center">
 
-{% include "partials/_alert.html" %}
 
 <div class="bg-white rounded-xl shadow-md w-full max-w-sm p-8">
+    {% include "partials/_alert.html" %} 
     <div class="mb-8 text-center">
         <img src="{% static 'img/logo/jc.png' %}" alt="Logo" class="h-12 object-contain mx-auto mb-4">
-        <h1 class="text-xl font-semibold text-gray-700">Staff Login</h1>
+        <h1 class="text-xl font-semibold text-gray-700">職員登入</h1>
     </div>
     <form action="{% url "administration:staff_login" %}" method="post" class="flex flex-col gap-4">
         {% csrf_token %}
@@ -35,6 +35,7 @@
         </button>
     </form>
 </div>
+
 
 </body>
 </html>
