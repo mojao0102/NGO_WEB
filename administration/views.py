@@ -1,7 +1,5 @@
 from django.shortcuts import render, redirect
-from django.db.models import Q, F
-from django.contrib.auth import authenticate, login, logout
-from django.contrib.auth.decorators import login_required
+from django.db.models import Q
 from django.contrib import messages
 from .models import Staff
 from .func import app_func as admin_app_func
@@ -32,7 +30,6 @@ def staff_login(request):
 
 
 def staff_logout(request):
-    logout(request)
     return redirect('administration:staff_login')
 
 
