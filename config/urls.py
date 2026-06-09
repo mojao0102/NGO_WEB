@@ -22,10 +22,10 @@ from django.conf.urls.static import static
 
 urlpatterns = [
     path('', include('front_web.urls', namespace='front_web')),
-    path('administration/', include('administration.urls', namespace='administration')),
-    path('students/', include('students.urls', namespace='students')),
-    path('teachers/', include('teachers.urls', namespace='teachers')),
-    path('courses/', include('courses.urls', namespace='courses')),
-    path('web_contents/', include('web_contents.urls', namespace='web_contents')),
+    path('manage/', include('administration.urls', namespace='administration')),
+    path('manage/students/', include('students.urls', namespace='students')),
+    path('manage/teachers/', include('teachers.urls', namespace='teachers')),
+    path('manage/courses/', include('courses.urls', namespace='courses')),
+    path('manage/web_contents/', include('web_contents.urls', namespace='web_contents')),
     path('admin/', admin.site.urls),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT) + debug_toolbar_urls()

@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Course Admin</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style type="text/tailwindcss">
+@layer utilities {
+    .sidebar-shadow { box-shadow: 2px 0 8px #0000000d; }
+    .dropdown-card { box-shadow: 0 2px 10px rgba(0,0,0,0.12); z-index:9999; }
+    .row-selected { background-color: #e6f0ff; }
+}
+</style>
+</head>
+<body class="bg-white min-h-screen">
+
+<!-- 手機漢堡按鈕 -->
+<button id="hamburger" class="md:hidden fixed top-4 left-4 z-[99999] text-xl text-gray-700">
+    <div class="py-2 px-4 bg-gray-100 rounded-full shadow-lg">
+        <i class="fa-solid fa-bars"></i>
+    </div>
+</button>
+
+<!-- 左側欄 -->
+<aside id="sidebar" class="w-[200px] min-h-screen bg-white sidebar-shadow fixed top-0 left-0 flex flex-col justify-between py-6 px-4
+    -translate-x-full md:translate-x-0 transition-transform duration-300 z-[99998]">
+
+    <!-- 手機關閉X -->
+    <button id="closeSidebar" class="md:hidden absolute top-4 right-4 text-xl text-gray-500">
+        <i class="fa-solid fa-xmark"></i>
+    </button>
+
+    <div class="mb-10 mt-6">
+        <img src="./img/logo/jc.png" alt="Logo" class="h-12 object-contain">
+    </div>
+
+    <!-- 全部文字 text-xs -->
+    <div class="flex-1">
+        <p class="text-xs text-gray-500 mb-3 tracking-wide">GENERAL</p>
+        <nav class="flex flex-col gap-2">
+            <a href="#" class="rounded-lg py-2.5 px-3 flex items-center gap-3 bg-gray-100 text-gray-600 text-xs">
+                <i class="fa-solid fa-gauge-high w-5 text-center"></i>
+                <span>Dashboard</span>
+            </a>
+            <a href="#" class="rounded-lg py-2.5 px-3 flex items-center gap-3 hover:bg-gray-100 text-gray-700 text-xs">
+                <i class="fa-solid fa-table-columns w-5 text-center"></i>
+                <span>Course Template</span>
+            </a>
+            <a href="#" class="rounded-lg py-2.5 px-3 flex items-center gap-3 hover:bg-gray-100 text-gray-700 text-xs">
+                <i class="fa-solid fa-book-open w-5 text-center"></i>
+                <span>Course</span>
+            </a>
+            <a href="#" class="rounded-lg py-2.5 px-3 flex items-center gap-3 hover:bg-gray-100 text-gray-600 text-xs">
+                <i class="fa-solid fa-newspaper w-5 text-center"></i>
+                <span>NEWS</span>
+            </a>
+            <a href="#" class="rounded-lg py-2.5 px-3 flex items-center gap-3 hover:bg-gray-100 text-gray-600 text-xs">
+                <i class="fa-solid fa-users w-5 text-center"></i>
+                <span>Student</span>
+            </a>
+            <a href="#" class="rounded-lg py-2.5 px-3 flex items-center gap-3 hover:bg-gray-100 text-gray-600 text-xs">
+                <i class="fa-solid fa-chalkboard-user w-5 text-center"></i>
+                <span>Teacher</span>
+            </a>
+        </nav>
+    </div>
+
+    <div class="mt-8">
+        <p class="text-xs mb-3">Hello, Staff A!</p>
+        <button class="border border-blue-500 rounded-lg py-2 px-3 text-blue-500 flex items-center gap-2 hover:bg-blue-50 text-xs">
+            <i class="fa-solid fa-right-from-bracket"></i> Log out
+        </button>
+    </div>
+</aside>
+
+<!-- 手機遮罩 -->
+<div id="overlay" class="hidden fixed inset-0 bg-black/20 z-[99997] md:hidden"></div>
+
+<!-- 主內容 -->
+<main class="md:ml-[200px] flex-1 p-8 pt-16 md:pt-8">
+    <h1 class="text-xl text-gray-700 font-medium mb-8">Edit Course Template</h1>
+
+    <form class="max-w-2xl space-y-5">
+        <!-- Center Name -->
+        <div>
+            <label class="block text-sm text-gray-600 mb-1">Center Name</label>
+            <select class="w-1/3 border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200">
+                <option>--select--</option>
+            </select>
+        </div>
+
+        <!-- Course code -->
+        <div>
+            <label class="block text-sm text-gray-600 mb-1">Course code</label>
+            <input type="text" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200">
+        </div>
+
+        <!-- Course name -->
+        <div>
+            <label class="block text-sm text-gray-600 mb-1">Course name</label>
+            <input type="text" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200">
+        </div>
+
+        <!-- Banner 上傳圖片功能 -->
+        <div>
+            <label class="block text-sm text-gray-600 mb-1">Banner</label>
+            <div class="flex items-center gap-3">
+                <input type="file" id="bannerUpload" accept="image/*" class="hidden">
+                <button type="button" onclick="document.getElementById('bannerUpload').click()" 
+                    class="border border-gray-300 rounded px-4 py-2 text-gray-600 hover:bg-gray-50">
+                    <i class="fa-solid fa-plus mr-1 text-sm"></i> Upload
+                </button>
+                <span id="bannerFileName" class="text-sm text-gray-500"></span>
+            </div>
+        </div>
+
+        <!-- Content -->
+        <div>
+            <label class="block text-sm text-gray-600 mb-1">Content</label>
+            <textarea rows="5" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200"></textarea>
+        </div>
+
+        <!-- Category -->
+        <div>
+            <label class="block text-sm text-gray-600 mb-1">Category</label>
+            <select class="w-1/3 border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200">
+                <option>--select--</option>
+            </select>
+        </div>
+
+        <!-- Teacher Name -->
+        <div>
+            <label class="block text-sm text-gray-600 mb-1">Teacher Name</label>
+            <select class="w-1/3 border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200">
+                <option>--select--</option>
+            </select>
+        </div>
+
+        <!-- Feature 動態新增行 (最多8個) -->
+        <div>
+            <label class="block text-sm text-gray-600 mb-1">Feature</label>
+            <div id="featureContainer">
+                <input type="text" class="w-full border border-gray-300 rounded px-3 py-2 mb-2 focus:outline-none focus:ring focus:ring-blue-200">
+                <input type="text" class="w-full border border-gray-300 rounded px-3 py-2 mb-2 focus:outline-none focus:ring focus:ring-blue-200">
+                <input type="text" class="w-full border border-gray-300 rounded px-3 py-2 mb-2 focus:outline-none focus:ring focus:ring-blue-200">
+                <input type="text" class="w-full border border-gray-300 rounded px-3 py-2 mb-2 focus:outline-none focus:ring focus:ring-blue-200">
+            </div>
+            <button type="button" onclick="addFeatureRow()" id="addFeatureBtn"
+                class="mt-2 border border-gray-300 rounded px-4 py-2 text-gray-600 hover:bg-gray-50">
+                <i class="fa-solid fa-plus mr-1"></i> 增添
+            </button>
+        </div>
+
+        <!-- Fee -->
+        <div>
+            <label class="block text-sm text-gray-600 mb-1">Fee</label>
+            <input type="text" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200">
+        </div>
+
+        <!-- Date Range -->
+        <div class="grid grid-cols-2 gap-4">
+            <div>
+                <label class="block text-sm text-gray-600 mb-1">Start Date</label>
+                <input type="text" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200">
+            </div>
+            <div>
+                <label class="block text-sm text-gray-600 mb-1">End Date</label>
+                <input type="text" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200">
+            </div>
+        </div>
+
+        <!-- Time Range -->
+        <div class="grid grid-cols-2 gap-4">
+            <div>
+                <label class="block text-sm text-gray-600 mb-1">Start Time</label>
+                <input type="text" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200">
+            </div>
+            <div>
+                <label class="block text-sm text-gray-600 mb-1">End Time</label>
+                <input type="text" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200">
+            </div>
+        </div>
+
+        <!-- Total Lesson -->
+        <div>
+            <label class="block text-sm text-gray-600 mb-1">Total Lesson</label>
+            <input type="text" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200">
+        </div>
+
+        <!-- Hours per lesson -->
+        <div>
+            <label class="block text-sm text-gray-600 mb-1">Hours per lesson</label>
+            <input type="text" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200">
+        </div>
+
+        <!-- Registration expiry date -->
+        <div>
+            <label class="block text-sm text-gray-600 mb-1">Registration expiry date</label>
+            <input type="text" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200">
+        </div>
+
+        <!-- Max number of student -->
+        <div>
+            <label class="block text-sm text-gray-600 mb-1">Max number of student</label>
+            <input type="text" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200">
+        </div>
+
+        <!-- Room -->
+        <div>
+            <label class="block text-sm text-gray-600 mb-1">Room</label>
+            <input type="text" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200">
+        </div>
+
+        <!-- Buttons -->
+        <div class="flex items-center gap-4 pt-4">
+            <button type="button" class="bg-green-500 text-white px-6 py-2 rounded hover:bg-green-600">Confirm edit</button>
+            <button type="button" class="bg-gray-700 text-white px-6 py-2 rounded hover:bg-gray-800">Back</button>
+            <button type="button" class="bg-red-500 text-white px-6 py-2 rounded hover:bg-red-600">Delete</button>
+        </div>
+
+    </form>
+</main>
+
+
+<!-- 動態新增 Feature 行的 JS -->
+<script>
+// 上傳圖片顯示檔名
+document.getElementById('bannerUpload').addEventListener('change', function(e) {
+    const fileName = e.target.files[0]?.name || '';
+    document.getElementById('bannerFileName').textContent = fileName;
+});
+
+// Feature 最多 8 個輸入框
+const MAX_FEATURE = 8;
+function addFeatureRow() {
+    const container = document.getElementById('featureContainer');
+    const currentCount = container.querySelectorAll('input').length;
+
+    // 達到上限則不再新增
+    if (currentCount >= MAX_FEATURE) return;
+
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'w-full border border-gray-300 rounded px-3 py-2 mb-2 focus:outline-none focus:ring focus:ring-blue-200';
+    container.appendChild(input);
+}
+</script>
+
+<!-- Mobile hamburgar JS -->
+<script>
+// 漢堡側欄
+const hamburger = document.getElementById('hamburger');
+const sidebar = document.getElementById('sidebar');
+const closeSidebar = document.getElementById('closeSidebar');
+const overlay = document.getElementById('overlay');
+
+hamburger.addEventListener('click', () => {
+    sidebar.classList.remove('-translate-x-full');
+    overlay.classList.remove('hidden');
+    hamburger.classList.add('hidden');
+});
+function closeMenu() {
+    sidebar.classList.add('-translate-x-full');
+    overlay.classList.add('hidden');
+    hamburger.classList.remove('hidden');
+}
+closeSidebar.addEventListener('click', closeMenu);
+overlay.addEventListener('click', closeMenu);
+
+// 選單功能
+const globalMoreMenu = document.getElementById('globalMoreMenu');
+function closeAllMenus() {
+    globalMoreMenu.classList.add('hidden');
+    document.querySelectorAll('.dropdown-filter > div, .dropdown-action > div').forEach(m => m.classList.add('hidden'));
+}
+
+// More
+document.querySelectorAll('.more-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        closeAllMenus();
+        const rect = btn.getBoundingClientRect();
+        globalMoreMenu.style.left = rect.left - 130 + 'px';
+        globalMoreMenu.style.top = rect.top + 10 + 'px';
+        globalMoreMenu.classList.remove('hidden');
+    });
+});
+
+// Filter & Action
+document.querySelectorAll('.dropdown-filter, .dropdown-action').forEach(wrap => {
+    const btn = wrap.querySelector('button');
+    const menu = wrap.querySelector('div');
+    btn.addEventListener('click', e => {
+        e.stopPropagation();
+        const open = !menu.classList.contains('hidden');
+        closeAllMenus();
+        if (!open) menu.classList.remove('hidden');
+    });
+});
+
+document.addEventListener('click', closeAllMenus);
+
+// 勾選行
+document.querySelectorAll('.row-check').forEach(ck => {
+    ck.addEventListener('change', () => {
+        ck.closest('.table-row').classList.toggle('row-selected', ck.checked);
+    });
+});
+</script>
+</body>
+</html>

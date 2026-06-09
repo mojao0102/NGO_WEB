@@ -8,8 +8,6 @@ from .func import app_func as admin_app_func
 
 def staff_login(request):
 
-
-
     if request.method == 'POST':
 
         username = request.POST.get('username', '').strip()
