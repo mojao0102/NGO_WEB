@@ -1,0 +1,85 @@
+{% extends 'staff_base.html' %}
+{% block content %}
+<!-- 主內容 -->
+<main class="md:ml-[200px] flex-1 p-8 pt-16 md:pt-8">
+    <h1 class="text-xl text-gray-700 font-medium mb-8">Edit NEWS</h1>
+
+    <form class="max-w-2xl space-y-5">
+        <!-- Title -->
+        <div>
+            <label class="block text-sm text-gray-600 mb-1">Title</label>
+            <input type="text" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200">
+        </div>
+
+        <!-- Content -->
+        <div>
+            <label class="block text-sm text-gray-600 mb-1">Content</label>
+            <textarea rows="6" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200"></textarea>
+        </div>
+
+        <!-- Hot Banner -->
+        <div>
+            <label class="block text-sm text-gray-600 mb-1">Hot Banner</label>
+            <div class="flex items-center gap-3">
+                <input type="file" id="hotBannerUpload" accept="image/*" class="hidden">
+                <button type="button" onclick="document.getElementById('hotBannerUpload').click()"
+                    class="border border-gray-300 rounded px-4 py-2 text-gray-600 hover:bg-gray-50">
+                    <i class="fa-solid fa-plus mr-1"></i> Upload Photo
+                </button>
+                <span id="hotBannerFileName" class="text-sm text-gray-500"></span>
+            </div>
+        </div>
+
+        <!-- Content Image (3個可上傳) -->
+        <div>
+            <label class="block text-sm text-gray-600 mb-1">Content Image</label>
+            <div class="space-y-3">
+                <div class="flex items-center gap-3">
+                    <input type="file" id="contentImage1" accept="image/*" class="hidden">
+                    <button type="button" onclick="document.getElementById('contentImage1').click()"
+                        class="border border-gray-300 rounded px-4 py-2 text-gray-600 hover:bg-gray-50">
+                        <i class="fa-solid fa-plus mr-1"></i> Upload Photo
+                    </button>
+                    <span id="contentImage1Name" class="text-sm text-gray-500"></span>
+                </div>
+                <div class="flex items-center gap-3">
+                    <input type="file" id="contentImage2" accept="image/*" class="hidden">
+                    <button type="button" onclick="document.getElementById('contentImage2').click()"
+                        class="border border-gray-300 rounded px-4 py-2 text-gray-600 hover:bg-gray-50">
+                        <i class="fa-solid fa-plus mr-1"></i> Upload Photo
+                    </button>
+                    <span id="contentImage2Name" class="text-sm text-gray-500"></span>
+                </div>
+                <div class="flex items-center gap-3">
+                    <input type="file" id="contentImage3" accept="image/*" class="hidden">
+                    <button type="button" onclick="document.getElementById('contentImage3').click()"
+                        class="border border-gray-300 rounded px-4 py-2 text-gray-600 hover:bg-gray-50">
+                        <i class="fa-solid fa-plus mr-1"></i> Upload Photo
+                    </button>
+                    <span id="contentImage3Name" class="text-sm text-gray-500"></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Expiry Date -->
+        <div>
+            <label class="block text-sm text-gray-600 mb-1">Expiry Date</label>
+            <input type="date" class="w-[200px] border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200">
+        </div>
+
+        <!-- Publish? -->
+        <div>
+            <label class="block text-sm text-gray-600 mb-2">Publish?</label>
+            <input type="checkbox" class="w-5 h-5 rounded border-gray-300 cursor-pointer">
+        </div>
+
+        <!-- Buttons -->
+        <div class="flex items-center gap-4 pt-4">
+            <button type="button" class="bg-green-500 text-white px-6 py-2 rounded hover:bg-green-600">Confirm edit</button>
+            <button type="button" class="bg-red-500 text-white px-6 py-2 rounded hover:bg-red-600">Delete</button>
+            <button type="button" class="bg-gray-700 text-white px-6 py-2 rounded hover:bg-gray-800">Back</button>
+        </div>
+    </form>
+</main>
+
+{% endblock  %}
