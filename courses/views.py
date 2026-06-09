@@ -16,4 +16,4 @@ def course_edit(request, course_id):
 
 @admin_app_func.staff_access_control
 def course_view(request, course_id):
-    return render(request, "courses/ourse_view.html")
+    return render(request, "courses/course_view.html")
