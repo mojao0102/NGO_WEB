@@ -54,8 +54,9 @@ def create_signup_from_checkout_session(session):
             course=course,
             student=student,
             sign_up_status="success",
+            payment_date__isnull=False,
             cancel_date__isnull=True,
-        ).exclude(payment_ref="").first()
+        ).first()
         if existing_paid_signup:
             return existing_paid_signup, False
 

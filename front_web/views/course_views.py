@@ -29,7 +29,10 @@ def course_list(request, mc_id):
 
         #Get course list
         course_queryset = Course.objects.annotate(
-        valid_signup_count=Count('signup_set', filter=~Q(signup_set__payment_ref="") & Q(signup_set__sign_up_status="success") & Q(signup_set__cancel_date__isnull=True))
+        valid_signup_count=Count('signup_set', filter=Q(signup_set__payment_date__isnull=False) 
+                                & Q(signup_set__sign_up_status="success") 
+                                & Q(signup_set__cancel_date__isnull=True)
+                                & ~Q(signup_set__file_status="deleted"))
         ).annotate(
         #generate str_course_status base on valid_signup_count
             str_course_status=Case(
@@ -45,7 +48,7 @@ def course_list(request, mc_id):
         context["list_course"] = course_queryset.filter(sub_category_id = sc_id, 
                                                 is_web_publish = True, 
                                                 registation_expiry_date__gt=timezone.localtime(timezone.now()),
-                                                course_status = "created")
+                                                course_status = "created").exclude(file_status="deleted")
     return render(request, "course_list.html", context)
 
 @frontweb_app_func.load_main_category
@@ -58,7 +61,10 @@ def course(request, course_id):
         #Build custom field at course queryset
         #Count valid signup
         course_queryset = Course.objects.annotate(
-        valid_signup_count=Count('signup_set', filter=~Q(signup_set__payment_ref="") & Q(signup_set__sign_up_status="success") & Q(signup_set__cancel_date__isnull=True))
+        valid_signup_count=Count('signup_set', filter=Q(signup_set__payment_date__isnull=False) 
+                                & Q(signup_set__sign_up_status="success") 
+                                & Q(signup_set__cancel_date__isnull=True)
+                                & ~Q(signup_set__file_status="deleted"))
         ).annotate(
         #generate str_course_status base on valid_signup_count
             str_course_status=Case(
@@ -74,7 +80,7 @@ def course(request, course_id):
         obj_course = get_object_or_404(course_queryset, id = course_id, 
                                     is_web_publish = True, 
                                     registation_expiry_date__gt=timezone.localtime(timezone.now()),
-                                    course_status = "created")
+                                    course_status = "created").exclude(file_status="deleted")
 
         context = {'list_mc' : request.list_mc, "obj_course" : obj_course}
 

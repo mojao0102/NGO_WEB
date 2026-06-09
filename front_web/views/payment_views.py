@@ -20,7 +20,7 @@ def course_payment(request, course_id):
 
         #1 Get course and check if course still avaliable, Only course with status "created", web published, signup number < max no and not over registation expiry date allow to sign_up
         course_queryset = Course.objects.annotate(
-        valid_signup_count=Count('signup_set', filter=~Q(signup_set__payment_ref="") & Q(signup_set__sign_up_status="success") & Q(signup_set__cancel_date__isnull=True)))     
+        valid_signup_count=Count('signup_set', filter=Q(signup_set__payment_date__isnull=False) & Q(signup_set__sign_up_status="success") & Q(signup_set__cancel_date__isnull=True)))     
         obj_course = course_queryset.filter(id = course_id, is_web_publish = True, registation_expiry_date__gt=timezone.localtime(timezone.now()), course_status = "created").first()
         if not obj_course:
             messages.error(request, "課程狀態已更改，請刷新頁面")
