@@ -30,9 +30,9 @@
 
             <button type="submit" class="border border-gray-300 py-2.5 px-4 rounded hover:bg-gray-50">Search</button>
             
-            <a href="{% url 'courses:course_list' %}" class="border border-gray-300 py-2.5 px-4 rounded hover:bg-gray-50 text-gray-600 flex items-center">
+            {% comment %} <a href="{% url 'courses:course_list' %}" class="border border-gray-300 py-2.5 px-4 rounded hover:bg-gray-50 text-gray-600 flex items-center">
                 <i class="fa-solid fa-arrows-rotate"></i>
-            </a>
+            </a> {% endcomment %}
 
             <div class="relative dropdown-action">
                 <button class="border border-gray-300 py-2.5 px-4 rounded hover:bg-gray-50" type="button">Action</button>
@@ -104,7 +104,7 @@
                         <td class="hidden md:table-cell py-5 align-top">{{ course.period_to|date:"Y-m-d" }}</td>
                         
                         <td class="py-5">
-                            <button type="button" class="more-btn text-gray-400 text-xl hover:text-gray-600" data-course-id="{{ course.id }}">
+                            <button type="button" class="more-btn text-gray-400 text-xl hover:text-gray-600" data-id="{{ course.id }}">
                                 <div class="px-3">
                                     <i class="fa-solid fa-ellipsis-v"></i>
                                 </div>
@@ -121,43 +121,28 @@
         </div>
     </form> 
     <div id="globalMoreMenu" class="hidden fixed z-[999999] bg-white border border-gray-300 shadow-lg min-w-[130px]">
-        <a href="{% url 'courses:course_view' 0 %}" id="viewLink" class="block py-2.5 px-3 hover:bg-gray-100 cursor-pointer flex items-center gap-3">
+        <a id="menuView" href="#" class="py-2.5 px-3 hover:bg-gray-100 cursor-pointer flex items-center gap-3">
             <i class="fa-solid fa-eye text-[#737373]"></i> View
         </a>
-
-        <a href="{% url 'courses:course_edit' 0 %}" id="editLink" class="block py-2.5 px-3 hover:bg-gray-100 cursor-pointer flex items-center gap-3">
+        <a id="menuEdit" href="#" class="py-2.5 px-3 hover:bg-gray-100 cursor-pointer flex items-center gap-3">
             <i class="fa-solid fa-pen-to-square text-[#527bff]"></i> Edit
         </a>
     </div>
 </main>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const moreBtns = document.querySelectorAll('.more-btn');
-    const viewLink = document.getElementById('viewLink');
-    const editLink = document.getElementById('editLink');
-
-    // 1. 網頁載入時，先記住原本帶有 /0/ 的乾淨網址
-    const defaultViewUrl = viewLink.getAttribute('href'); 
-    const defaultEditUrl = editLink.getAttribute('href'); 
-
-    moreBtns.forEach(btn => {
-        btn.addEventListener('click', function(e) {
-            e.preventDefault(); // 防止按鈕預設行為
-            
-            // 2. 抓取這一個 Row 專屬的 Course ID
-            const courseId = this.getAttribute('data-course-id');
-
-            // 3. 施展魔法：把預設網址裡面的 /0/ 替換成真正的 /ID/
-            // 例如：/courses/edit/0/ -> /courses/edit/15/
-            viewLink.setAttribute('href', defaultViewUrl.replace('/0/', `/${courseId}/`));
-            editLink.setAttribute('href', defaultEditUrl.replace('/0/', `/${courseId}/`));
-
-            // ----------------------------------------------------
-            // 4. (這裡放你原本用來顯示和定位 globalMoreMenu 的邏輯)
-            // 例如：計算按鈕位置，把選單 set display: block 等等...
-            // ----------------------------------------------------
-        });
+// More
+document.querySelectorAll('.more-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        closeAllMenus();
+        const rect = btn.getBoundingClientRect();
+        globalMoreMenu.style.left = rect.left - 130 + 'px';
+        globalMoreMenu.style.top = rect.top + 10 + 'px';
+        globalMoreMenu.classList.remove('hidden');
+        const id = btn.dataset.id;
+        document.getElementById('menuView').href = `/manage/courses/view/${id}`;
+        document.getElementById('menuEdit').href = `/manage/courses/edit/${id}`;
     });
 });
 </script>
