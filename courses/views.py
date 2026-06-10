@@ -6,6 +6,7 @@ from django.urls import reverse
 from urllib.parse import urlencode
 from django.contrib import messages
 from .func import app_func as course_app_func
+from django.utils.dateparse import parse_date
 
 @admin_app_func.staff_access_control
 def course_list(request):
@@ -31,17 +32,33 @@ def course_list(request):
             return render(request, "courses/course_list.html", context)
         
         #Get User filter and pass by redirect
-        keyword = request.POST.get('txtkeyword', '').strip()
-        dynamic_status = request.POST.get('StatusSelector', '').strip()
-        course_category = request.GET.get('CategorySelector', '').strip()
-
         query_kwargs = {}
-        if keyword:
+        if keyword:= request.POST.get('txtkeyword', '').strip():
             query_kwargs['txtkeyword'] = keyword
-        if dynamic_status:
+
+        if dynamic_status:= request.POST.get('StatusSelector', '').strip():
             query_kwargs['StatusSelector'] = dynamic_status
-        if course_category:
+
+        if course_category:= request.POST.get('CategorySelector', '').strip():
             query_kwargs['CategorySelector'] = course_category
+
+        if (publish_status := request.GET.get('PublishSelector', '').strip()) in ('0', '1'):
+            query_kwargs['PublishSelector'] = publish_status
+
+        if (promote_status := request.GET.get('PromoteSelector', '').strip()) in ('0', '1'):
+            query_kwargs['PromoteSelector'] = promote_status
+
+        if start_date_from:= parse_date(request.POST.get('start_date_from', '').strip()):
+            query_kwargs['start_date_from'] = start_date_from
+
+        if start_date_to:= parse_date(request.POST.get('start_date_to', '').strip()):
+            query_kwargs['start_date_to'] = start_date_to
+
+        if expiry_date_from:= parse_date(request.POST.get('expiry_date_from', '').strip()):
+            query_kwargs['expiry_date_from'] = expiry_date_from
+
+        if expiry_date_to:= parse_date(request.POST.get('expiry_date_to', '').strip()):
+            query_kwargs['expiry_date_to'] = expiry_date_to
 
         #reassemble the url with filter
         base_url = reverse('courses:course_list')
@@ -52,22 +69,37 @@ def course_list(request):
 
         #redirect with filter element
         return redirect(redirect_url)
-    else:
-        keyword = request.GET.get('txtkeyword', '').strip()
-        dynamic_status = request.GET.get('StatusSelector', '').strip()
-        course_category = request.GET.get('CategorySelector', '').strip()
-
+    else:#GET
         course_filters = {} 
 
-        if keyword:
+        if keyword:= request.GET.get('txtkeyword', '').strip():
             course_filters['keyword'] = keyword
-        if course_category:
+
+        if course_category:= request.GET.get('CategorySelector', '').strip():
             course_filters['sub_category_id'] = course_category
+
+        if (publish_status := request.GET.get('PublishSelector', '').strip()) in ('0', '1'):
+            course_filters['is_web_publish'] = (publish_status == '1')
+
+        if (promote_status := request.GET.get('PromoteSelector', '').strip()) in ('0', '1'):
+            course_filters['is_promote'] = (promote_status == '1')
+
+        if start_date_from:= parse_date(request.GET.get('start_date_from', '').strip()):
+            course_filters['period_from__gte'] = start_date_from
+
+        if start_date_to:= parse_date(request.GET.get('start_date_to', '').strip()):
+            course_filters['period_from__lte'] = start_date_to
+
+        if expiry_date_from:= parse_date(request.GET.get('expiry_date_from', '').strip()):
+            course_filters['registation_expiry_date__gte'] = expiry_date_from
+
+        if expiry_date_to:= parse_date(request.GET.get('expiry_date_to', '').strip()):
+            course_filters['registation_expiry_date__lte'] = expiry_date_to
 
         list_course = course_app_func.get_courses_with_dynamic_status(**course_filters)
 
         #Filter annote field
-        if dynamic_status:
+        if dynamic_status:= request.GET.get('StatusSelector', '').strip():
             list_course = list_course.filter(course_dynamic_status=dynamic_status)
             
         context = {"list_category" : list_category, "list_course" : list_course, "input_data" : request.GET}

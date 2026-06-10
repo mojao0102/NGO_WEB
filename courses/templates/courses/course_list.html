@@ -9,17 +9,36 @@
 
     <form id="courseForm" method="GET" action="{% url 'courses:course_list' %}" class="w-full">
         {% csrf_token %}
+        <div class="flex flex-wrap items-center gap-3 mb-2 text-sm">
 
-        <div class="flex flex-wrap items-center gap-3 mb-8">
-            <div class="relative flex-grow max-w-[460px]">
+            <a href="{% url 'courses:course_create' %}" class="border border-gray-300 py-2.5 px-4 rounded hover:bg-gray-50 flex items-center gap-2">
+                <i class="fa-solid fa-plus"></i> Create
+            </a> 
+
+            <div class="relative dropdown-action pr-3">
+                <button class="border border-gray-300 py-2.5 px-4 rounded hover:bg-gray-50" type="button">
+                    <i class="fa-solid fa-bolt"></i> 
+                        <span>Action</span>
+                    <i class="fa-solid fa-chevron-down text-xs text-gray-400 ml-1"></i>
+                </button>
+                <div class="hidden flex flex-col absolute top-full mt-1 bg-white border border-gray-300 dropdown-card min-w-[200px] z-50">
+                    <button formmethod="post" class="py-2 px-5 text-left hover:bg-gray-100 cursor-pointer" type="submit" name="btnAction" value="SetWebPublish">Set Publish</button>
+                    <button formmethod="post" class="py-2 px-5 text-left hover:bg-gray-100 cursor-pointer" type="submit" name="btnAction" value="UndoWebPublish">Undo Publish</button>
+                    <button formmethod="post" class="py-2 px-5 text-left hover:bg-gray-100 cursor-pointer" type="submit" name="btnAction" value="SetPromote">Set Promote</button>
+                    <button formmethod="post" class="py-2 px-5 text-left hover:bg-gray-100 cursor-pointer" type="submit" name="btnAction" value="UndoPromote">Undo Promote</button>
+                </div>
+            </div>  
+
+            <div class="relative flex-grow max-w-[200px]">
                 <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
-                <input type="text" name="txtkeyword" value="{{input_data.txtkeyword}}" placeholder="搜尋課程代碼或名稱..." class="w-full pl-10 pr-4 py-2.5 rounded-full border border-gray-300 focus:outline-none">
+                <input type="text" name="txtkeyword" value="{{input_data.txtkeyword}}" placeholder="搜尋課程代碼或名稱..." 
+                class="w-full pl-10 pr-4 py-2.5 rounded-full border border-gray-300 focus:outline-none">
             </div>
 
             <select 
                 name="StatusSelector" 
                 class="border border-gray-300 py-2.5 px-4 rounded hover:bg-gray-50 bg-white focus:outline-none cursor-pointer"
-                onchange="this.form.submit()">
+                onchange="submitGetForm()">
                 <option value=""{% if input_data.StatusSelector == '' %}selected{% endif %}>-- 所有狀態 --</option>
                 <option value="報名中" {% if input_data.StatusSelector == '報名中' %}selected{% endif %}>報名中</option>
                 <option value="人數已滿" {% if input_data.StatusSelector == '人數已滿' %}selected{% endif %}>人數已滿</option>
@@ -31,29 +50,69 @@
 
             <select 
                 name="CategorySelector" 
-                class="border border-gray-300 py-2.5 px-4 rounded hover:bg-gray-50 bg-white focus:outline-none cursor-pointer"
-                onchange="this.form.submit()">
+                class="border border-gray-300 py-2.5 px-4 rounded hover:bg-gray-50 bg-white focus:outline-none cursor-pointer max-w-[200px]"
+                onchange="submitGetForm()">
                 <option value=""{% if input_data.CategorySelector == '' %}selected{% endif %}>-- 所有類別 --</option>
                 {% for category in list_category %}
-                    <option value="{{category.id}}" {% if input_data.CategorySelector == '{{category.id}}' %}selected{% endif %}>[{{category.main_category.short_name}}]_{{category.name}}</option>
+                    <option value="{{category.id}}" {% if input_data.CategorySelector == category.id|stringformat:"s" %}selected{% endif %}>[{{category.main_category.short_name}}] {{category.name}}</option>
                 {% endfor %}
             </select>
+            
+            <select 
+                name="PublishSelector" 
+                class="border border-gray-300 py-2.5 px-4 rounded hover:bg-gray-50 bg-white focus:outline-none cursor-pointer"
+                onchange="submitGetForm()">
+                <option value="" {% if input_data.PublishSelector == '' %}selected{% endif %}>-- 發佈 --</option>
+                <option value="1" {% if input_data.PublishSelector == '1' %}selected{% endif %}>已發佈</option>
+                <option value="0" {% if input_data.PublishSelector == '0' %}selected{% endif %}>未發佈</option>
+            </select>
 
-            <button type="submit" class="border border-gray-300 py-2.5 px-4 rounded hover:bg-gray-50">Search</button>
+            <select 
+                name="PromoteSelector" 
+                class="border border-gray-300 py-2.5 px-4 rounded hover:bg-gray-50 bg-white focus:outline-none cursor-pointer"
+                onchange="submitGetForm()">
+                <option value="" {% if input_data.PromoteSelector == '' %}selected{% endif %}>-- 推廣 --</option>
+                <option value="1" {% if input_data.PromoteSelector == '1' %}selected{% endif %}>已推廣</option>
+                <option value="0" {% if input_data.PromoteSelector == '0' %}selected{% endif %}>未推廣</option>
+            </select>
 
-            <div class="relative dropdown-action">
-                <button class="border border-gray-300 py-2.5 px-4 rounded hover:bg-gray-50" type="button">Action</button>
-                <div class="hidden flex flex-col absolute top-full mt-1 bg-white border border-gray-300 dropdown-card min-w-[200px] z-50">
-                    <button formmethod="post" class="py-2 px-5 text-left hover:bg-gray-100 cursor-pointer" type="submit" name="btnAction" value="SetWebPublish">Set Publish</button>
-                    <button formmethod="post" class="py-2 px-5 text-left hover:bg-gray-100 cursor-pointer" type="submit" name="btnAction" value="UndoWebPublish">Undo Publish</button>
-                    <button formmethod="post" class="py-2 px-5 text-left hover:bg-gray-100 cursor-pointer" type="submit" name="btnAction" value="SetPromote">Set Promote</button>
-                    <button formmethod="post" class="py-2 px-5 text-left hover:bg-gray-100 cursor-pointer" type="submit" name="btnAction" value="UndoPromote">Undo Promote</button>
+            <button onclick="submitGetForm()" class="border border-gray-300 py-2.5 px-4 rounded hover:bg-gray-50">
+                <i class="fa-solid fa-arrows-rotate"></i> Refresh
+            </button>
+
+            <button type="button" onclick="toggleAdvancedFilters()" class="border border-gray-300 py-2.5 px-4 rounded hover:bg-gray-50 flex items-center gap-2 text-gray-600">
+                <i class="fa-solid fa-sliders"></i> 進階篩選
+            </button>
+
+            <div id="advancedFilters" class="hidden bg-gray-50 border border-gray-200 p-2 rounded-lg shadow-inner">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2 text-xs">
+                            <i class="fa-regular fa-clock mr-1 text-gray-400"></i> 報名截止日期區間
+                        </label>
+                        <div class="flex items-center gap-2">
+                            <input type="text" placeholder="YYYY-MM-DD" name="expiry_date_from" value="{{ input_data.expiry_date_from }}" 
+                            class="datepicker w-full border border-gray-300 rounded px-3 py-2 text-sm text-gray-600 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-xs">
+                            <span class="text-gray-400">至</span>
+                            <input type="text" placeholder="YYYY-MM-DD" name="expiry_date_to" value="{{ input_data.expiry_date_to }}" 
+                            class="datepicker w-full border border-gray-300 rounded px-3 py-2 text-sm text-gray-600 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-xs">
+                        </div>
+                    </div>  
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2 text-xs">
+                            <i class="fa-regular fa-calendar-check mr-1 text-gray-400"></i> 開課日期區間
+                        </label>
+                        <div class="flex items-center gap-2">
+                            <input type="text" placeholder="YYYY-MM-DD" name="start_date_from" value="{{ input_data.start_date_from }}" 
+                            class="datepicker w-full border border-gray-300 rounded px-3 py-2 text-sm text-gray-600 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-xs">
+                            <span class="text-gray-400">至</span>
+                            <input type="text" placeholder="YYYY-MM-DD" name="start_date_to" value="{{ input_data.start_date_to }}" 
+                            class="datepicker w-full border border-gray-300 rounded px-3 py-2 text-sm text-gray-600 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-xs">
+                        </div>
+                    </div>             
                 </div>
-            </div>
+            </div> 
 
-            <a href="{% url 'courses:course_create' %}" class="border border-gray-300 py-2.5 px-4 rounded hover:bg-gray-50 flex items-center gap-2">
-                <i class="fa-solid fa-plus"></i> Create
-            </a>
         </div>
 
         <div class="overflow-x-auto">
@@ -77,14 +136,14 @@
                 <tbody>
                     {% for course in list_course %}
                     <tr class="border-b border-gray-200 table-row text-sm">
-                        <td class="hidden md:table-cell py-5">
+                        <td class="hidden md:table-cell py-4">
                             <input type="checkbox" name="ceSelectedCourses" value="{{ course.id }}" class="row-check w-4 h-4 rounded cursor-pointer">
                         </td>
-                        <td class="hidden md:table-cell py-5 align-top">[{{course.sub_category.main_category.short_name}}]<br>{{course.sub_category.name}}</td>
-                        <td class="hidden md:table-cell py-5 align-top">{{ course.code }}</td>
-                        <td class="py-5 align-top">{{ course.name }}</td>
+                        <td class="hidden md:table-cell py-4 align-top">[{{course.sub_category.main_category.short_name}}]<br>{{course.sub_category.name}}</td>
+                        <td class="hidden md:table-cell py-4 align-top">{{ course.code }}</td>
+                        <td class="py-4 align-top">{{ course.name }}</td>
                         
-                        <td class="hidden md:table-cell py-5 align-top">
+                        <td class="hidden md:table-cell py-4 align-top">
                             {% if course.course_dynamic_status == '報名中' %}
                                 <span class="bg-green-100 text-green-700 text-xs px-3 py-1 rounded-full whitespace-nowrap">{{ course.course_dynamic_status }}</span>
                             {% elif course.course_dynamic_status == '人數已滿' %}
@@ -102,7 +161,7 @@
                             </div>
                         </td>
 
-                        <td class="hidden md:table-cell py-5 align-top">
+                        <td class="hidden md:table-cell py-4 align-top">
                             {% if course.is_web_publish %}
                                 <i class="fa-solid fa-check text-green-500"></i>
                             {% else %}
@@ -110,7 +169,7 @@
                             {% endif %}
                         </td>
 
-                        <td class="hidden md:table-cell py-5 align-top">
+                        <td class="hidden md:table-cell py-4 align-top">
                             {% if course.is_promote %}
                                 <i class="fa-solid fa-check text-green-500"></i>
                             {% else %}
@@ -118,11 +177,11 @@
                             {% endif %}
                         </td>
 
-                        <td class="hidden md:table-cell py-5 align-top">{{ course.registation_expiry_date|date:"Y-m-d" }}</td>
-                        <td class="hidden md:table-cell py-5 align-top">{{ course.period_from|date:"Y-m-d" }}</td>
-                        <td class="hidden md:table-cell py-5 align-top">{{ course.period_to|date:"Y-m-d" }}</td>
+                        <td class="hidden md:table-cell py-4 align-top">{{ course.registation_expiry_date|date:"Y-m-d" }}</td>
+                        <td class="hidden md:table-cell py-4 align-top">{{ course.period_from|date:"Y-m-d" }}</td>
+                        <td class="hidden md:table-cell py-4 align-top">{{ course.period_to|date:"Y-m-d" }}</td>
                         
-                        <td class="py-5">
+                        <td class="py-4">
                             <button type="button" class="more-btn text-gray-400 text-xl hover:text-gray-600" data-id="{{ course.id }}">
                                 <div class="px-3">
                                     <i class="fa-solid fa-ellipsis-v"></i>
@@ -149,20 +208,68 @@
     </div>
 </main>
 
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
 <script>
-// More
-document.querySelectorAll('.more-btn').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        closeAllMenus();
-        const rect = btn.getBoundingClientRect();
-        globalMoreMenu.style.left = rect.left - 130 + 'px';
-        globalMoreMenu.style.top = rect.top + 10 + 'px';
-        globalMoreMenu.classList.remove('hidden');
-        const id = btn.dataset.id;
-        document.getElementById('menuView').href = `/manage/courses/view/${id}`;
-        document.getElementById('menuEdit').href = `/manage/courses/edit/${id}`;
+document.addEventListener('DOMContentLoaded', function() {
+    
+    // --- More 按鈕全域選單控制 ---
+    const globalMoreMenu = document.getElementById('globalMoreMenu');
+    
+    document.querySelectorAll('.more-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            
+            const rect = btn.getBoundingClientRect();
+            globalMoreMenu.style.left = (rect.left - 130) + 'px';
+            globalMoreMenu.style.top = (rect.top + window.scrollY + 10) + 'px'; // 加上 scrollY 防止滾動後錯位
+            globalMoreMenu.classList.remove('hidden');
+            
+            const id = btn.dataset.id;
+            document.getElementById('menuView').href = `/manage/courses/view/${id}`;
+            document.getElementById('menuEdit').href = `/manage/courses/edit/${id}`;
+        });
+    });
+
+    // 點擊頁面其他地方時隱藏 More 選AN
+    document.addEventListener('click', () => {
+        globalMoreMenu.classList.add('hidden');
+    });
+
+    // --- 檢查網址是否有日期參數，有就自動展開「進階篩選」 ---
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('start_date_from') || urlParams.get('start_date_to') || 
+        urlParams.get('expiry_date_from') || urlParams.get('expiry_date_to')) {
+        document.getElementById('advancedFilters').classList.remove('hidden');
+    }
+
+    // --- 初始化 Flatpickr 日期選取器 ---
+    flatpickr(".datepicker", {
+        dateFormat: "Y-m-d", 
+        allowInput: true,    
+        onChange: function(selectedDates, dateStr, instance) {
+            // 當日期選好後，自動觸發送出
+            submitGetForm();
+        }
     });
 });
+
+// --- 切換進階篩選面板顯示/隱藏 ---
+function toggleAdvancedFilters() {
+    const panel = document.getElementById('advancedFilters');
+    panel.classList.toggle('hidden');
+}
+
+// --- 🎯 補上你 HTML 裡面呼叫的表單送出與 CSRF 清除函數 ---
+function submitGetForm() {
+    const form = document.getElementById('courseForm');
+    // 如果是 GET 搜尋，把 CSRF Token 拔掉，讓網址變乾淨
+    const csrfInput = form.querySelector('input[name="csrfmiddlewaretoken"]');
+    if (csrfInput) {
+        csrfInput.remove();
+    }
+    form.submit();
+}
 </script>
 {% endblock %}
