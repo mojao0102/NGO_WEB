@@ -60,26 +60,25 @@
                 </tr>
             </thead>
             <tbody>
+                {% for course in courses %}
                 <tr class="border-b border-gray-200 table-row text-sm">
                     <td class="hidden md:table-cell py-5"><input type="checkbox" class="row-check w-4 h-4 rounded"></td>
-                    <td class="hidden md:table-cell py-5 align-top">26PG311-02</td>
-                    <td class="py-5 align-top">Little Ones 自理與學前分離預備 Playgroup</td>
-                    <td class="hidden md:table-cell py-5 align-top">
-                        <span class="bg-[#fff3cd] text-gray-700 text-xs px-4 py-0.5 rounded-full">Pending</span>
-                    </td>
-                    <td class="hidden md:table-cell py-5 align-top">Y</td>
-                    <td class="hidden md:table-cell py-5 align-top">$1480</td>
-                    <td class="hidden md:table-cell py-5 align-top">25/04/2026</td>
-                    <td class="hidden md:table-cell py-5 align-top">13/06/2026</td>
-                    <!-- More ** Added more space, it is easy to click ** -->
+                    <td class="hidden md:table-cell py-5 align-top">{{ course.code }}</td>
+                    <td class="py-5 align-top">{{ course.name }}</td>
+                    <td class="hidden md:table-cell py-5 align-top">{{ course.course_status }}</td>
+                    <td class="hidden md:table-cell py-5 align-top">{% if course.is_web_publish %}Y{% else %}N{% endif %}</td>
+                    <td class="hidden md:table-cell py-5 align-top">${{ course.course_fee }}</td>
+                    <td class="hidden md:table-cell py-5 align-top">{{ course.period_from }}</td>
+                    <td class="hidden md:table-cell py-5 align-top">{{ course.period_to }}</td>
                     <td class="py-5">
-                        <button class="more-btn text-gray-400 text-xl hover:text-gray-600">
-                            <div class="px-3">
-                                <i class="fa-solid fa-ellipsis-v"></i>
-                            </div>
+                        <button class="more-btn text-gray-400 text-xl hover:text-gray-600" data-id="{{ course.id }}">
+                            <div class="px-3"><i class="fa-solid fa-ellipsis-v"></i></div>
                         </button>
                     </td>
                 </tr>
+                {% empty %}
+                <tr><td colspan="9" class="py-5 text-center text-gray-400">No courses found.</td></tr>
+                {% endfor %}
             </tbody>
         </table>
     </div>
