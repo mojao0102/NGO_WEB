@@ -1,91 +1,185 @@
-{% extends "staff_base.html" %} 
+{% extends "staff_base.html" %}
 {% load static %}
 {% load humanize %}
+
 {% block content %}
-
-<!-- 主內容 -->
 <main class="md:ml-[200px] flex-1 p-8 pt-16 md:pt-8">
-    <!-- Page Title -->
-    <h1 class="text-[2rem] text-gray-700 font-semibold mb-6">Dashboard</h1>
+    <h1 class="text-[2rem] text-gray-700 font-semibold mb-6">Staff Dashboard</h1>
 
-    <!-- Month Select -->
-    <div class="mb-6">
-        <button class="px-3 py-2 bg-gray-100 rounded border flex items-center gap-2">
-            <i class="fa-solid fa-calendar-days text-gray-500"></i>
-            <span>March 2025</span>
-            <i class="fa-solid fa-chevron-down text-xs"></i>
-        </button>
+    <!-- 年份 + 月份 篩選（選擇後自動提交） -->
+    <div class="flex gap-3 mb-6">
+        <form id="filterForm" method="GET" class="flex gap-2 items-center">
+            <select 
+                name="year" 
+                class="border border-gray-300 rounded px-3 py-2 bg-white min-w-[100px] cursor-pointer"
+                id="yearSelect">
+                {% for y in years %}
+                    <option value="{{ y }}" {% if y == year %}selected{% endif %}>{{ y }}</option>
+                {% endfor %}
+            </select>
+
+            <select 
+                name="month" 
+                class="border border-gray-300 rounded px-3 py-2 bg-white min-w-[150px] cursor-pointer"
+                id="monthSelect">
+                {% for m_num, m_name in months %}
+                    <option value="{{ m_num }}" {% if m_num == month %}selected{% endif %}>{{ m_name }}</option>
+                {% endfor %}
+            </select>
+        </form>
     </div>
 
-    <!-- Top Stat Cards Row -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <!-- Daily Revenue -->
+    <script>
+    document.addEventListener('DOMContentLoaded', function(){
+        const yearSel = document.getElementById('yearSelect');
+        const monthSel = document.getElementById('monthSelect');
+        const form = document.getElementById('filterForm');
+
+        if(yearSel){
+            yearSel.addEventListener('change', function(){
+                form.submit();
+            });
+        }
+        if(monthSel){
+            monthSel.addEventListener('change', function(){
+                form.submit();
+            });
+        }
+    });
+    </script>
+
+    <!-- 統計卡片區 -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <!-- 當月營業額 -->
         <div class="bg-white rounded-xl shadow-md p-5">
             <div class="text-gray-500 mb-2">
                 <i class="fa-solid fa-credit-card text-2xl"></i>
             </div>
-            <p class="text-sm text-gray-500">Daily Revenue</p>
-            <p class="text-[2rem] font-bold mt-2">$9990</p>
+            <p class="text-sm text-gray-500">Monthly Revenue ({{ year }}-{{ month }})</p>
+            <p class="text-[2rem] font-bold mt-2">${{ monthly_revenue|default:0|intcomma }}</p>
         </div>
-        <!-- Monthly Revenue -->
+
+        <!-- 當年營業額 -->
         <div class="bg-white rounded-xl shadow-md p-5">
             <div class="text-gray-500 mb-2">
-                <i class="fa-solid fa-credit-card text-2xl"></i>
+                <i class="fa-solid fa-sack-dollar text-2xl"></i>
             </div>
-            <p class="text-sm text-gray-500">Monthly Revenue</p>
-            <p class="text-[2rem] font-bold mt-2">$39990</p>
+            <p class="text-sm text-gray-500">Yearly Revenue ({{ year }})</p>
+            <p class="text-[2rem] font-bold mt-2">${{ yearly_revenue|default:0|intcomma }}</p>
         </div>
-        <!-- Intake students -->
+
+        <!-- 當月不重複學生 -->
         <div class="bg-white rounded-xl shadow-md p-5">
             <div class="text-gray-500 mb-2">
                 <i class="fa-solid fa-users text-2xl"></i>
             </div>
-            <p class="text-sm text-gray-500">[Month] Intake students</p>
-            <p class="text-[2rem] font-bold mt-2">30</p>
+            <p class="text-sm text-gray-500">Monthly Unique Students</p>
+            <p class="text-[2rem] font-bold mt-2">{{ monthly_student_distinct|default:0 }}</p>
+        </div>
+
+        <!-- 當月總報讀人次 -->
+        <div class="bg-white rounded-xl shadow-md p-5">
+            <div class="text-gray-500 mb-2">
+                <i class="fa-solid fa-clipboard-list text-2xl"></i>
+            </div>
+            <p class="text-sm text-gray-500">Monthly Signup Count</p>
+            <p class="text-[2rem] font-bold mt-2">{{ monthly_signup_total|default:0 }}</p>
         </div>
     </div>
 
-    <!-- Empty Chart Block (留白待Bar Chart後續接入) -->
+    <!-- 長條圖：當年每月收入 -->
     <div class="mb-10">
-        <h2 class="text-xl text-gray-700 font-medium mb-4">Dashboard</h2>
-        <div class="bg-[#f8f8ff] rounded border min-h-[280px] w-full">
-            <!-- 圖表位置空白，後續放bar chart -->
+        <h2 class="text-xl text-gray-700 font-medium mb-4">Monthly Revenue Trend ({{ year }})</h2>
+        <div class="bg-[#f8f8ff] rounded border p-4 w-full">
+            <canvas id="revenueBarChart" height="280"></canvas>
         </div>
     </div>
 
-    <!-- Bottom Table: The student with the most registrations -->
+    <!-- 報名次數 Top 5 學生列表 -->
     <div>
-        <h2 class="text-xl text-gray-700 font-medium mb-5">The student with the most registrations</h2>
+        <h2 class="text-xl text-gray-700 font-medium mb-5">Top 5 Students (Most Registrations)</h2>
         <div class="overflow-x-auto">
             <table class="table-fixed w-full border-collapse">
                 <thead>
                     <tr class="border-b border-gray-300">
-                        <th class="w-[18%] py-3 text-left text-gray-600 text-sm font-medium">Student no.</th>
-                        <th class="w-[18%] py-3 text-left text-gray-600 text-sm font-medium">Name (Chi)</th>
-                        <th class="w-[26%] py-3 text-left text-gray-600 text-sm font-medium">Name (Eng)</th>
-                        <th class="w-[22%] py-3 text-left text-gray-600 text-sm font-medium">birthday</th>
-                        <th class="w-[16%] py-3 text-left text-gray-600 text-sm font-medium">Number of registrations</th>
+                        <th class="w-[18%] py-3 text-left text-sm text-gray-600">Student No.</th>
+                        <th class="w-[18%] py-3 text-left text-sm text-gray-600">Name (Chi)</th>
+                        <th class="w-[26%] py-3 text-left text-sm text-gray-600">Name (Eng)</th>
+                        <th class="w-[22%] py-3 text-left text-sm text-gray-600">Birthday</th>
+                        <th class="w-[16%] py-3 text-left text-sm text-gray-600">Registrations</th>
                     </tr>
                 </thead>
                 <tbody>
+                    {% for stu in top_students %}
                     <tr class="border-b border-gray-200 text-sm">
-                        <td class="py-3">S143095</td>
-                        <td class="py-3">陳大文</td>
-                        <td class="py-3">Chan Tai Man</td>
-                        <td class="py-3">2016-01-01</td>
-                        <td class="py-3">5</td>
+                        <td class="py-3">{{ stu.student__student_no }}</td>
+                        <td class="py-3">{{ stu.student__cn_name }}</td>
+                        <td class="py-3">{{ stu.student__en_name }}</td>
+                        <td class="py-3">{{ stu.student__dob|date:"Y-m-d" }}</td>
+                        <td class="py-3">{{ stu.signup_count }}</td>
                     </tr>
+                    {% empty %}
                     <tr class="text-sm">
-                        <td class="py-3">S143123</td>
-                        <td class="py-3">陳小文</td>
-                        <td class="py-3">Chan Siu Man</td>
-                        <td class="py-3">2018-01-01</td>
-                        <td class="py-3">3</td>
+                        <td colspan="5" class="py-4 text-center text-gray-400">暫無報名記錄</td>
                     </tr>
+                    {% endfor %}
                 </tbody>
             </table>
         </div>
     </div>
 </main>
-{% endblock %}
 
+<!-- 引入 Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
+
+<!-- 繪製長條圖 -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const ctx = document.getElementById('revenueBarChart').getContext('2d');
+    // 後端傳入的月份標籤 & 金額數據
+    const labels = {{ chart_labels|safe }};
+    const data = {{ chart_data|safe }};
+
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Monthly Revenue ($)',
+                data: data,
+                backgroundColor: 'rgba(59, 130, 246, 0.6)',
+                borderColor: 'rgba(59, 130, 246, 1)',
+                borderWidth: 1,
+                borderRadius: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'top',
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return 'Revenue: $' + context.raw.toLocaleString();
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return '$' + value.toLocaleString();
+                        }
+                    }
+                }
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

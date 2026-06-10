@@ -28,40 +28,83 @@
 <aside id="sidebar" class="w-[200px] min-h-screen bg-white sidebar-shadow fixed top-0 left-0 flex flex-col justify-between py-6 px-4
     -translate-x-full md:translate-x-0 transition-transform duration-300 z-[99998]">
 
-    <!-- 手機關閉X -->
+    <!-- Close button -->
     <button id="closeSidebar" class="md:hidden absolute top-4 right-4 text-xl text-gray-500">
         <i class="fa-solid fa-xmark"></i>
     </button>
 
     <div class="mb-10 mt-6">
-        <img src="./img/logo/jc.png" alt="Logo" class="h-12 object-contain">
+        <img src="{% static 'img/logo/jc.png'%}" alt="Logo" class="h-12 object-contain">
     </div>
 
-    <!-- 全部文字 text-xs -->
+    <!-- Left bar -->
     <div class="flex-1">
         <p class="text-xs text-gray-500 mb-3 tracking-wide">GENERAL</p>
         <nav class="flex flex-col gap-2">
-            <a href="{% url "administration:dashboard" %}" class="rounded-lg py-2.5 px-3 flex items-center gap-3 bg-gray-100 text-gray-600 text-xs">
+            {# Dashboard #}
+            <a href="{% url "administration:dashboard" %}"
+            class="rounded-lg py-2.5 px-3 flex items-center gap-3 text-xs
+                    {% if '/manage/dashboard' in request.path %}
+                    bg-gray-100 text-gray-600
+                    {% else %}
+                    hover:bg-gray-100 text-gray-700
+                    {% endif %}">
                 <i class="fa-solid fa-gauge-high w-5 text-center"></i>
                 <span>Dashboard</span>
             </a>
-            <a href="#" class="rounded-lg py-2.5 px-3 flex items-center gap-3 hover:bg-gray-100 text-gray-700 text-xs">
+
+            {# Course Template #}
+            <a href="#"
+            class="rounded-lg py-2.5 px-3 flex items-center gap-3 text-xs
+                    hover:bg-gray-100 text-gray-700">
                 <i class="fa-solid fa-table-columns w-5 text-center"></i>
                 <span>Course Template</span>
             </a>
-            <a href="{% url "courses:course_list" %}" class="rounded-lg py-2.5 px-3 flex items-center gap-3 hover:bg-gray-100 text-gray-700 text-xs">
+
+            {# Course #}
+            <a href="{% url "courses:course_list" %}"
+            class="rounded-lg py-2.5 px-3 flex items-center gap-3 text-xs
+                    {% if '/manage/courses/' in request.path %}
+                    bg-gray-100 text-gray-600
+                    {% else %}
+                    hover:bg-gray-100 text-gray-700
+                    {% endif %}">
                 <i class="fa-solid fa-book-open w-5 text-center"></i>
                 <span>Course</span>
             </a>
-            <a href="{% url "web_contents:news_list" %}" class="rounded-lg py-2.5 px-3 flex items-center gap-3 hover:bg-gray-100 text-gray-600 text-xs">
+
+            {# NEWS #}
+            <a href="{% url "web_contents:news_list" %}"
+            class="rounded-lg py-2.5 px-3 flex items-center gap-3 text-xs
+                    {% if '/manage/web_contents/' in request.path %}
+                    bg-gray-100 text-gray-600
+                    {% else %}
+                    hover:bg-gray-100 text-gray-600
+                    {% endif %}">
                 <i class="fa-solid fa-newspaper w-5 text-center"></i>
                 <span>NEWS</span>
             </a>
-            <a href="#" class="rounded-lg py-2.5 px-3 flex items-center gap-3 hover:bg-gray-100 text-gray-600 text-xs">
+
+            {# Student #}
+            <a href="#"
+            class="rounded-lg py-2.5 px-3 flex items-center gap-3 text-xs
+                    {% if '/manage/students/' in request.path %}
+                    bg-gray-100 text-gray-600
+                    {% else %}
+                    hover:bg-gray-100 text-gray-600
+                    {% endif %}">
                 <i class="fa-solid fa-users w-5 text-center"></i>
                 <span>Student</span>
             </a>
-            <a href="{% url "teachers:teacher_list" %}" class="rounded-lg py-2.5 px-3 flex items-center gap-3 hover:bg-gray-100 text-gray-600 text-xs">
+
+            {# Teacher #}
+            <a href="{% url "teachers:teacher_list" %}"
+            class="rounded-lg py-2.5 px-3 flex items-center gap-3 text-xs
+                    {% if '/manage/teachers/' in request.path %}
+                    bg-gray-100 text-gray-600
+                    {% else %}
+                    hover:bg-gray-100 text-gray-600
+                    {% endif %}">
                 <i class="fa-solid fa-chalkboard-user w-5 text-center"></i>
                 <span>Teacher</span>
             </a>
