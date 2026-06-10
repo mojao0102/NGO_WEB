@@ -1,0 +1,171 @@
+{% extends 'staff_base.html' %}
+{% block content %}
+
+<!-- 主內容 -->
+<main class="md:ml-[200px] flex-1 p-8 pt-16 md:pt-8 text-gray-600">
+    <!-- 教師基本資料 -->
+    <div class="mb-10">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-y-4 gap-x-6">
+            <div>
+                <span class="block text-sm text-gray-500">Teacher no</span>
+                <span>{{ teacher.teacher_no }}</span>
+            </div>
+            <div>
+                <span class="block text-sm text-gray-500">Register Date</span>
+                <span>{{ teacher.created_datetime|date:"Y-m-d" }}</span>
+            </div>
+            <div>
+                <span class="block text-sm text-gray-500">Email</span>
+                <span>{{ teacher.email }}</span>
+            </div>
+
+            <div>
+                <span class="block text-sm text-gray-500">Name</span>
+                <span>{{ teacher.title }} {{ teacher.first_name }} {{ teacher.last_name }}</span>
+            </div>
+            <div>
+                <span class="block text-sm text-gray-500">Title</span>
+                <span>{{ teacher.title }}</span>
+            </div>
+            <div>
+                <span class="block text-sm text-gray-500">Phone</span>
+                <span>{{ teacher.phone }}</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Enrolling Course -->
+    <div class="mb-10">
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-lg font-semibold text-gray-700">Enrolling Course</h2>
+            <span class="text-sm text-blue-500 hover:underline cursor-pointer">See more...</span>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm border-collapse">
+                <thead>
+                    <tr class="border-b border-gray-300 text-gray-500">
+                        <th class="py-2 text-left">Code</th>
+                        <th class="py-2 text-left">Course Name</th>
+                        <th class="py-2 text-left">Status</th>
+                        <th class="py-2 text-left">Fee</th>
+                        <th class="py-2 text-left">Start Date</th>
+                        <th class="py-2 text-left">End Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr class="border-b border-gray-200">
+                        <td class="py-3">26PG311-02</td>
+                        <td class="py-3">Little Ones 自理與學前分離預備 Playgroup</td>
+                        <td class="py-3">進行中</td>
+                        <td class="py-3">$1480</td>
+                        <td class="py-3">25/04/2026</td>
+                        <td class="py-3">13/06/2026</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Competed Course -->
+    <div class="mb-10">
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-lg font-semibold text-gray-700">Competed Course</h2>
+            <span class="text-sm text-blue-500 hover:underline cursor-pointer">See more...</span>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm border-collapse">
+                <thead>
+                    <tr class="border-b border-gray-300 text-gray-500">
+                        <th class="py-2 text-left">Code</th>
+                        <th class="py-2 text-left">Course Name</th>
+                        <th class="py-2 text-left">Status</th>
+                        <th class="py-2 text-left">Fee</th>
+                        <th class="py-2 text-left">Start Date</th>
+                        <th class="py-2 text-left">End Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr class="border-b border-gray-200">
+                        <td class="py-3">26PG311-02</td>
+                        <td class="py-3">Little Ones 自理與學前分離預備 Playgroup</td>
+                        <td class="py-3">已完成</td>
+                        <td class="py-3">$1480</td>
+                        <td class="py-3">25/04/2026</td>
+                        <td class="py-3">13/06/2026</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Back Button -->
+    <div>
+        <a href="{% url 'teachers:teacher_list' %}" class="bg-gray-700 text-white px-6 py-2 rounded hover:bg-gray-800">Back</a>
+    </div>
+</main>
+
+<script>
+// 漢堡側欄
+const hamburger = document.getElementById('hamburger');
+const sidebar = document.getElementById('sidebar');
+const closeSidebar = document.getElementById('closeSidebar');
+const overlay = document.getElementById('overlay');
+
+hamburger.addEventListener('click', () => {
+    sidebar.classList.remove('-translate-x-full');
+    overlay.classList.remove('hidden');
+    hamburger.classList.add('hidden');
+});
+function closeMenu() {
+    sidebar.classList.add('-translate-x-full');
+    overlay.classList.add('hidden');
+    hamburger.classList.remove('hidden');
+}
+closeSidebar.addEventListener('click', closeMenu);
+overlay.addEventListener('click', closeMenu);
+
+// 選單功能
+const globalMoreMenu = document.getElementById('globalMoreMenu');
+function closeAllMenus() {
+    globalMoreMenu.classList.add('hidden');
+    document.querySelectorAll('.dropdown-filter > div, .dropdown-action > div').forEach(m => m.classList.add('hidden'));
+}
+
+// More
+document.querySelectorAll('.more-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        closeAllMenus();
+        const rect = btn.getBoundingClientRect();
+        globalMoreMenu.style.left = rect.left - 130 + 'px';
+        globalMoreMenu.style.top = rect.top + 10 + 'px';
+        globalMoreMenu.classList.remove('hidden');
+    });
+});
+
+// Filter & Action
+document.querySelectorAll('.dropdown-filter, .dropdown-action').forEach(wrap => {
+    const btn = wrap.querySelector('button');
+    const menu = wrap.querySelector('div');
+    btn.addEventListener('click', e => {
+        e.stopPropagation();
+        const open = !menu.classList.contains('hidden');
+        closeAllMenus();
+        if (!open) menu.classList.remove('hidden');
+    });
+});
+
+document.addEventListener('click', closeAllMenus);
+
+// 勾選行
+document.querySelectorAll('.row-check').forEach(ck => {
+    ck.addEventListener('change', () => {
+        ck.closest('.table-row').classList.toggle('row-selected', ck.checked);
+    });
+});
+</script>
+</body>
+</html>
+
+
+{% endblock %}

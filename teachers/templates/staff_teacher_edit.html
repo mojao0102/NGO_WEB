@@ -1,0 +1,127 @@
+{% extends 'staff_base.html' %}
+{% block content %}
+
+<!-- 主內容 -->
+<main class="md:ml-[200px] flex-1 p-8 pt-16 md:pt-8">
+    <h1 class="text-xl text-gray-700 font-medium mb-8">Edit Teacher</h1>
+
+    <form method="POST" action="{% url 'teachers:teacher_edit' teacher.id %}" class="max-w-2xl space-y-5">
+        {% csrf_token %}
+        <h3 class="text-lg text-gray-700 font-medium mb-8">Set up teacher account</h3>
+        <div>
+            <label class="block text-sm text-gray-600 mb-1">Username</label>
+            <input type="text" name="username" value="{{ teacher.username }}" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200">
+        </div>
+        <div>
+            <label class="block text-sm text-gray-600 mb-1">Password</label>
+            <input type="text" name="password" value="{{ teacher.password }}" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200">
+        </div>
+
+        <div class="pt-5"><hr class="border-gray-300" /></div>
+        <h3 class="text-lg text-gray-700 font-medium mb-8">Teacher personal information</h3>
+
+        <div>
+            <label class="block text-sm text-gray-600 mb-1">Teacher no</label>
+            <input type="text" name="teacher_no" value="{{ teacher.teacher_no }}" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200">
+        </div>
+        <div>
+            <label class="block text-sm text-gray-600 mb-1">First Name</label>
+            <input type="text" name="first_name" value="{{ teacher.first_name }}" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200">
+        </div>
+        <div>
+            <label class="block text-sm text-gray-600 mb-1">Last Name</label>
+            <input type="text" name="last_name" value="{{ teacher.last_name }}" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200">
+        </div>
+        <div>
+            <label class="block text-sm text-gray-600 mb-1">Title</label>
+            <input type="text" name="title" value="{{ teacher.title }}" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200">
+        </div>
+        <div>
+            <label class="block text-sm text-gray-600 mb-1">Phone</label>
+            <input type="text" name="phone" value="{{ teacher.phone }}" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200">
+        </div>
+        <div>
+            <label class="block text-sm text-gray-600 mb-1">Email</label>
+            <input type="email" name="email" value="{{ teacher.email }}" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200">
+        </div>
+        <div>
+            <label class="block text-sm text-gray-600 mb-1">Remark</label>
+            <textarea name="remarks" rows="3" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200">{{ teacher.remarks }}</textarea>
+        </div>
+        <div>
+            <label class="block text-sm text-gray-600 mb-1">Register Date</label>
+            <p class="block text-sm text-gray-600 mb-1">{{ teacher.created_datetime|date:"Y-m-d" }}</p>
+        </div>
+
+        <div class="flex items-center gap-4 pt-4">
+            <button type="submit" class="bg-green-500 text-white px-6 py-2 rounded hover:bg-green-600">Confirm edit</button>
+            <button type="button" class="bg-red-500 text-white px-6 py-2 rounded hover:bg-red-600">Delete</button>
+            <a href="{% url 'teachers:teacher_list' %}" class="bg-gray-700 text-white px-6 py-2 rounded hover:bg-gray-800">Back</a>
+        </div>
+    </form>
+</main>
+
+<script>
+// 漢堡側欄
+const hamburger = document.getElementById('hamburger');
+const sidebar = document.getElementById('sidebar');
+const closeSidebar = document.getElementById('closeSidebar');
+const overlay = document.getElementById('overlay');
+
+hamburger.addEventListener('click', () => {
+    sidebar.classList.remove('-translate-x-full');
+    overlay.classList.remove('hidden');
+    hamburger.classList.add('hidden');
+});
+function closeMenu() {
+    sidebar.classList.add('-translate-x-full');
+    overlay.classList.add('hidden');
+    hamburger.classList.remove('hidden');
+}
+closeSidebar.addEventListener('click', closeMenu);
+overlay.addEventListener('click', closeMenu);
+
+// 選單功能
+const globalMoreMenu = document.getElementById('globalMoreMenu');
+function closeAllMenus() {
+    globalMoreMenu.classList.add('hidden');
+    document.querySelectorAll('.dropdown-filter > div, .dropdown-action > div').forEach(m => m.classList.add('hidden'));
+}
+
+// More
+document.querySelectorAll('.more-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        closeAllMenus();
+        const rect = btn.getBoundingClientRect();
+        globalMoreMenu.style.left = rect.left - 130 + 'px';
+        globalMoreMenu.style.top = rect.top + 10 + 'px';
+        globalMoreMenu.classList.remove('hidden');
+    });
+});
+
+// Filter & Action
+document.querySelectorAll('.dropdown-filter, .dropdown-action').forEach(wrap => {
+    const btn = wrap.querySelector('button');
+    const menu = wrap.querySelector('div');
+    btn.addEventListener('click', e => {
+        e.stopPropagation();
+        const open = !menu.classList.contains('hidden');
+        closeAllMenus();
+        if (!open) menu.classList.remove('hidden');
+    });
+});
+
+document.addEventListener('click', closeAllMenus);
+
+// 勾選行
+document.querySelectorAll('.row-check').forEach(ck => {
+    ck.addEventListener('change', () => {
+        ck.closest('.table-row').classList.toggle('row-selected', ck.checked);
+    });
+});
+</script>
+</body>
+</html>
+
+{% endblock %}
