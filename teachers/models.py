@@ -12,7 +12,7 @@ class Teacher(AuditBaseModel):
     phone = models.CharField(max_length=50, verbose_name="電話")
     email = models.CharField(max_length=200, verbose_name="電子郵件")
     addr = models.CharField(max_length=200, blank=True, verbose_name="地址")
-    dob = models.DateField(blank=True, verbose_name="出生日期")
+    dob = models.DateField(null=True, blank=True, verbose_name="出生日期")
     username = models.CharField(max_length=50, blank=True, verbose_name="帳號")
     password = models.CharField(max_length=50, blank=True, verbose_name="密碼")
     remarks = models.TextField(blank=True, verbose_name="備註")
