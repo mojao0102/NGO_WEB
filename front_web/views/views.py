@@ -16,7 +16,7 @@ def home(request):
     #load course
     list_promote_course = Course.objects.filter(is_web_publish = True, 
                                                 is_promote = True, 
-                                                registation_expiry_date__gt=current_time, 
+                                                registation_expiry_date__gte=current_time.date(), 
                                                 course_status = 'created')
     context = {
         'list_mc' : request.list_mc, 

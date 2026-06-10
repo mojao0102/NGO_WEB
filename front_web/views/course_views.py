@@ -47,7 +47,7 @@ def course_list(request, mc_id):
         #Only course with status "created", web published and not over registation expiry date allow to show
         context["list_course"] = course_queryset.filter(sub_category_id = sc_id, 
                                                 is_web_publish = True, 
-                                                registation_expiry_date__gt=timezone.localtime(timezone.now()),
+                                                registation_expiry_date__gte=timezone.localtime(timezone.now()).date(),
                                                 course_status = "created").exclude(file_status="deleted")
     return render(request, "course_list.html", context)
 
@@ -79,8 +79,8 @@ def course(request, course_id):
         #Only course with status "created", web published and not over registation expiry date allow to show
         obj_course = get_object_or_404(course_queryset, id = course_id, 
                                     is_web_publish = True, 
-                                    registation_expiry_date__gt=timezone.localtime(timezone.now()),
-                                    course_status = "created").exclude(file_status="deleted")
+                                    registation_expiry_date__gte=timezone.localtime(timezone.now()).date(),
+                                    course_status = "created")
 
         context = {'list_mc' : request.list_mc, "obj_course" : obj_course}
 

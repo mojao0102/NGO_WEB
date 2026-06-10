@@ -11,18 +11,18 @@ def staff_access_control(view_func):
         #Check if login
         if not request.session.get('staff_id'):
             messages.error(request, "請先登入帳號")
-            return redirect("front_web:staff_login")
+            return redirect("administration:staff_login")
         try:#Check if staff
             obj_staff = Staff.objects.get(id=request.session.get('staff_id'))
         except Staff.DoesNotExist:
             messages.error(request, "帳號不存在，請聯絡系統管理員")
-            return redirect("front_web:staff_login")
+            return redirect("administration:staff_login")
         
         #Check if staff active
         if not obj_staff.is_active:
             clear_login_session(request)
             messages.error(request, "帳號已被停權，請聯絡系統管理員")
-            return redirect("front_web:staff_login")
+            return redirect("administration:staff_login")
         
         #For view's function to use
         request.obj_staff = obj_staff

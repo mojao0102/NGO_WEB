@@ -4,43 +4,50 @@
 {% block content %}
 
 <main class="md:ml-[200px] flex-1 p-8 pt-16 md:pt-8">
+    {% include "partials/_alert.html" %} 
     <h1 class="text-2xl text-gray-600 font-medium mb-8">Course</h1>
 
-    <form method="GET" action="{% url 'courses:course_list' %}" class="w-full">
+    <form id="courseForm" method="GET" action="{% url 'courses:course_list' %}" class="w-full">
         {% csrf_token %}
 
         <div class="flex flex-wrap items-center gap-3 mb-8">
             <div class="relative flex-grow max-w-[460px]">
                 <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
-                <input type="text" name="q" value="{{ q }}" placeholder="搜尋課程代碼或名稱..." class="w-full pl-10 pr-4 py-2.5 rounded-full border border-gray-300 focus:outline-none">
+                <input type="text" name="txtkeyword" value="{{input_data.txtkeyword}}" placeholder="搜尋課程代碼或名稱..." class="w-full pl-10 pr-4 py-2.5 rounded-full border border-gray-300 focus:outline-none">
             </div>
 
             <select 
                 name="StatusSelector" 
                 class="border border-gray-300 py-2.5 px-4 rounded hover:bg-gray-50 bg-white focus:outline-none cursor-pointer"
                 onchange="this.form.submit()">
-                <option value="">-- 所有狀態 --</option>
-                <option value="報名中" {% if dynamic_status == '報名中' %}selected{% endif %}>報名中</option>
-                <option value="人數已滿" {% if dynamic_status == '人數已滿' %}selected{% endif %}>人數已滿</option>
-                <option value="截止報名" {% if dynamic_status == '截止報名' %}selected{% endif %}>截止報名</option>
-                <option value="進行中" {% if dynamic_status == '進行中' %}selected{% endif %}>進行中</option>
-                <option value="已完結" {% if dynamic_status == '已完結' %}selected{% endif %}>已完結</option>
-                <option value="已取消" {% if dynamic_status == '已取消' %}selected{% endif %}>已取消</option>
+                <option value=""{% if input_data.StatusSelector == '' %}selected{% endif %}>-- 所有狀態 --</option>
+                <option value="報名中" {% if input_data.StatusSelector == '報名中' %}selected{% endif %}>報名中</option>
+                <option value="人數已滿" {% if input_data.StatusSelector == '人數已滿' %}selected{% endif %}>人數已滿</option>
+                <option value="截止報名" {% if input_data.StatusSelector == '截止報名' %}selected{% endif %}>截止報名</option>
+                <option value="進行中" {% if input_data.StatusSelector == '進行中' %}selected{% endif %}>進行中</option>
+                <option value="已完結" {% if input_data.StatusSelector == '已完結' %}selected{% endif %}>已完結</option>
+                <option value="已取消" {% if input_data.StatusSelector == '已取消' %}selected{% endif %}>已取消</option>
+            </select>
+
+            <select 
+                name="CategorySelector" 
+                class="border border-gray-300 py-2.5 px-4 rounded hover:bg-gray-50 bg-white focus:outline-none cursor-pointer"
+                onchange="this.form.submit()">
+                <option value=""{% if input_data.CategorySelector == '' %}selected{% endif %}>-- 所有類別 --</option>
+                {% for category in list_category %}
+                    <option value="{{category.id}}" {% if input_data.CategorySelector == '{{category.id}}' %}selected{% endif %}>[{{category.main_category.short_name}}]_{{category.name}}</option>
+                {% endfor %}
             </select>
 
             <button type="submit" class="border border-gray-300 py-2.5 px-4 rounded hover:bg-gray-50">Search</button>
-            
-            {% comment %} <a href="{% url 'courses:course_list' %}" class="border border-gray-300 py-2.5 px-4 rounded hover:bg-gray-50 text-gray-600 flex items-center">
-                <i class="fa-solid fa-arrows-rotate"></i>
-            </a> {% endcomment %}
 
             <div class="relative dropdown-action">
                 <button class="border border-gray-300 py-2.5 px-4 rounded hover:bg-gray-50" type="button">Action</button>
                 <div class="hidden flex flex-col absolute top-full mt-1 bg-white border border-gray-300 dropdown-card min-w-[200px] z-50">
                     <button formmethod="post" class="py-2 px-5 text-left hover:bg-gray-100 cursor-pointer" type="submit" name="btnAction" value="SetWebPublish">Set Publish</button>
                     <button formmethod="post" class="py-2 px-5 text-left hover:bg-gray-100 cursor-pointer" type="submit" name="btnAction" value="UndoWebPublish">Undo Publish</button>
-                    <button formmethod="post" class="py-2 px-5 text-left hover:bg-gray-100 cursor-pointer" type="submit" name="btnAction" value="SetPromote">Set Hot Course</button>
-                    <button formmethod="post" class="py-2 px-5 text-left hover:bg-gray-100 cursor-pointer" type="submit" name="btnAction" value="UndoPromote">Undo Hot Course</button>
+                    <button formmethod="post" class="py-2 px-5 text-left hover:bg-gray-100 cursor-pointer" type="submit" name="btnAction" value="SetPromote">Set Promote</button>
+                    <button formmethod="post" class="py-2 px-5 text-left hover:bg-gray-100 cursor-pointer" type="submit" name="btnAction" value="UndoPromote">Undo Promote</button>
                 </div>
             </div>
 
@@ -52,16 +59,18 @@
         <div class="overflow-x-auto">
             <table class="table-fixed w-full border-collapse">
                 <thead>
-                    <tr class="border-b border-gray-300">
+                    <tr class="border-b border-gray-300 text-sm">
                         <th class="hidden md:table-cell w-[5%] py-4 text-left">
                             </th>
-                        <th class="hidden md:table-cell w-[12%] py-4 text-left text-gray-600 font-medium">Code</th>
-                        <th class="w-[80%] md:w-[32%] py-4 text-left text-gray-600 font-medium">Course Name</th>
-                        <th class="hidden md:table-cell w-[12%] py-4 text-left text-gray-600 font-medium">Status</th>
-                        <th class="hidden md:table-cell w-[8%] py-4 text-left text-gray-600 font-medium">Publish</th>
-                        <th class="hidden md:table-cell w-[11%] py-4 text-left text-gray-600 font-medium">Expiry End</th>
-                        <th class="hidden md:table-cell w-[15%] py-4 text-left text-gray-600 font-medium">Start Date</th>
-                        <th class="hidden md:table-cell w-[15%] py-4 text-left text-gray-600 font-medium">End Date</th>
+                        <th class="hidden md:table-cell w-[15%] py-4 text-left text-gray-600 font-medium">Category</th>
+                        <th class="hidden md:table-cell w-[10%] py-4 text-left text-gray-600 font-medium">Code</th>
+                        <th class="w-[80%] md:w-[28%] py-4 text-left text-gray-600 font-medium">Course Name</th>
+                        <th class="hidden md:table-cell w-[10%] py-4 text-left text-gray-600 font-medium">Status</th>
+                        <th class="hidden md:table-cell w-[6%] py-4 text-left text-gray-600 font-medium">Publish</th>
+                        <th class="hidden md:table-cell w-[6%] py-4 text-left text-gray-600 font-medium">Promote</th>
+                        <th class="hidden md:table-cell w-[10%] py-4 text-left text-gray-600 font-medium">Expiry End</th>
+                        <th class="hidden md:table-cell w-[10%] py-4 text-left text-gray-600 font-medium">Start Date</th>
+                        <th class="hidden md:table-cell w-[10%] py-4 text-left text-gray-600 font-medium">End Date</th>
                         <th class="w-[10%] md:w-[5%] py-4 text-left text-gray-600 font-medium">More</th>
                     </tr>
                 </thead>
@@ -69,8 +78,9 @@
                     {% for course in list_course %}
                     <tr class="border-b border-gray-200 table-row text-sm">
                         <td class="hidden md:table-cell py-5">
-                            <input type="checkbox" name="selected_courses" value="{{ course.id }}" class="row-check w-4 h-4 rounded cursor-pointer">
+                            <input type="checkbox" name="ceSelectedCourses" value="{{ course.id }}" class="row-check w-4 h-4 rounded cursor-pointer">
                         </td>
+                        <td class="hidden md:table-cell py-5 align-top">[{{course.sub_category.main_category.short_name}}]<br>{{course.sub_category.name}}</td>
                         <td class="hidden md:table-cell py-5 align-top">{{ course.code }}</td>
                         <td class="py-5 align-top">{{ course.name }}</td>
                         
@@ -99,6 +109,15 @@
                                 <i class="fa-solid fa-xmark text-red-500"></i>
                             {% endif %}
                         </td>
+
+                        <td class="hidden md:table-cell py-5 align-top">
+                            {% if course.is_promote %}
+                                <i class="fa-solid fa-check text-green-500"></i>
+                            {% else %}
+                                <i class="fa-solid fa-xmark text-red-500"></i>
+                            {% endif %}
+                        </td>
+
                         <td class="hidden md:table-cell py-5 align-top">{{ course.registation_expiry_date|date:"Y-m-d" }}</td>
                         <td class="hidden md:table-cell py-5 align-top">{{ course.period_from|date:"Y-m-d" }}</td>
                         <td class="hidden md:table-cell py-5 align-top">{{ course.period_to|date:"Y-m-d" }}</td>
