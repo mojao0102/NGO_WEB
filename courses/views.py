@@ -1,5 +1,5 @@
 from administration.func import app_func as admin_app_func
-from .models import Course, CourseSubCategory, CourseTemplate
+from .models import Course, CourseMainCategory, CourseSubCategory, CourseTemplate
 from teachers.models import Teacher
 from django.db.models import Q, F
 from django.shortcuts import render, redirect, get_object_or_404
@@ -8,6 +8,7 @@ from urllib.parse import urlencode
 from django.contrib import messages
 from .func import app_func as course_app_func
 from django.utils.dateparse import parse_date
+from django.utils import timezone
 import json
 
 # region Course
@@ -15,7 +16,8 @@ import json
 def course_list(request):
     
     #Load Category for filter
-    list_category = CourseSubCategory.objects.filter(is_active=True)
+    list_maincategory = CourseMainCategory.objects.filter(is_active=True)
+    list_subcategory = CourseSubCategory.objects.filter(is_active=True)
 
     if request.method == "POST" and request.POST.get("btnAction", '').strip() and request.POST.getlist("ceSelectedCourses"):
 
@@ -31,7 +33,7 @@ def course_list(request):
             course_app_func.course_undo_promote(request, list_id)        
         else:
             messages.error(request, "unknown action")
-            context = {"list_category" : list_category, "list_course" : list_course, "input_data" : request.POST}
+            context = {"list_maincategory" : list_maincategory, "list_subcategory" : list_subcategory, "list_course" : list_course, "input_data" : request.POST}
             return render(request, "courses/course_list.html", context)
         
         #Get User filter and pass by redirect
@@ -42,8 +44,11 @@ def course_list(request):
         if dynamic_status:= request.POST.get('StatusSelector', '').strip():
             query_kwargs['StatusSelector'] = dynamic_status
 
-        if course_category:= request.POST.get('CategorySelector', '').strip():
-            query_kwargs['CategorySelector'] = course_category
+        if maincourse_category:= request.POST.get('MainCategorySelector', '').strip():
+            query_kwargs['MainCategorySelector'] = maincourse_category
+
+        if subcourse_category:= request.POST.get('SubCategorySelector', '').strip():
+            query_kwargs['SubCategorySelector'] = subcourse_category
 
         if (publish_status := request.GET.get('PublishSelector', '').strip()) in ('0', '1'):
             query_kwargs['PublishSelector'] = publish_status
@@ -78,8 +83,11 @@ def course_list(request):
         if keyword:= request.GET.get('txtkeyword', '').strip():
             course_filters['keyword'] = keyword
 
-        if course_category:= request.GET.get('CategorySelector', '').strip():
-            course_filters['sub_category_id'] = course_category
+        if maincourse_category:= request.GET.get('MainCategorySelector', '').strip():
+            course_filters['sub_category__main_category_id'] = maincourse_category
+
+        if subcourse_category:= request.GET.get('SubCategorySelector', '').strip():
+            course_filters['sub_category_id'] = subcourse_category
 
         if (publish_status := request.GET.get('PublishSelector', '').strip()) in ('0', '1'):
             course_filters['is_web_publish'] = (publish_status == '1')
@@ -105,12 +113,60 @@ def course_list(request):
         if dynamic_status:= request.GET.get('StatusSelector', '').strip():
             list_course = list_course.filter(course_dynamic_status=dynamic_status)
             
-        context = {"list_category" : list_category, "list_course" : list_course, "input_data" : request.GET}
+        context = {"list_maincategory" : list_maincategory, "list_subcategory" : list_subcategory, "list_course" : list_course, "input_data" : request.GET}
         return render(request, "courses/course_list.html", context)
 
 @admin_app_func.staff_access_control
 def course_create(request):
-    return render(request, "courses/course_edit.html")
+
+    if request.method == "POST":
+
+        #template = request.POST.get("template", '').strip()     
+        code = request.POST.get("code", '').strip()
+        name = request.POST.get("name", '').strip()
+        content = request.POST.get("content", '').strip()
+        sub_category = request.POST.get("sub_category", '').strip()
+        teacher = request.POST.get("teacher", '').strip()
+        feature_1 = request.POST.get("feature_1", '').strip()
+        feature_2 = request.POST.get("feature_2", '').strip()
+        feature_3 = request.POST.get("feature_3", '').strip()
+        feature_4 = request.POST.get("feature_4", '').strip()
+        feature_5 = request.POST.get("feature_5", '').strip()
+        feature_6 = request.POST.get("feature_6", '').strip()
+        feature_7 = request.POST.get("feature_7", '').strip()
+        feature_8 = request.POST.get("feature_8", '').strip()
+        course_fee = request.POST.get("course_fee", '').strip()
+        period_from = request.POST.get("period_from", '').strip()
+        period_to = request.POST.get("period_to", '').strip()
+        time_from = request.POST.get("time_from", '').strip()
+        time_to = request.POST.get("time_to", '').strip()
+        total_lessons = request.POST.get("total_lessons", '').strip()
+        hours_per_lesson = request.POST.get("hours_per_lesson", '').strip()
+        registation_expiry_date = request.POST.get("registation_expiry_date", '').strip()
+        max_no_student = request.POST.get("max_no_student", '').strip()
+        room = request.POST.get("room", '').strip()
+        is_web_publish = request.POST.get("is_web_publish", '').strip()
+        is_promote = request.POST.get("is_promote", '').strip()
+        course_status = request.POST.get("course_status", '').strip()
+
+        blnIsValid = True
+        if not parse_date(registation_expiry_date) or not parse_date(period_from) or not parse_date(period_to):
+            messages.error(request, "請輸入有效的日期格式")
+            blnInputError = False
+        if registation_expiry_date <= timezone.now().date():
+            messages.error(request, "報名截止日期必須 > 今天")
+            blnInputError = False  
+        if registation_expiry_date >= period_from:
+            messages.error(request, "報名截止日期必須 < 開始日期")
+            blnInputError = False
+        if  period_from > period_to:
+            messages.error(request, "報名截止日期必須 >= 課程開始日期")
+            blnInputError = False      
+
+
+        return redirect("courses:course_edit")
+    else:
+        return render(request, "courses/course_edit.html")
 
 @admin_app_func.staff_access_control
 def course_edit(request, course_id):

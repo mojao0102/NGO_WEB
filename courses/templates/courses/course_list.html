@@ -49,12 +49,22 @@
             </select>
 
             <select 
-                name="CategorySelector" 
+                name="MainCategorySelector" 
                 class="border border-gray-300 py-2.5 px-4 rounded hover:bg-gray-50 bg-white focus:outline-none cursor-pointer max-w-[200px]"
                 onchange="submitGetForm()">
-                <option value=""{% if input_data.CategorySelector == '' %}selected{% endif %}>-- 所有類別 --</option>
-                {% for category in list_category %}
-                    <option value="{{category.id}}" {% if input_data.CategorySelector == category.id|stringformat:"s" %}selected{% endif %}>[{{category.main_category.short_name}}] {{category.name}}</option>
+                <option value=""{% if input_data.MainCategorySelector == '' %}selected{% endif %}>-- 所有主類別 --</option>
+                {% for maincategory in list_maincategory %}
+                    <option value="{{maincategory.id}}" {% if input_data.MainCategorySelector == maincategory.id|stringformat:"s" %}selected{% endif %}>{{maincategory.short_name}}</option>
+                {% endfor %}
+            </select>
+
+            <select 
+                name="SubCategorySelector" 
+                class="border border-gray-300 py-2.5 px-4 rounded hover:bg-gray-50 bg-white focus:outline-none cursor-pointer max-w-[200px]"
+                onchange="submitGetForm()">
+                <option value=""{% if input_data.SubCategorySelector == '' %}selected{% endif %}>-- 所有子類別 --</option>
+                {% for subcategory in list_subcategory %}
+                    <option value="{{subcategory.id}}" {% if input_data.SubCategorySelector == subcategory.id|stringformat:"s" %}selected{% endif %}>[{{subcategory.main_category.short_name}}] {{subcategory.name}}</option>
                 {% endfor %}
             </select>
             
@@ -78,6 +88,10 @@
 
             <button onclick="submitGetForm()" class="border border-gray-300 py-2.5 px-4 rounded hover:bg-gray-50">
                 <i class="fa-solid fa-arrows-rotate"></i> Refresh
+            </button>
+
+            <button type="button" onclick="clearAllFilters()" class="border border-gray-300 py-2.5 px-4 rounded hover:bg-gray-50 flex items-center gap-2 text-red-600 border-red-200 hover:border-red-300 hover:bg-red-50">
+                <i class="fa-solid fa-xmark"></i> Clear
             </button>
 
             <button type="button" onclick="toggleAdvancedFilters()" class="border border-gray-300 py-2.5 px-4 rounded hover:bg-gray-50 flex items-center gap-2 text-gray-600">
@@ -268,6 +282,40 @@ function submitGetForm() {
         csrfInput.remove();
     }
     form.submit();
+};
+
+function clearAllFilters() {
+    const form = document.getElementById('courseForm');
+    
+    // 1. 清空文字輸入框 (關鍵字)
+    const keywordInput = form.querySelector('input[name="txtkeyword"]');
+    if (keywordInput) keywordInput.value = '';
+
+    // 2. 還原所有下拉選單到第一個選項 (-- 所有狀態 --, -- 所有類別 -- 等)
+    const selectors = ['StatusSelector', 'MainCategorySelector', 'SubCategorySelector', 'PublishSelector', 'PromoteSelector'];
+    selectors.forEach(name => {
+        const selectEl = form.querySelector(`select[name="${name}"]`);
+        if (selectEl) selectEl.selectedIndex = 0;
+    });
+
+    // 3. 清空進階篩選裡面的所有 Flatpickr 日期欄位
+    // 這裡我們直接找到所有帶有 .datepicker 的 input 並清空它
+    form.querySelectorAll('.datepicker').forEach(input => {
+        if (input._flatpickr) {
+            input._flatpickr.clear(); // 🌟 這是 Flatpickr 專屬的清空方法，最乾淨
+        } else {
+            input.value = ''; // 防呆備用
+        }
+    });
+
+    // 4. 順手把進階篩選面板藏起來 (因為條件都清空了)
+    const advancedPanel = document.getElementById('advancedFilters');
+    if (advancedPanel) {
+        advancedPanel.classList.add('hidden');
+    }
+
+    // 5. 呼叫你原本就寫好的表單送出函數 (順便幫你拔掉網址的 CSRF)
+    submitGetForm();
 }
 </script>
 {% endblock %}

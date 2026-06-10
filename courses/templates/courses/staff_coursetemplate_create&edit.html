@@ -5,7 +5,7 @@
     <h1 class="text-xl text-gray-700 font-medium mb-8">{% if template %}Edit{% else %}Create{% endif %} Course Template</h1>
 
     <form method="post" class="max-w-2xl space-y-5"
-          action="{% if template %}{% url 'courses:course_template_edit' template.id %}{% else %}{% url 'courses:course_template_create' %}{% endif %}">
+        action="{% if template %}{% url 'courses:course_template_edit' template.id %}{% else %}{% url 'courses:course_template_create' %}{% endif %}">
         {% csrf_token %}
 
         <div>
