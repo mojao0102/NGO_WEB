@@ -12,7 +12,7 @@
         <div class="flex flex-wrap items-center gap-3 mb-8">
             <div class="relative flex-grow max-w-[460px]">
                 <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
-                <input type="text" name="q" value="{{ request.GET.q }}" placeholder="搜尋課程代碼或名稱..." class="w-full pl-10 pr-4 py-2.5 rounded-full border border-gray-300 focus:outline-none">
+                <input type="text" name="q" value="{{ q }}" placeholder="搜尋課程代碼或名稱..." class="w-full pl-10 pr-4 py-2.5 rounded-full border border-gray-300 focus:outline-none">
             </div>
 
             <select 
@@ -20,12 +20,12 @@
                 class="border border-gray-300 py-2.5 px-4 rounded hover:bg-gray-50 bg-white focus:outline-none cursor-pointer"
                 onchange="this.form.submit()">
                 <option value="">-- 所有狀態 --</option>
-                <option value="報名中" {% if request.GET.status == '報名中' %}selected{% endif %}>報名中</option>
-                <option value="人數已滿" {% if request.GET.status == '人數已滿' %}selected{% endif %}>人數已滿</option>
-                <option value="截止報名" {% if request.GET.status == '截止報名' %}selected{% endif %}>截止報名</option>
-                <option value="進行中" {% if request.GET.status == '進行中' %}selected{% endif %}>進行中</option>
-                <option value="已完結" {% if request.GET.status == '已完結' %}selected{% endif %}>已完結</option>
-                <option value="已取消" {% if request.GET.status == '已取消' %}selected{% endif %}>已取消</option>
+                <option value="報名中" {% if dynamic_status == '報名中' %}selected{% endif %}>報名中</option>
+                <option value="人數已滿" {% if dynamic_status == '人數已滿' %}selected{% endif %}>人數已滿</option>
+                <option value="截止報名" {% if dynamic_status == '截止報名' %}selected{% endif %}>截止報名</option>
+                <option value="進行中" {% if dynamic_status == '進行中' %}selected{% endif %}>進行中</option>
+                <option value="已完結" {% if dynamic_status == '已完結' %}selected{% endif %}>已完結</option>
+                <option value="已取消" {% if dynamic_status == '已取消' %}selected{% endif %}>已取消</option>
             </select>
 
             <button type="submit" class="border border-gray-300 py-2.5 px-4 rounded hover:bg-gray-50">Search</button>

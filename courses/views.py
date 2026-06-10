@@ -7,6 +7,8 @@ from .func import app_func as course_app_func
 @admin_app_func.staff_access_control
 def course_list(request):
     
+    
+
     list_course = course_app_func.get_courses_with_dynamic_status()
     context = {"list_course" : list_course}
 
