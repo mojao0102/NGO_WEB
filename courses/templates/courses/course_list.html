@@ -9,6 +9,9 @@
 
     <form id="courseForm" method="GET" action="{% url 'courses:course_list' %}" class="w-full">
         {% csrf_token %}
+        <input type="hidden" name="sort_by" id="sort_by_input" value="{{ input_data.sort_by }}">
+        <input type="hidden" name="sort_dir" id="sort_dir_input" value="{{ input_data.sort_dir|default:'asc' }}">
+
         <div class="flex flex-wrap items-center gap-3 mb-2 text-sm">
 
             <a href="{% url 'courses:course_create' %}" class="border border-gray-300 py-2.5 px-4 rounded hover:bg-gray-50 flex items-center gap-2">
@@ -132,17 +135,82 @@
             <table class="table-fixed w-full border-collapse">
                 <thead>
                     <tr class="border-b border-gray-300 text-sm">
-                        <th class="hidden md:table-cell w-[5%] py-4 text-left">
-                            </th>
-                        <th class="hidden md:table-cell w-[15%] py-4 text-left text-gray-600 font-medium">Category</th>
-                        <th class="hidden md:table-cell w-[10%] py-4 text-left text-gray-600 font-medium">Code</th>
-                        <th class="w-[80%] md:w-[28%] py-4 text-left text-gray-600 font-medium">Course Name</th>
+                        <th class="hidden md:table-cell w-[5%] py-4 text-left"></th>
+                        
+                        <th class="hidden md:table-cell w-[15%] py-4 text-left text-gray-600 font-medium cursor-pointer hover:text-blue-600 select-none" onclick="handleSort('sub_category__name')">
+                            Category
+                            {% if input_data.sort_by == 'sub_category__name' %}
+                                <i class="fa-solid {% if input_data.sort_dir == 'asc' %}fa-arrow-up-a-z{% else %}fa-arrow-down-z-a{% endif %} ml-1 text-blue-500"></i>
+                            {% else %}
+                                <i class="fa-solid fa-sort text-gray-300 ml-1"></i>
+                            {% endif %}
+                        </th>
+                        
+                        <th class="hidden md:table-cell w-[10%] py-4 text-left text-gray-600 font-medium cursor-pointer hover:text-blue-600 select-none" onclick="handleSort('code')">
+                            Code
+                            {% if input_data.sort_by == 'code' %}
+                                <i class="fa-solid {% if input_data.sort_dir == 'asc' %}fa-arrow-up-1-9{% else %}fa-arrow-down-9-1{% endif %} ml-1 text-blue-500"></i>
+                            {% else %}
+                                <i class="fa-solid fa-sort text-gray-300 ml-1"></i>
+                            {% endif %}
+                        </th>
+                        
+                        <th class="w-[80%] md:w-[28%] py-4 text-left text-gray-600 font-medium cursor-pointer hover:text-blue-600 select-none" onclick="handleSort('name')">
+                            Course Name
+                            {% if input_data.sort_by == 'name' %}
+                                <i class="fa-solid {% if input_data.sort_dir == 'asc' %}fa-arrow-up-a-z{% else %}fa-arrow-down-z-a{% endif %} ml-1 text-blue-500"></i>
+                            {% else %}
+                                <i class="fa-solid fa-sort text-gray-300 ml-1"></i>
+                            {% endif %}
+                        </th>
+                        
                         <th class="hidden md:table-cell w-[10%] py-4 text-left text-gray-600 font-medium">Status</th>
-                        <th class="hidden md:table-cell w-[6%] py-4 text-left text-gray-600 font-medium">Publish</th>
-                        <th class="hidden md:table-cell w-[6%] py-4 text-left text-gray-600 font-medium">Promote</th>
-                        <th class="hidden md:table-cell w-[10%] py-4 text-left text-gray-600 font-medium">Expiry End</th>
-                        <th class="hidden md:table-cell w-[10%] py-4 text-left text-gray-600 font-medium">Start Date</th>
-                        <th class="hidden md:table-cell w-[10%] py-4 text-left text-gray-600 font-medium">End Date</th>
+                        
+                        <th class="hidden md:table-cell w-[6%] py-4 text-left text-gray-600 font-medium cursor-pointer hover:text-blue-600 select-none" onclick="handleSort('is_web_publish')">
+                            Publish
+                            {% if input_data.sort_by == 'is_web_publish' %}
+                                <i class="fa-solid {% if input_data.sort_dir == 'asc' %}fa-arrow-up-1-9{% else %}fa-arrow-down-9-1{% endif %} ml-1 text-blue-500"></i>
+                            {% else %}
+                                <i class="fa-solid fa-sort text-gray-300 ml-1"></i>
+                            {% endif %}
+                        </th>
+                        
+                        <th class="hidden md:table-cell w-[6%] py-4 text-left text-gray-600 font-medium cursor-pointer hover:text-blue-600 select-none" onclick="handleSort('is_promote')">
+                            Promote
+                            {% if input_data.sort_by == 'is_promote' %}
+                                <i class="fa-solid {% if input_data.sort_dir == 'asc' %}fa-arrow-up-1-9{% else %}fa-arrow-down-9-1{% endif %} ml-1 text-blue-500"></i>
+                            {% else %}
+                                <i class="fa-solid fa-sort text-gray-300 ml-1"></i>
+                            {% endif %}
+                        </th>
+                        
+                        <th class="hidden md:table-cell w-[10%] py-4 text-left text-gray-600 font-medium cursor-pointer hover:text-blue-600 select-none" onclick="handleSort('registation_expiry_date')">
+                            Expiry End
+                            {% if input_data.sort_by == 'registation_expiry_date' %}
+                                <i class="fa-solid {% if input_data.sort_dir == 'asc' %}fa-arrow-up-1-9{% else %}fa-arrow-down-9-1{% endif %} ml-1 text-blue-500"></i>
+                            {% else %}
+                                <i class="fa-solid fa-sort text-gray-300 ml-1"></i>
+                            {% endif %}
+                        </th>
+                        
+                        <th class="hidden md:table-cell w-[10%] py-4 text-left text-gray-600 font-medium cursor-pointer hover:text-blue-600 select-none" onclick="handleSort('period_from')">
+                            Start Date
+                            {% if input_data.sort_by == 'period_from' %}
+                                <i class="fa-solid {% if input_data.sort_dir == 'asc' %}fa-arrow-up-1-9{% else %}fa-arrow-down-9-1{% endif %} ml-1 text-blue-500"></i>
+                            {% else %}
+                                <i class="fa-solid fa-sort text-gray-300 ml-1"></i>
+                            {% endif %}
+                        </th>
+                        
+                        <th class="hidden md:table-cell w-[10%] py-4 text-left text-gray-600 font-medium cursor-pointer hover:text-blue-600 select-none" onclick="handleSort('period_to')">
+                            End Date
+                            {% if input_data.sort_by == 'period_to' %}
+                                <i class="fa-solid {% if input_data.sort_dir == 'asc' %}fa-arrow-up-1-9{% else %}fa-arrow-down-9-1{% endif %} ml-1 text-blue-500"></i>
+                            {% else %}
+                                <i class="fa-solid fa-sort text-gray-300 ml-1"></i>
+                            {% endif %}
+                        </th>
+                        
                         <th class="w-[10%] md:w-[5%] py-4 text-left text-gray-600 font-medium">More</th>
                     </tr>
                 </thead>
@@ -287,6 +355,9 @@ function submitGetForm() {
 function clearAllFilters() {
     const form = document.getElementById('courseForm');
     
+    document.getElementById('sort_by_input').value = '';
+    document.getElementById('sort_dir_input').value = 'asc';
+
     // 1. 清空文字輸入框 (關鍵字)
     const keywordInput = form.querySelector('input[name="txtkeyword"]');
     if (keywordInput) keywordInput.value = '';
@@ -316,6 +387,23 @@ function clearAllFilters() {
 
     // 5. 呼叫你原本就寫好的表單送出函數 (順便幫你拔掉網址的 CSRF)
     submitGetForm();
-}
+};
+
+function handleSort(columnName) {
+    const sortByInput = document.getElementById('sort_by_input');
+    const sortDirInput = document.getElementById('sort_dir_input');
+
+    // 如果點擊的是原本的欄位，就切換方向 (asc -> desc -> asc)
+    if (sortByInput.value === columnName) {
+        sortDirInput.value = sortDirInput.value === 'asc' ? 'desc' : 'asc';
+    } else {
+        // 如果點擊新的欄位，預設為遞增 (asc)
+        sortByInput.value = columnName;
+        sortDirInput.value = 'asc';
+    }
+
+    // 呼叫你原本的送出函數
+    submitGetForm();
+};
 </script>
 {% endblock %}

@@ -1,5 +1,5 @@
 from administration.func import app_func as admin_app_func
-from .models import Course, CourseMainCategory, CourseSubCategory, CourseTemplate
+from .models import Course, CourseMainCategory, CourseSubCategory, CourseTemplate, SignUp
 from teachers.models import Teacher
 from django.db.models import Q, F
 from django.shortcuts import render, redirect, get_object_or_404
@@ -112,6 +112,19 @@ def course_list(request):
         #Filter annote field
         if dynamic_status:= request.GET.get('StatusSelector', '').strip():
             list_course = list_course.filter(course_dynamic_status=dynamic_status)
+
+        #取得排序參數並套用 ORM 的 order_by
+        sort_by = request.GET.get('sort_by', '').strip()
+        sort_dir = request.GET.get('sort_dir', 'asc').strip() # 預設遞增 (asc)
+
+        if sort_by:
+            # 確保欄位名稱是合法的，防止惡意字串導致 ORM 報錯
+            valid_sort_fields = ['code', 'name', 'is_web_publish', 'is_promote', 'registation_expiry_date', 'period_from', 'period_to', 'sub_category__name']
+            if sort_by in valid_sort_fields:
+                # 如果是 desc 就加上負號 '-' 來做遞減排序
+                order_prefix = '-' if sort_dir == 'desc' else ''
+                list_course = list_course.order_by(f"{order_prefix}{sort_by}")
+        #End Sort
             
         context = {"list_maincategory" : list_maincategory, "list_subcategory" : list_subcategory, "list_course" : list_course, "input_data" : request.GET}
         return render(request, "courses/course_list.html", context)
@@ -293,7 +306,7 @@ def course_edit(request, course_id):
                 messages.error(request, "課程費用格式錯誤，必須是數字")
                 blnIsValid = False
 
-        if not (total_lessons:=request.POST.get("total_lessons", '').strip()) or not total_lessons.isdigit() or not int(total_lessons) <= 0:
+        if not (total_lessons:=request.POST.get("total_lessons", '').strip()) or not total_lessons.isdigit() or int(total_lessons) <= 0:
             messages.error(request, "總堂數必須是大於 0 的整數")
             blnIsValid = False
 
@@ -328,6 +341,7 @@ def course_edit(request, course_id):
         if not blnIsValid:
             #Create dict from pass non-string value back to template
             temp_obj = request.POST.dict()
+            temp_obj['id'] = course_id
             temp_obj['period_from'] = period_from
             temp_obj['period_to'] = period_to
             temp_obj['registation_expiry_date'] = registation_expiry_date
@@ -348,7 +362,7 @@ def course_edit(request, course_id):
                 "list_teacher": list_teacher,}
             return render(request, "courses/course_edit.html", context)
         
-        obj_course.sub_category_id=sub_category_id,
+        obj_course.sub_category_id=sub_category_id
         obj_course.teacher_id=request.POST.get("teacher_id") or None
         obj_course.center_id=request.POST.get("center") or None
 
@@ -395,6 +409,18 @@ def course_edit(request, course_id):
             "list_subcategory": list_subcategory,
             "list_teacher": list_teacher,}
         return render(request, "courses/course_edit.html", context)
+
+@admin_app_func.staff_access_control
+def course_delete(request, course_id):
+    if SignUp.objects.filter(course_id=course_id).exclude(file_status="deleted"):
+        messages.error(request, "SignUp found, cannot delete")
+        return redirect("courses:course_edit", course_id)
+    else:
+        obj_course = get_object_or_404(Course, (Q(id=course_id) & ~Q(file_status="deleted")))
+        obj_course.delete()
+        messages.success(request, "Deleted")
+        return redirect("courses:course_list")
+# endregion
 
 @admin_app_func.staff_access_control
 def course_view(request, course_id):
