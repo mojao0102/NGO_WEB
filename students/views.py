@@ -1,19 +1,22 @@
-from django.shortcuts import render
-from django.http import HttpResponse
+# from django.http import HttpResponse
 
-# Create your views here.
+# reference from courses app folder
 
-# reference from 
+from administration.func import app_func as admin_app_func
 from django.shortcuts import render, get_list_or_404, get_object_or_404
 
-def course_list(request):
-    return render(request, "course_list.html")
+# @admin_app_func.staff_access_control
+def student_list(request):
+    return render(request, "students/student_list.html")
 
-def course_create(request):
-    return render(request, "course_edit.html")
+# @admin_app_func.staff_access_control
+def student_create(request):
+    return render(request, "students/student_edit.html")
 
-def course_edit(request, course_id):
-    return render(request, "course_edit.html")
+# @admin_app_func.staff_access_control
+def student_edit(request, student_id):
+    return render(request, "student/student_edit.html")
 
-def course_view(request, course_id):
-    return render(request, "course_view.html")
+# @admin_app_func.staff_access_control
+def student_view(request, student_id):
+    return render(request, "students/student_view.html")
