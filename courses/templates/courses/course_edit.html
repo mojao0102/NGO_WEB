@@ -3,13 +3,19 @@
 {% load humanize %}
 {% block content %}
 
-<!-- 主內容 -->
 <main class="md:ml-[200px] flex-1 p-8 pt-16 md:pt-8">
-    <h1 class="text-xl text-gray-700 font-medium mb-8">Edit Course Template</h1>
+    <h1 class="text-xl text-gray-700 font-medium mb-8">
+        {% if form_mode == 'edit' %}Edit Course{% else %}Create Course{% endif %}
+    </h1>
 
-    <form method="post" action="{% url 'courses:course_create' %}" class="max-w-2xl space-y-5">
+    {% include "partials/_alert.html" %} 
+
+    <form method="post" 
+        action="{% if form_mode == 'edit' %}{% url 'courses:course_edit' obj_course.id %}{% else %}{% url 'courses:course_create' %}{% endif %}" 
+        enctype="multipart/form-data" 
+        class="max-w-2xl space-y-5">
         {% csrf_token %}
-        <!-- Course Template select -->
+        
         <div>
             <label class="block text-sm text-gray-600 mb-1">Course Template</label>
             <select name="template" id="templateSelect" class="w-1/3 border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200">
@@ -20,79 +26,77 @@
             </select>
         </div>
 
-        <!-- Center Name -->
-        <div>
+        {% comment %} <div>
             <label class="block text-sm text-gray-600 mb-1">Center Name</label>
-            <select class="w-1/3 border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200">
-                <option>--select--</option>
-            </select>
-        </div>
+            <select name="center" class="w-1/3 border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200">
+                <option value="">--select--</option>
+                </select>
+        </div> {% endcomment %}
 
-        <!-- Course code -->
         <div>
             <label class="block text-sm text-gray-600 mb-1">Course code</label>
-            <input type="text" name="code" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200" required>
+            <input type="text" name="code" value="{{ obj_course.code|default:'' }}" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200" required>
         </div>
 
-        <!-- Course name -->
         <div>
             <label class="block text-sm text-gray-600 mb-1">Course name</label>
-            <input type="text" name="name" id="fieldName" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200" required>
+            <input type="text" name="name" id="fieldName" value="{{ obj_course.name|default:'' }}" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200" required>
         </div>
 
-        <!-- Banner 上傳圖片功能 -->
         <div>
             <label class="block text-sm text-gray-600 mb-1">Banner</label>
             <div class="flex items-center gap-3">
-                <input type="file" id="bannerUpload" accept="image/*" class="hidden">
+                <input type="file" name="photo" id="bannerUpload" accept="image/*" class="hidden">
                 <button type="button" onclick="document.getElementById('bannerUpload').click()" 
                     class="border border-gray-300 rounded px-4 py-2 text-gray-600 hover:bg-gray-50">
                     <i class="fa-solid fa-plus mr-1 text-sm"></i> Upload
                 </button>
                 <span id="bannerFileName" class="text-sm text-gray-500"></span>
             </div>
+            {% if obj_course.photo and obj_course.photo.url %}
+            <div class="mt-3">
+                <img src="{{ obj_course.photo.url }}" alt="Current Banner" class="h-24 w-auto object-cover rounded border border-gray-200">
+                <p class="text-xs text-gray-500 mt-1">目前圖片檔案: {{ obj_course.photo.name }}</p>
+            </div>
+            {% endif %}
         </div>
 
-        <!-- Content -->
         <div>
             <label class="block text-sm text-gray-600 mb-1">Content</label>
-            <textarea id="fieldContent" name="content" rows="5" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200"></textarea>
+            <textarea id="fieldContent" name="content" rows="5" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200">{{ obj_course.content|default:'' }}</textarea>
         </div>
 
-        <!-- Category -->
         <div>
             <label class="block text-sm text-gray-600 mb-1">Category</label>
-            <select id="fieldSubCategory" name="sub_category" required class="w-1/3 border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200">
+            <select id="fieldSubCategory" name="sub_category_id" required class="w-1/3 border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200">
                 <option value="">--select--</option>
                 {% for subcat in list_subcategory %}
-                    <option value="{{ subcat.id }}">[{{ subcat.main_category.short_name }}] {{ subcat.name }}</option>
+                    <option value="{{ subcat.id }}" {% if obj_course.sub_category_id == subcat.id %}selected{% endif %}>{{ subcat.name }}</option>
                 {% endfor %}
             </select>
         </div>
 
-        <!-- Teacher Name -->
         <div>
             <label class="block text-sm text-gray-600 mb-1">Teacher Name</label>
-            <select id="fieldTeacher" name="teacher" required class="w-1/3 border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200">
+            <select id="fieldTeacher" name="teacher_id" class="w-1/3 border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200">
                 <option value="">--select--</option>
                 {% for teacher in list_teacher %}
-                <option value="{{ teacher.id }}">{{ teacher.first_name }} {{ teacher.last_name }}</option>
+                <option value="{{ teacher.id }}" {% if obj_course.teacher_id == teacher.id %}selected{% endif %}>{{ teacher.first_name }} {{ teacher.last_name }}</option>
                 {% endfor %}
             </select>
         </div>
 
-        <!-- Feature 動態新增行 (最多8個) -->
         <div>
             <label class="block text-sm text-gray-600 mb-1">Feature</label>
             <div id="featureContainer">
-                <input type="text" name="feature_1" class="w-full border border-gray-300 rounded px-3 py-2 mb-2 focus:outline-none focus:ring focus:ring-blue-200">
-                <input type="text" name="feature_2" class="w-full border border-gray-300 rounded px-3 py-2 mb-2 focus:outline-none focus:ring focus:ring-blue-200">
-                <input type="text" name="feature_3" class="w-full border border-gray-300 rounded px-3 py-2 mb-2 focus:outline-none focus:ring focus:ring-blue-200">
-                <input type="text" name="feature_4" class="w-full border border-gray-300 rounded px-3 py-2 mb-2 focus:outline-none focus:ring focus:ring-blue-200">
-                <input type="text" name="feature_5" class="w-full border border-gray-300 rounded px-3 py-2 mb-2 hidden focus:outline-none focus:ring focus:ring-blue-200">
-                <input type="text" name="feature_6" class="w-full border border-gray-300 rounded px-3 py-2 mb-2 hidden focus:outline-none focus:ring focus:ring-blue-200">
-                <input type="text" name="feature_7" class="w-full border border-gray-300 rounded px-3 py-2 mb-2 hidden focus:outline-none focus:ring focus:ring-blue-200">
-                <input type="text" name="feature_8" class="w-full border border-gray-300 rounded px-3 py-2 mb-2 hidden focus:outline-none focus:ring focus:ring-blue-200">
+                <input type="text" name="feature_1" value="{{ obj_course.feature_1|default:'' }}" class="w-full border border-gray-300 rounded px-3 py-2 mb-2 focus:outline-none focus:ring focus:ring-blue-200 feature-row">
+                <input type="text" name="feature_2" value="{{ obj_course.feature_2|default:'' }}" class="w-full border border-gray-300 rounded px-3 py-2 mb-2 focus:outline-none focus:ring focus:ring-blue-200 feature-row">
+                <input type="text" name="feature_3" value="{{ obj_course.feature_3|default:'' }}" class="w-full border border-gray-300 rounded px-3 py-2 mb-2 focus:outline-none focus:ring focus:ring-blue-200 feature-row">
+                <input type="text" name="feature_4" value="{{ obj_course.feature_4|default:'' }}" class="w-full border border-gray-300 rounded px-3 py-2 mb-2 focus:outline-none focus:ring focus:ring-blue-200 feature-row">
+                <input type="text" name="feature_5" value="{{ obj_course.feature_5|default:'' }}" class="w-full border border-gray-300 rounded px-3 py-2 mb-2 focus:outline-none focus:ring focus:ring-blue-200 feature-row {% if not obj_course.feature_5 %}hidden{% endif %}">
+                <input type="text" name="feature_6" value="{{ obj_course.feature_6|default:'' }}" class="w-full border border-gray-300 rounded px-3 py-2 mb-2 focus:outline-none focus:ring focus:ring-blue-200 feature-row {% if not obj_course.feature_6 %}hidden{% endif %}">
+                <input type="text" name="feature_7" value="{{ obj_course.feature_7|default:'' }}" class="w-full border border-gray-300 rounded px-3 py-2 mb-2 focus:outline-none focus:ring focus:ring-blue-200 feature-row {% if not obj_course.feature_7 %}hidden{% endif %}">
+                <input type="text" name="feature_8" value="{{ obj_course.feature_8|default:'' }}" class="w-full border border-gray-300 rounded px-3 py-2 mb-2 focus:outline-none focus:ring focus:ring-blue-200 feature-row {% if not obj_course.feature_8 %}hidden{% endif %}">
             </div>
             <button type="button" onclick="addFeatureRow()" id="addFeatureBtn"
                 class="mt-2 border border-gray-300 rounded px-4 py-2 text-gray-600 hover:bg-gray-50">
@@ -101,108 +105,99 @@
         </div>
 
         <div class="grid grid-cols-2 gap-4">
-        <!-- Fee -->
-            <div>
+        <div>
                 <label class="block text-sm text-gray-600 mb-1">Fee</label>
-                <input type="number" step="0.01" name="course_fee" id="fieldFee" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200" required>
+                <input type="number" step="0.01" name="course_fee" id="fieldFee" value="{{ obj_course.course_fee|default:'' }}" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200" required>
             </div>
 
-        <!-- Registration expiry date -->
-            <div>
+        <div>
                 <label class="block text-sm text-gray-600 mb-1 width-50">Registration expiry date</label>
-                <input type="date" name="registation_expiry_date" required class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200">
+                <input type="date" name="registation_expiry_date" value="{{ obj_course.registation_expiry_date|date:'Y-m-d' }}" required class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200">
             </div>
         </div>
 
-        <!-- Date Range -->
         <div class="grid grid-cols-2 gap-4">
             <div>
                 <label class="block text-sm text-gray-600 mb-1">Start Date</label>
-                <input type="date" name="period_from" required class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200">
+                <input type="date" name="period_from" value="{{ obj_course.period_from|date:'Y-m-d' }}" required class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200">
             </div>
             <div>
                 <label class="block text-sm text-gray-600 mb-1">End Date</label>
-                <input type="date" name="period_to" required class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200">
+                <input type="date" name="period_to" value="{{ obj_course.period_to|date:'Y-m-d' }}" required class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200">
             </div>
         </div>
 
-        <!-- Time Range -->
         <div class="grid grid-cols-2 gap-4">
             <div>
                 <label class="block text-sm text-gray-600 mb-1">Start Time</label>
-                <input type="time" name="time_from" required class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200">
+                <input type="time" name="time_from" value="{{ obj_course.time_from|time:'H:i' }}" required class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200">
             </div>
             <div>
                 <label class="block text-sm text-gray-600 mb-1">End Time</label>
-                <input type="time" name="time_to" required class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200">
+                <input type="time" name="time_to" value="{{ obj_course.time_to|time:'H:i' }}" required class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200">
             </div>
         </div>
 
-        <!-- Total Lesson -->
         <div class="grid grid-cols-2 gap-4"> 
             <div>
                 <label class="block text-sm text-gray-600 mb-1">Total Lesson</label>
-                <input type="number" step="1" name="total_lessons" id="fieldTotalLessons" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200" required>
+                <input type="number" step="1" name="total_lessons" id="fieldTotalLessons" value="{{ obj_course.total_lessons|default:'' }}" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200" required>
             </div>
 
-        <!-- Hours per lesson -->
-            <div>
+        <div>
                 <label class="block text-sm text-gray-600 mb-1">Hours per lesson</label>
-                <input type="number" step="0.5" name="hours_per_lesson" id="fieldHoursPerLesson" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200">
+                <input type="number" step="0.5" name="hours_per_lesson" id="fieldHoursPerLesson" value="{{ obj_course.hours_per_lesson|default:'' }}" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200">
             </div>
         </div>
 
-        <!-- Max number of student -->
         <div>
             <label class="block text-sm text-gray-600 mb-1">Max number of student</label>
-            <input type="number" name="max_no_student" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200" required>
+            <input type="number" name="max_no_student" value="{{ obj_course.max_no_student|default:'' }}" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200" required>
         </div>
 
-        <!-- Room -->
-        <div>
+        {% comment %} <div>
             <label class="block text-sm text-gray-600 mb-1">Room</label>
-            <input type="text" name="room" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200">
-        </div>
+            <input type="text" name="room" value="{{ obj_course.room|default:'' }}" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200">
+        </div> {% endcomment %}
 
-        <!-- Publish? / Hot Course? 雙欄 Checkbox -->
         <div class="grid grid-cols-2 gap-4">
             <div>
                 <label class="block text-sm text-gray-600 mb-2">Publish</label>
                 <div class="flex items-center">
-                    <input type="checkbox" checked name="is_web_publish" class="w-5 h-5 rounded border-gray-300 cursor-pointer">
+                    <input type="checkbox" name="is_web_publish" 
+                    {% if obj_course %}
+                        {% if obj_course.is_web_publish %}checked{% endif %}
+                    {% else %}
+                        checked
+                    {% endif %}
+                    class="w-5 h-5 rounded border-gray-300 cursor-pointer">
                 </div>
             </div>
             <div>
                 <label class="block text-sm text-gray-600 mb-2">Hot Course</label>
                 <div class="flex items-center">
-                    <input type="checkbox" name="is_promote" class="w-5 h-5 rounded border-gray-300 cursor-pointer">
+                    <input type="checkbox" name="is_promote" {% if obj_course.is_promote %}checked{% endif %} class="w-5 h-5 rounded border-gray-300 cursor-pointer">
                 </div>
             </div>
         </div>
 
-        <!-- Course Status -->
-        {% comment %} <div>
-            <label class="block text-sm text-gray-600 mb-1">Course Status</label>
-            <select name="course_status" class="w-1/3 border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200">
-                <option value="created">created</option>
-                <option value="cancel">cancel</option>
-            </select>
-        </div> {% endcomment %}
-
-        <!-- Buttons -->
         <div class="flex items-center gap-4 pt-4">
             <button type="submit" class="bg-green-500 text-white px-6 py-2 rounded hover:bg-green-600">Confirm</button>
-            <button type="button" class="bg-gray-700 text-white px-6 py-2 rounded hover:bg-gray-800">Back</button>
+            <a href="{% url 'courses:course_list' %}" class="bg-gray-700 text-white px-6 py-2 rounded hover:bg-gray-800 text-center">Back</a>
+            {% if form_mode == 'edit' %}
             <button type="button" class="bg-red-500 text-white px-6 py-2 rounded hover:bg-red-600">Delete</button>
+            {% endif %}
         </div>
 
     </form>
 </main>
 
 <script>
-const TEMPLATES_DATA = {{ templates_data_json|safe }};
+// (注意：你的 TEMPLATES_DATA 若是從 View 傳過來，這行才會生效，否則需要確保 view 有傳 templates_data_json)
+// const TEMPLATES_DATA = {{ templates_data_json|safe }};
 
 document.getElementById('templateSelect').addEventListener('change', function() {
+    if (typeof TEMPLATES_DATA === 'undefined') return;
     const t = TEMPLATES_DATA[this.value];
     if (!t) return;
     document.getElementById('fieldName').value = t.name;
@@ -220,6 +215,7 @@ document.getElementById('templateSelect').addEventListener('change', function() 
 
 const MAX_FEATURE = 8;
 function addFeatureRow() {
+    // 💡 修正了 JS 抓不到輸入框的問題
     const rows = document.querySelectorAll('.feature-row');
     for (const row of rows) {
         if (row.classList.contains('hidden')) {
@@ -229,20 +225,10 @@ function addFeatureRow() {
     }
 }
 
-document.addEventListener('DOMContentLoaded', function() {
-    const totalLessons = document.getElementById('totalLessons');
-    const hoursPerLesson = document.getElementById('hoursPerLesson');
-    const totalHours = document.getElementById('totalHours');
-
-    function calcTotalHours() {
-        const l = parseFloat(totalLessons.value) || 0;
-        const h = parseFloat(hoursPerLesson.value) || 0;
-        totalHours.value = (l * h) || '';
-    }
-
-    totalLessons.addEventListener('input', calcTotalHours);
-    hoursPerLesson.addEventListener('input', calcTotalHours);
+// 顯示選擇的圖片檔名
+document.getElementById('bannerUpload').addEventListener('change', function() {
+    const fileName = this.files[0] ? this.files[0].name : '';
+    document.getElementById('bannerFileName').textContent = fileName;
 });
-
 </script>
 {% endblock %}
