@@ -13,6 +13,6 @@ urlpatterns = [
     # path('delete/<int:course_id>', views.course_delete, name='course_delete'),
     # path('view/<int:course_id>', views.course_view, name='course_view'),
     path('edit/<str:hash_course>/', views.course_edit, name='course_edit'),
-    path('delete/<str:hash_course>', views.course_delete, name='course_delete'),
+    # path('delete/<str:hash_course>', views.course_delete, name='course_delete'),
     path('view/<str:hash_course>/', views.course_view, name='course_view'),
 ]

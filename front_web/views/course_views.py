@@ -4,6 +4,7 @@ from django.shortcuts import render, get_object_or_404
 from courses.models import CourseMainCategory, CourseSubCategory, Course
 from web_contents.models import News
 from ..func import app_func as frontweb_app_func, stripe_func
+from courses.func import app_func as course_app_func
 from core.utils import decode_id
 from django.http import Http404
 
@@ -34,28 +35,38 @@ def course_list(request, hash_mc):
 
         context["obj_sc"] = get_object_or_404(CourseSubCategory, id = sc_id, is_active = True)
 
-        #Get course list
-        course_queryset = Course.objects.annotate(
-        valid_signup_count=Count('signup_set', filter=Q(signup_set__payment_date__isnull=False) 
-                                & Q(signup_set__sign_up_status="success") 
-                                & Q(signup_set__cancel_date__isnull=True)
-                                & ~Q(signup_set__file_status="deleted"))
-        ).annotate(
-        #generate str_course_status base on valid_signup_count
-            str_course_status=Case(
-            When(
-                max_no_student__gt=0, 
-                valid_signup_count__gte=F('max_no_student'), 
-                then=Value('名額已滿')
-            ),
-            default=Value('收生中'),
-            output_field=CharField(),))
+        # #Get course list
+        # course_queryset = Course.objects.annotate(
+        # valid_signup_count=Count('signup_set', filter=Q(signup_set__payment_date__isnull=False) 
+        #                         & Q(signup_set__sign_up_status="success") 
+        #                         & Q(signup_set__cancel_date__isnull=True)
+        #                         & ~Q(signup_set__file_status="deleted"))
+        # ).annotate(
+        # #generate str_course_status base on valid_signup_count
+        #     str_course_status=Case(
+        #     When(
+        #         max_no_student__gt=0, 
+        #         valid_signup_count__gte=F('max_no_student'), 
+        #         then=Value('名額已滿')
+        #     ),
+        #     default=Value('收生中'),
+        #     output_field=CharField(),))
         
-        #Only course with status "created", web published and not over registation expiry date allow to show
-        context["list_course"] = course_queryset.filter(sub_category_id = sc_id, 
-                                                is_web_publish = True, 
-                                                registation_expiry_date__gte=timezone.localtime(timezone.now()).date(),
-                                                course_status = "created").exclude(file_status="deleted")
+        # #Only course with status "created", web published and not over registation expiry date allow to show
+        # context["list_course"] = course_queryset.filter(sub_category_id = sc_id, 
+        #                                         is_web_publish = True, 
+        #                                         registation_expiry_date__gte=timezone.localtime(timezone.now()).date(),
+        #                                         course_status = "created").exclude(file_status="deleted")
+        
+
+        course_filters = {}
+        course_filters["course_status"] = "created"
+        course_filters["sub_category_id"] = sc_id
+        course_filters["is_web_publish"] = True
+        course_filters["registation_expiry_date__gte"] = timezone.now()
+        context["list_course"] = course_app_func.get_courses_with_dynamic_status(**course_filters) 
+
+
     return render(request, "course_list.html", context)
 
 @frontweb_app_func.load_main_category

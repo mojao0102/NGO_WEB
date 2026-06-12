@@ -7,11 +7,13 @@ from django.urls import reverse
 from urllib.parse import urlencode
 from django.contrib import messages
 from .func import app_func as course_app_func
-from django.utils.dateparse import parse_date, parse_time
+from django.utils.dateparse import parse_date, parse_time, parse_datetime
 from django.utils import timezone
+from datetime import datetime, time
 import json
-from core.utils import decode_id
+from core.utils import decode_id, encode_id
 from django.http import Http404
+from django.db import transaction
 
 # region Course
 @admin_app_func.staff_access_control
@@ -82,33 +84,24 @@ def course_list(request):
     else:#GET
         course_filters = {} 
 
-        print(f"Keyword: {request.GET.get('txtkeyword', '').strip()}")
         if keyword:= request.GET.get('txtkeyword', '').strip():
             course_filters['keyword'] = keyword
-
         if maincourse_category:= request.GET.get('MainCategorySelector', '').strip():
             course_filters['sub_category__main_category_id'] = maincourse_category
-
         if subcourse_category:= request.GET.get('SubCategorySelector', '').strip():
             course_filters['sub_category_id'] = subcourse_category
-
         if (publish_status := request.GET.get('PublishSelector', '').strip()) in ('0', '1'):
             course_filters['is_web_publish'] = (publish_status == '1')
-
         if (promote_status := request.GET.get('PromoteSelector', '').strip()) in ('0', '1'):
             course_filters['is_promote'] = (promote_status == '1')
-
         if start_date_from:= parse_date(request.GET.get('start_date_from', '').strip()):
             course_filters['period_from__gte'] = start_date_from
-
         if start_date_to:= parse_date(request.GET.get('start_date_to', '').strip()):
             course_filters['period_from__lte'] = start_date_to
-
         if expiry_date_from:= parse_date(request.GET.get('expiry_date_from', '').strip()):
             course_filters['registation_expiry_date__gte'] = expiry_date_from
-
         if expiry_date_to:= parse_date(request.GET.get('expiry_date_to', '').strip()):
-            course_filters['registation_expiry_date__lte'] = expiry_date_to
+            course_filters['registation_expiry_date__lte'] = datetime.combine(expiry_date_to, time.max)
 
         list_course = course_app_func.get_courses_with_dynamic_status(**course_filters)
 
@@ -146,15 +139,12 @@ def course_create(request):
         if not (name:= request.POST.get("name", '').strip()):
             messages.error(request, "課程名稱為必填欄位")
             blnIsValid = False
-
         if not (code:= request.POST.get("code", '').strip()):
             messages.error(request, "課程代碼為必填欄位")
             blnIsValid = False
-
         if not (sub_category_id:= request.POST.get("sub_category_id", '').strip()):
             messages.error(request, "請選擇課程類別")
             blnIsValid = False
-
         if not (course_fee:= request.POST.get("course_fee", '').strip()):
             messages.error(request, "請填寫課程費用")
             blnIsValid = False
@@ -167,24 +157,24 @@ def course_create(request):
             except ValueError:
                 messages.error(request, "課程費用格式錯誤，必須是數字")
                 blnIsValid = False
-
         if not (total_lessons:=request.POST.get("total_lessons", '').strip()) or not total_lessons.isdigit() or int(total_lessons) <= 0:
             messages.error(request, "總堂數必須是大於 0 的整數")
             blnIsValid = False
-
         if not (max_no_student:=request.POST.get("max_no_student", '').strip()) or not max_no_student.isdigit() or int(max_no_student) <= 0:
             messages.error(request, "人數上限必須是大於 0 的整數")
             blnIsValid = False
 
         #Date Checking
-        if not (registation_expiry_date:=parse_date(request.POST.get("registation_expiry_date", '').strip())) or not (period_from:=parse_date(request.POST.get("period_from", '').strip())) or not (period_to:=parse_date(request.POST.get("period_to", '').strip())):
+        if not (registation_expiry_date:=parse_datetime(request.POST.get("registation_expiry_date", '').strip())) or not (period_from:=parse_date(request.POST.get("period_from", '').strip())) or not (period_to:=parse_date(request.POST.get("period_to", '').strip())):
             messages.error(request, "請輸入有效的日期格式")
             blnIsValid = False
         else:
-            if registation_expiry_date <= timezone.now().date():
+            registation_expiry_date = timezone.make_aware(registation_expiry_date) if timezone.is_naive(registation_expiry_date) else registation_expiry_date
+
+            if registation_expiry_date <= timezone.now():
                 messages.error(request, "報名截止日期必須 > 今天")
                 blnIsValid = False
-            if registation_expiry_date >= period_from:
+            if registation_expiry_date.date() >= period_from:
                 messages.error(request, "報名截止日期必須 < 開始日期")
                 blnIsValid = False
             if  period_from > period_to:
@@ -207,11 +197,9 @@ def course_create(request):
             temp_obj['period_to'] = period_to
             temp_obj['registation_expiry_date'] = registation_expiry_date
             temp_obj['time_from'] = time_from
-            temp_obj['time_to'] = time_to
-            
+            temp_obj['time_to'] = time_to       
             temp_obj['is_web_publish'] = request.POST.get("is_web_publish") == "on"
             temp_obj['is_promote'] = request.POST.get("is_promote") == "on"
-
             temp_obj['sub_category_id'] = int(sub_category_id) if sub_category_id  else None
             temp_obj['teacher_id'] = int(request.POST.get("teacher_id")) if request.POST.get("teacher_id") and request.POST.get("teacher_id").isdigit() else None
 
@@ -258,7 +246,7 @@ def course_create(request):
             is_web_publish=request.POST.get("is_web_publish") == "on",
             is_promote=request.POST.get("is_promote") == "on",
             course_status="created" # 預設狀態
-        )
+            )
         #Success
         messages.success(request, "課程建立成功！")
         return redirect("courses:course_list")
@@ -273,34 +261,75 @@ def course_create(request):
 
 @admin_app_func.staff_access_control
 def course_edit(request, hash_course):
-
     #decode hash id
     course_id = decode_id(hash_course)
     if not course_id:
-        raise Http404("無效的課程連結")
-    
-    #Get course object & drop down list datasource
+        raise Http404("無效的課程連結")  
+
     obj_course = get_object_or_404(Course, Q(id=course_id) & ~Q(file_status="deleted"))
-    list_templates = CourseTemplate.objects.exclude(file_status="deleted")
-    list_subcategory = CourseSubCategory.objects.filter(is_active=True).exclude(file_status="deleted")
-    list_teacher = Teacher.objects.filter(is_active=True).exclude(file_status="deleted")
 
     if request.method == "POST":
+        #Check if delete      
+        if request.POST.get("btnAction", '').strip() == "delete":
+            if SignUp.objects.filter(course_id=course_id).exclude(file_status="deleted"):
+                messages.error(request, "此課程已有學生報名，無法刪除，請考慮將狀態改為取消")
+                return redirect("courses:course_edit", hash_course)
+            else:
+                obj_course = get_object_or_404(Course, (Q(id=course_id) & ~Q(file_status="deleted")))
+                obj_course.delete()
+                messages.success(request, "Deleted")
+                return redirect("courses:course_list")
+            
+        #Check if cancel      
+        if request.POST.get("btnAction", '').strip() == "cancel":
+            if not request.obj_staff.is_admin:
+                messages.error(request, "權限不足：只有管理員才能取消課程。")
+                return redirect("courses:course_edit", hash_course)
+            else:
+                #Check if staff input cancel reason
+                if not (cancel_reason := request.POST.get("cancel_reason", "").strip()):
+                    messages.error(request, "請填寫或選擇課程取消的原因。")
+                    return redirect("courses:course_edit", hash_course)
+                try:
+                    with transaction.atomic():
+                        obj_course.course_status = 'cancel'
+                        obj_course.last_updated_by=request.obj_staff.username
+                        obj_course.save()
+
+                        #Get related SignUp
+                        list_signup = SignUp.objects.filter(course_id=course_id).exclude(file_status="deleted")
+
+                        #Get cancel reason
+                        updated_count = list_signup.update(sign_up_status='cancel', 
+                                                        cancel_date=timezone.now(), 
+                                                        cancel_by=request.obj_staff, 
+                                                        cancel_reason=cancel_reason, 
+                                                        last_updated_by=request.obj_staff.username)
+                        
+                        messages.success(request, f"課程已成功取消！系統已連動取消 {updated_count} 位學生的報名紀錄。")
+                        return redirect("courses:course_edit", hash_course)
+                except Exception as e:
+                    print(f"取消課程失敗: {str(e)}")
+                    messages.error(request, "系統發生錯誤，取消動作已安全撤銷，請聯絡管理員。")
+                    return redirect("courses:course_edit", hash_course)
+
+        #Edit, load datasource
+        obj_course = get_object_or_404(Course, Q(id=course_id) & ~Q(file_status="deleted"))
+        list_templates = CourseTemplate.objects.exclude(file_status="deleted")
+        list_subcategory = CourseSubCategory.objects.filter(is_active=True).exclude(file_status="deleted")
+        list_teacher = Teacher.objects.filter(is_active=True).exclude(file_status="deleted")
 
         #Check input Valid
         blnIsValid = True
         if not (name:= request.POST.get("name", '').strip()):
             messages.error(request, "課程名稱為必填欄位")
             blnIsValid = False
-
         if not (code:= request.POST.get("code", '').strip()):
             messages.error(request, "課程代碼為必填欄位")
             blnIsValid = False
-
         if not (sub_category_id:= request.POST.get("sub_category_id", '').strip()):
             messages.error(request, "請選擇課程類別")
             blnIsValid = False
-
         if not (course_fee:= request.POST.get("course_fee", '').strip()):
             messages.error(request, "請填寫課程費用")
             blnIsValid = False
@@ -313,30 +342,28 @@ def course_edit(request, hash_course):
             except ValueError:
                 messages.error(request, "課程費用格式錯誤，必須是數字")
                 blnIsValid = False
-
         if not (total_lessons:=request.POST.get("total_lessons", '').strip()) or not total_lessons.isdigit() or int(total_lessons) <= 0:
             messages.error(request, "總堂數必須是大於 0 的整數")
             blnIsValid = False
-
         if not (max_no_student:=request.POST.get("max_no_student", '').strip()) or not max_no_student.isdigit() or int(max_no_student) <= 0:
             messages.error(request, "人數上限必須是大於 0 的整數")
             blnIsValid = False
-
         #Date Checking
-        if not (registation_expiry_date:=parse_date(request.POST.get("registation_expiry_date", '').strip())) or not (period_from:=parse_date(request.POST.get("period_from", '').strip())) or not (period_to:=parse_date(request.POST.get("period_to", '').strip())):
+        if not (registation_expiry_date:=parse_datetime(request.POST.get("registation_expiry_date", '').strip())) or not (period_from:=parse_date(request.POST.get("period_from", '').strip())) or not (period_to:=parse_date(request.POST.get("period_to", '').strip())):
             messages.error(request, "請輸入有效的日期格式")
             blnIsValid = False
         else:
-            if registation_expiry_date <= timezone.now().date():
+            registation_expiry_date = timezone.make_aware(registation_expiry_date) if timezone.is_naive(registation_expiry_date) else registation_expiry_date
+
+            if registation_expiry_date <= timezone.now():
                 messages.error(request, "報名截止日期必須 > 今天")
                 blnIsValid = False
-            if registation_expiry_date >= period_from:
+            if registation_expiry_date.date() >= period_from:
                 messages.error(request, "報名截止日期必須 < 開始日期")
                 blnIsValid = False
             if  period_from > period_to:
                 messages.error(request, "課程結束日期必須 >= 課程開始日期")
                 blnIsValid = False
-
         #Time chacking
         if not (time_from:= parse_time(request.POST.get("time_from", '').strip())) or not (time_to:= parse_time(request.POST.get("time_to", '').strip())):
             messages.error(request, "請填寫有效的上課時間")
@@ -354,14 +381,11 @@ def course_edit(request, hash_course):
             temp_obj['period_to'] = period_to
             temp_obj['registation_expiry_date'] = registation_expiry_date
             temp_obj['time_from'] = time_from
-            temp_obj['time_to'] = time_to
-            
+            temp_obj['time_to'] = time_to         
             temp_obj['is_web_publish'] = request.POST.get("is_web_publish") == "on"
             temp_obj['is_promote'] = request.POST.get("is_promote") == "on"
-
             temp_obj['sub_category_id'] = int(sub_category_id) if sub_category_id  else None
             temp_obj['teacher_id'] = int(request.POST.get("teacher_id")) if request.POST.get("teacher_id") and request.POST.get("teacher_id").isdigit() else None
-
             context = {
                 "form_mode" : "edit",
                 "obj_course": temp_obj,
@@ -370,16 +394,15 @@ def course_edit(request, hash_course):
                 "list_teacher": list_teacher,}
             return render(request, "courses/course_edit.html", context)
         
+        #Update object
         obj_course.sub_category_id=sub_category_id
         obj_course.teacher_id=request.POST.get("teacher_id") or None
         obj_course.center_id=request.POST.get("center") or None
-
         obj_course.code=code
         obj_course.name=name
         obj_course.content=request.POST.get("content", '').strip()
         if "photo" in request.FILES:
             obj_course.photo = request.FILES.get("photo")
-
         obj_course.feature_1=request.POST.get("feature_1", '').strip()
         obj_course.feature_2=request.POST.get("feature_2", '').strip()
         obj_course.feature_3=request.POST.get("feature_3", '').strip()
@@ -388,28 +411,28 @@ def course_edit(request, hash_course):
         obj_course.feature_6=request.POST.get("feature_6", '').strip()
         obj_course.feature_7=request.POST.get("feature_7", '').strip()
         obj_course.feature_8=request.POST.get("feature_8", '').strip()
-
         obj_course.course_fee=course_fee
         obj_course.total_lessons=total_lessons
         obj_course.hours_per_lesson=request.POST.get("hours_per_lesson") or 0
         obj_course.max_no_student=max_no_student
-
         obj_course.period_from=period_from
         obj_course.period_to=period_to
         obj_course.time_from=time_from
         obj_course.time_to=time_to
-
         obj_course.registation_expiry_date=registation_expiry_date
         #obj_course.default_room=request.POST.get("room", '').strip()
         obj_course.is_web_publish=request.POST.get("is_web_publish") == "on"
         obj_course.is_promote=request.POST.get("is_promote") == "on"
 
         obj_course.save()
-
         messages.success(request, "課程更新成功！")
-        return redirect("courses:course_list")
+        return redirect("courses:course_list") 
     
     else:#GET
+        obj_course = get_object_or_404(Course, Q(id=course_id) & ~Q(file_status="deleted"))
+        list_templates = CourseTemplate.objects.exclude(file_status="deleted")
+        list_subcategory = CourseSubCategory.objects.filter(is_active=True).exclude(file_status="deleted")
+        list_teacher = Teacher.objects.filter(is_active=True).exclude(file_status="deleted")
         context = {
             "form_mode" : "edit",
             "obj_course": obj_course,
@@ -417,24 +440,6 @@ def course_edit(request, hash_course):
             "list_subcategory": list_subcategory,
             "list_teacher": list_teacher,}
         return render(request, "courses/course_edit.html", context)
-
-@admin_app_func.staff_access_control
-def course_delete(request, hash_course):
-
-    #decode hash id
-    course_id = decode_id(hash_course)
-    if not course_id:
-        raise Http404("無效的課程連結")
-
-    #Check if any student signup already, if yes, only allow cancel
-    if SignUp.objects.filter(course_id=course_id).exclude(file_status="deleted"):
-        messages.error(request, "SignUp found, cannot delete, please consider cancel it")
-        return redirect("courses:course_edit", course_id)
-    else:
-        obj_course = get_object_or_404(Course, (Q(id=course_id) & ~Q(file_status="deleted")))
-        obj_course.delete()
-        messages.success(request, "Deleted")
-        return redirect("courses:course_list")
 # endregion
 
 @admin_app_func.staff_access_control
