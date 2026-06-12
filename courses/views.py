@@ -412,8 +412,9 @@ def course_edit(request, course_id):
 
 @admin_app_func.staff_access_control
 def course_delete(request, course_id):
+    #Check if any student signup already, if yes, only allow cancel
     if SignUp.objects.filter(course_id=course_id).exclude(file_status="deleted"):
-        messages.error(request, "SignUp found, cannot delete")
+        messages.error(request, "SignUp found, cannot delete, please consider cancel it")
         return redirect("courses:course_edit", course_id)
     else:
         obj_course = get_object_or_404(Course, (Q(id=course_id) & ~Q(file_status="deleted")))
