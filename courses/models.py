@@ -6,6 +6,7 @@ from administration.models import Center, Room, Staff
 from teachers.models import Teacher
 from students.models import Student
 from django.utils import timezone
+from core.utils import encode_id #For hash id
 
 class CourseMainCategory(AuditBaseModel):
 
@@ -25,6 +26,10 @@ class CourseMainCategory(AuditBaseModel):
 
     def __str__(self):
         return self.name or f"MainCategory {self.id}"
+    
+    @property
+    def hash_id(self):
+        return encode_id(self.id)
 
 
 class CourseSubCategory(AuditBaseModel):
@@ -42,6 +47,10 @@ class CourseSubCategory(AuditBaseModel):
 
     def __str__(self):
         return self.name or f"SubCategory {self.id}"
+    
+    @property
+    def hash_id(self):
+        return encode_id(self.id)
     
 class CourseTemplate(AuditBaseModel):
     teacher = models.ForeignKey(Teacher, null=True, blank=True, on_delete=models.DO_NOTHING, related_name='templates', verbose_name="老師")
@@ -122,6 +131,10 @@ class Course(AuditBaseModel):
 
     def __str__(self):
         return f"[{self.code}] {self.name}"
+    
+    @property
+    def hash_id(self):
+        return encode_id(self.id)
 
 
 class CourseSchedule(AuditBaseModel):
@@ -166,6 +179,10 @@ class SignUp(AuditBaseModel):
     def __str__(self):
         return f"{self.student} - {self.course}"
     
+    @property
+    def hash_id(self):
+        return encode_id(self.id)
+    
 class SignUpRefund(AuditBaseModel):
     sign_up = models.ForeignKey(SignUp, on_delete=models.CASCADE, related_name='refunds', verbose_name="報名紀錄")
     refund_date = models.DateTimeField(default=timezone.now, verbose_name="退款日期")
@@ -182,3 +199,8 @@ class SignUpRefund(AuditBaseModel):
 
     def __str__(self):
         return f"Refund for SignUp #{self.sign_up.id}"    
+    
+    @property
+    def hash_id(self):
+        return encode_id(self.id)
+        

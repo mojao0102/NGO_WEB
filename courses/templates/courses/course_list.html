@@ -3,95 +3,413 @@
 {% load humanize %}
 {% block content %}
 
-<!-- 主內容 -->
 <main class="md:ml-[200px] flex-1 p-8 pt-16 md:pt-8">
+    {% include "partials/_alert.html" %} 
     <h1 class="text-2xl text-gray-600 font-medium mb-8">Course</h1>
 
-    <div class="flex flex-wrap items-center gap-3 mb-8">
-        <div class="relative flex-grow max-w-[460px]">
-            <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
-            <input type="text" class="w-full pl-10 pr-4 py-2.5 rounded-full border border-gray-300 focus:outline-none">
-        </div>
+    <form id="courseForm" method="GET" action="{% url 'courses:course_list' %}" class="w-full">
+        {% csrf_token %}
+        <input type="hidden" name="sort_by" id="sort_by_input" value="{{ input_data.sort_by }}">
+        <input type="hidden" name="sort_dir" id="sort_dir_input" value="{{ input_data.sort_dir|default:'asc' }}">
 
-        <div class="relative dropdown-filter">
-            <button class="border border-gray-300 py-2.5 px-4 rounded hover:bg-gray-50 flex items-center gap-2">
-                <i class="fa-solid fa-filter"></i> Filter
+        <div class="flex flex-wrap items-center gap-3 mb-2 text-sm">
+
+            <a href="{% url 'courses:course_create' %}" class="border border-gray-300 py-2.5 px-4 rounded hover:bg-gray-50 flex items-center gap-2">
+                <i class="fa-solid fa-plus"></i> Create
+            </a> 
+
+            <div class="relative dropdown-action pr-3">
+                <button class="border border-gray-300 py-2.5 px-4 rounded hover:bg-gray-50" type="button">
+                    <i class="fa-solid fa-bolt"></i> 
+                        <span>Action</span>
+                    <i class="fa-solid fa-chevron-down text-xs text-gray-400 ml-1"></i>
+                </button>
+                <div class="hidden flex flex-col absolute top-full mt-1 bg-white border border-gray-300 dropdown-card min-w-[200px] z-50">
+                    <button formmethod="post" class="py-2 px-5 text-left hover:bg-gray-100 cursor-pointer" type="submit" name="btnAction" value="SetWebPublish">Set Publish</button>
+                    <button formmethod="post" class="py-2 px-5 text-left hover:bg-gray-100 cursor-pointer" type="submit" name="btnAction" value="UndoWebPublish">Undo Publish</button>
+                    <button formmethod="post" class="py-2 px-5 text-left hover:bg-gray-100 cursor-pointer" type="submit" name="btnAction" value="SetPromote">Set Promote</button>
+                    <button formmethod="post" class="py-2 px-5 text-left hover:bg-gray-100 cursor-pointer" type="submit" name="btnAction" value="UndoPromote">Undo Promote</button>
+                </div>
+            </div>  
+
+            <div class="relative flex-grow max-w-[200px]">
+                <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                <input type="text" name="txtkeyword" value="{{input_data.txtkeyword}}" placeholder="搜尋課程代碼或名稱..." 
+                class="w-full pl-10 pr-4 py-2.5 rounded-full border border-gray-300 focus:outline-none">
+            </div>
+
+            <select 
+                name="StatusSelector" 
+                class="border border-gray-300 py-2.5 px-4 rounded hover:bg-gray-50 bg-white focus:outline-none cursor-pointer"
+                onchange="submitGetForm()">
+                <option value=""{% if input_data.StatusSelector == '' %}selected{% endif %}>-- 所有狀態 --</option>
+                <option value="報名中" {% if input_data.StatusSelector == '報名中' %}selected{% endif %}>報名中</option>
+                <option value="人數已滿" {% if input_data.StatusSelector == '人數已滿' %}selected{% endif %}>人數已滿</option>
+                <option value="截止報名" {% if input_data.StatusSelector == '截止報名' %}selected{% endif %}>截止報名</option>
+                <option value="進行中" {% if input_data.StatusSelector == '進行中' %}selected{% endif %}>進行中</option>
+                <option value="已完結" {% if input_data.StatusSelector == '已完結' %}selected{% endif %}>已完結</option>
+                <option value="已取消" {% if input_data.StatusSelector == '已取消' %}selected{% endif %}>已取消</option>
+            </select>
+
+            <select 
+                name="MainCategorySelector" 
+                class="border border-gray-300 py-2.5 px-4 rounded hover:bg-gray-50 bg-white focus:outline-none cursor-pointer max-w-[200px]"
+                onchange="submitGetForm()">
+                <option value=""{% if input_data.MainCategorySelector == '' %}selected{% endif %}>-- 所有主類別 --</option>
+                {% for maincategory in list_maincategory %}
+                    <option value="{{maincategory.id}}" {% if input_data.MainCategorySelector == maincategory.id|stringformat:"s" %}selected{% endif %}>{{maincategory.short_name}}</option>
+                {% endfor %}
+            </select>
+
+            <select 
+                name="SubCategorySelector" 
+                class="border border-gray-300 py-2.5 px-4 rounded hover:bg-gray-50 bg-white focus:outline-none cursor-pointer max-w-[200px]"
+                onchange="submitGetForm()">
+                <option value=""{% if input_data.SubCategorySelector == '' %}selected{% endif %}>-- 所有子類別 --</option>
+                {% for subcategory in list_subcategory %}
+                    <option value="{{subcategory.id}}" {% if input_data.SubCategorySelector == subcategory.id|stringformat:"s" %}selected{% endif %}>[{{subcategory.main_category.short_name}}] {{subcategory.name}}</option>
+                {% endfor %}
+            </select>
+            
+            <select 
+                name="PublishSelector" 
+                class="border border-gray-300 py-2.5 px-4 rounded hover:bg-gray-50 bg-white focus:outline-none cursor-pointer"
+                onchange="submitGetForm()">
+                <option value="" {% if input_data.PublishSelector == '' %}selected{% endif %}>-- 發佈 --</option>
+                <option value="1" {% if input_data.PublishSelector == '1' %}selected{% endif %}>已發佈</option>
+                <option value="0" {% if input_data.PublishSelector == '0' %}selected{% endif %}>未發佈</option>
+            </select>
+
+            <select 
+                name="PromoteSelector" 
+                class="border border-gray-300 py-2.5 px-4 rounded hover:bg-gray-50 bg-white focus:outline-none cursor-pointer"
+                onchange="submitGetForm()">
+                <option value="" {% if input_data.PromoteSelector == '' %}selected{% endif %}>-- 推廣 --</option>
+                <option value="1" {% if input_data.PromoteSelector == '1' %}selected{% endif %}>已推廣</option>
+                <option value="0" {% if input_data.PromoteSelector == '0' %}selected{% endif %}>未推廣</option>
+            </select>
+
+            <button onclick="submitGetForm()" class="border border-gray-300 py-2.5 px-4 rounded hover:bg-gray-50">
+                <i class="fa-solid fa-arrows-rotate"></i> Refresh
             </button>
-            <div class="hidden absolute top-full left-0 mt-1 bg-white border border-gray-300 dropdown-card min-w-[200px]">
-                <div class="py-2.5 px-3 hover:bg-gray-100 cursor-pointer">filter 1</div>
-                <div class="py-2.5 px-3 hover:bg-gray-100 cursor-pointer">filter 2</div>
-            </div>
+
+            <button type="button" onclick="clearAllFilters()" class="border border-gray-300 py-2.5 px-4 rounded hover:bg-gray-50 flex items-center gap-2 text-red-600 border-red-200 hover:border-red-300 hover:bg-red-50">
+                <i class="fa-solid fa-xmark"></i> Clear
+            </button>
+
+            <button type="button" onclick="toggleAdvancedFilters()" class="border border-gray-300 py-2.5 px-4 rounded hover:bg-gray-50 flex items-center gap-2 text-gray-600">
+                <i class="fa-solid fa-sliders"></i> 進階篩選
+            </button>
+
+            <div id="advancedFilters" class="hidden bg-gray-50 border border-gray-200 p-2 rounded-lg shadow-inner">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2 text-xs">
+                            <i class="fa-regular fa-clock mr-1 text-gray-400"></i> 報名截止日期區間
+                        </label>
+                        <div class="flex items-center gap-2">
+                            <input type="text" placeholder="YYYY-MM-DD" name="expiry_date_from" value="{{ input_data.expiry_date_from }}" 
+                            class="datepicker w-full border border-gray-300 rounded px-3 py-2 text-sm text-gray-600 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-xs">
+                            <span class="text-gray-400">至</span>
+                            <input type="text" placeholder="YYYY-MM-DD" name="expiry_date_to" value="{{ input_data.expiry_date_to }}" 
+                            class="datepicker w-full border border-gray-300 rounded px-3 py-2 text-sm text-gray-600 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-xs">
+                        </div>
+                    </div>  
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2 text-xs">
+                            <i class="fa-regular fa-calendar-check mr-1 text-gray-400"></i> 開課日期區間
+                        </label>
+                        <div class="flex items-center gap-2">
+                            <input type="text" placeholder="YYYY-MM-DD" name="start_date_from" value="{{ input_data.start_date_from }}" 
+                            class="datepicker w-full border border-gray-300 rounded px-3 py-2 text-sm text-gray-600 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-xs">
+                            <span class="text-gray-400">至</span>
+                            <input type="text" placeholder="YYYY-MM-DD" name="start_date_to" value="{{ input_data.start_date_to }}" 
+                            class="datepicker w-full border border-gray-300 rounded px-3 py-2 text-sm text-gray-600 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-xs">
+                        </div>
+                    </div>             
+                </div>
+            </div> 
         </div>
 
-        <button class="border border-gray-300 py-2.5 px-4 rounded hover:bg-gray-50">Search</button>
-        <button class="border border-gray-300 py-2.5 px-4 rounded hover:bg-gray-50"><i class="fa-solid fa-arrows-rotate"></i></button>
-
-        <div class="relative dropdown-action">
-            <button class="border border-gray-300 py-2.5 px-4 rounded hover:bg-gray-50">Action</button>
-            <div class="hidden absolute top-full mt-1 bg-white border border-gray-300 dropdown-card min-w-[200px]">
-                <div class="py-2 px-5 hover:bg-gray-100 cursor-pointer">Set Publish</div>
-                <div class="py-2 px-5 hover:bg-gray-100 cursor-pointer">Undo Publish</div>
-                <div class="py-2 px-5 hover:bg-gray-100 cursor-pointer">Set Hot Course</div>
-                <div class="py-2 px-5 hover:bg-gray-100 cursor-pointer">Undo Hot Course</div>
-            </div>
-        </div>
-
-
-        <a href="{% url "courses:course_create" %}" class="border border-gray-300 py-2.5 px-4 rounded hover:bg-gray-50 flex items-center gap-2">
-            <i class="fa-solid fa-plus"></i> Create
-        </a>
-
-    </div>
-
-    <!-- 手機只顯示 Course Name + More -->
-    <div class="overflow-x-auto">
-        <table class="table-fixed w-full border-collapse">
-            <thead>
-                <tr class="border-b border-gray-300">
-                    <th class="hidden md:table-cell w-[5%] py-4 text-left"></th>
-                    <th class="hidden md:table-cell w-[12%] py-4 text-left text-gray-600 font-medium">Code</th>
-                    <th class="w-[80%] md:w-[32%] py-4 text-left text-gray-600 font-medium">Course Name</th>
-                    <th class="hidden md:table-cell w-[12%] py-4 text-left text-gray-600 font-medium">Status</th>
-                    <th class="hidden md:table-cell w-[8%] py-4 text-left text-gray-600 font-medium">Publish</th>
-                    <th class="hidden md:table-cell w-[11%] py-4 text-left text-gray-600 font-medium">Fee</th>
-                    <th class="hidden md:table-cell w-[15%] py-4 text-left text-gray-600 font-medium">Start Date</th>
-                    <th class="hidden md:table-cell w-[15%] py-4 text-left text-gray-600 font-medium">End Date</th>
-                    <th class="w-[10%] md:w-[5%] py-4 text-left text-gray-600 font-medium">More</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr class="border-b border-gray-200 table-row text-sm">
-                    <td class="hidden md:table-cell py-5"><input type="checkbox" class="row-check w-4 h-4 rounded"></td>
-                    <td class="hidden md:table-cell py-5 align-top">26PG311-02</td>
-                    <td class="py-5 align-top">Little Ones 自理與學前分離預備 Playgroup</td>
-                    <td class="hidden md:table-cell py-5 align-top">
-                        <span class="bg-[#fff3cd] text-gray-700 text-xs px-4 py-0.5 rounded-full">Pending</span>
-                    </td>
-                    <td class="hidden md:table-cell py-5 align-top">Y</td>
-                    <td class="hidden md:table-cell py-5 align-top">$1480</td>
-                    <td class="hidden md:table-cell py-5 align-top">25/04/2026</td>
-                    <td class="hidden md:table-cell py-5 align-top">13/06/2026</td>
-                    <!-- More ** Added more space, it is easy to click ** -->
-                    <td class="py-5">
-                        <button class="more-btn text-gray-400 text-xl hover:text-gray-600">
-                            <div class="px-3">
-                                <i class="fa-solid fa-ellipsis-v"></i>
+        <div class="overflow-x-auto">
+            <table class="table-fixed w-full border-collapse">
+                <thead>
+                    <tr class="border-b border-gray-300 text-sm">
+                        <th class="hidden md:table-cell w-[5%] py-4 text-left"></th>
+                        
+                        <th class="hidden md:table-cell w-[15%] py-4 text-left text-gray-600 font-medium cursor-pointer hover:text-blue-600 select-none" onclick="handleSort('sub_category__name')">
+                            Category
+                            {% if input_data.sort_by == 'sub_category__name' %}
+                                <i class="fa-solid {% if input_data.sort_dir == 'asc' %}fa-arrow-up-a-z{% else %}fa-arrow-down-z-a{% endif %} ml-1 text-blue-500"></i>
+                            {% else %}
+                                <i class="fa-solid fa-sort text-gray-300 ml-1"></i>
+                            {% endif %}
+                        </th>
+                        
+                        <th class="hidden md:table-cell w-[10%] py-4 text-left text-gray-600 font-medium cursor-pointer hover:text-blue-600 select-none" onclick="handleSort('code')">
+                            Code
+                            {% if input_data.sort_by == 'code' %}
+                                <i class="fa-solid {% if input_data.sort_dir == 'asc' %}fa-arrow-up-1-9{% else %}fa-arrow-down-9-1{% endif %} ml-1 text-blue-500"></i>
+                            {% else %}
+                                <i class="fa-solid fa-sort text-gray-300 ml-1"></i>
+                            {% endif %}
+                        </th>
+                        
+                        <th class="w-[80%] md:w-[28%] py-4 text-left text-gray-600 font-medium cursor-pointer hover:text-blue-600 select-none" onclick="handleSort('name')">
+                            Course Name
+                            {% if input_data.sort_by == 'name' %}
+                                <i class="fa-solid {% if input_data.sort_dir == 'asc' %}fa-arrow-up-a-z{% else %}fa-arrow-down-z-a{% endif %} ml-1 text-blue-500"></i>
+                            {% else %}
+                                <i class="fa-solid fa-sort text-gray-300 ml-1"></i>
+                            {% endif %}
+                        </th>
+                        
+                        <th class="hidden md:table-cell w-[10%] py-4 text-left text-gray-600 font-medium">Status</th>
+                        
+                        <th class="hidden md:table-cell w-[6%] py-4 text-left text-gray-600 font-medium cursor-pointer hover:text-blue-600 select-none" onclick="handleSort('is_web_publish')">
+                            Publish
+                            {% if input_data.sort_by == 'is_web_publish' %}
+                                <i class="fa-solid {% if input_data.sort_dir == 'asc' %}fa-arrow-up-1-9{% else %}fa-arrow-down-9-1{% endif %} ml-1 text-blue-500"></i>
+                            {% else %}
+                                <i class="fa-solid fa-sort text-gray-300 ml-1"></i>
+                            {% endif %}
+                        </th>
+                        
+                        <th class="hidden md:table-cell w-[6%] py-4 text-left text-gray-600 font-medium cursor-pointer hover:text-blue-600 select-none" onclick="handleSort('is_promote')">
+                            Promote
+                            {% if input_data.sort_by == 'is_promote' %}
+                                <i class="fa-solid {% if input_data.sort_dir == 'asc' %}fa-arrow-up-1-9{% else %}fa-arrow-down-9-1{% endif %} ml-1 text-blue-500"></i>
+                            {% else %}
+                                <i class="fa-solid fa-sort text-gray-300 ml-1"></i>
+                            {% endif %}
+                        </th>
+                        
+                        <th class="hidden md:table-cell w-[10%] py-4 text-left text-gray-600 font-medium cursor-pointer hover:text-blue-600 select-none" onclick="handleSort('registation_expiry_date')">
+                            Expiry End
+                            {% if input_data.sort_by == 'registation_expiry_date' %}
+                                <i class="fa-solid {% if input_data.sort_dir == 'asc' %}fa-arrow-up-1-9{% else %}fa-arrow-down-9-1{% endif %} ml-1 text-blue-500"></i>
+                            {% else %}
+                                <i class="fa-solid fa-sort text-gray-300 ml-1"></i>
+                            {% endif %}
+                        </th>
+                        
+                        <th class="hidden md:table-cell w-[10%] py-4 text-left text-gray-600 font-medium cursor-pointer hover:text-blue-600 select-none" onclick="handleSort('period_from')">
+                            Start Date
+                            {% if input_data.sort_by == 'period_from' %}
+                                <i class="fa-solid {% if input_data.sort_dir == 'asc' %}fa-arrow-up-1-9{% else %}fa-arrow-down-9-1{% endif %} ml-1 text-blue-500"></i>
+                            {% else %}
+                                <i class="fa-solid fa-sort text-gray-300 ml-1"></i>
+                            {% endif %}
+                        </th>
+                        
+                        <th class="hidden md:table-cell w-[10%] py-4 text-left text-gray-600 font-medium cursor-pointer hover:text-blue-600 select-none" onclick="handleSort('period_to')">
+                            End Date
+                            {% if input_data.sort_by == 'period_to' %}
+                                <i class="fa-solid {% if input_data.sort_dir == 'asc' %}fa-arrow-up-1-9{% else %}fa-arrow-down-9-1{% endif %} ml-1 text-blue-500"></i>
+                            {% else %}
+                                <i class="fa-solid fa-sort text-gray-300 ml-1"></i>
+                            {% endif %}
+                        </th>
+                        
+                        <th class="w-[10%] md:w-[5%] py-4 text-left text-gray-600 font-medium">More</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for course in list_course %}
+                    <tr class="border-b border-gray-200 table-row text-sm">
+                        <td class="hidden md:table-cell py-4">
+                            <input type="checkbox" name="ceSelectedCourses" value="{{ course.id }}" class="row-check w-4 h-4 rounded cursor-pointer">
+                        </td>
+                        <td class="hidden md:table-cell py-4 align-top">[{{course.sub_category.main_category.short_name}}]<br>{{course.sub_category.name}}</td>
+                        <td class="hidden md:table-cell py-4 align-top">{{ course.code }}</td>
+                        <td class="py-4 align-top">{{ course.name }}</td>
+                        
+                        <td class="hidden md:table-cell py-4 align-top">
+                            {% if course.course_dynamic_status == '報名中' %}
+                                <span class="bg-green-100 text-green-700 text-xs px-3 py-1 rounded-full whitespace-nowrap">{{ course.course_dynamic_status }}</span>
+                            {% elif course.course_dynamic_status == '人數已滿' %}
+                                <span class="bg-red-100 text-red-700 text-xs px-3 py-1 rounded-full whitespace-nowrap">{{ course.course_dynamic_status }}</span>
+                            {% elif course.course_dynamic_status == '截止報名' %}
+                                <span class="bg-orange-100 text-orange-700 text-xs px-3 py-1 rounded-full whitespace-nowrap">{{ course.course_dynamic_status }}</span>
+                            {% elif course.course_dynamic_status == '進行中' %}
+                                <span class="bg-blue-100 text-blue-700 text-xs px-3 py-1 rounded-full whitespace-nowrap">{{ course.course_dynamic_status }}</span>
+                            {% else %}
+                                <span class="bg-gray-100 text-gray-700 text-xs px-3 py-1 rounded-full whitespace-nowrap">{{ course.course_dynamic_status }}</span>
+                            {% endif %}
+                            
+                            <div class="text-xs text-gray-500 mt-2 ml-1">
+                                {{ course.current_signup_count|default:"0" }} / {{ course.max_no_student }} 人
                             </div>
-                        </button>
-                    </td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
+                        </td>
+                        <td class="hidden md:table-cell py-4 align-top">
+                            {% if course.is_web_publish %}
+                                <i class="fa-solid fa-check text-green-500"></i>
+                            {% else %}
+                                <i class="fa-solid fa-xmark text-red-500"></i>
+                            {% endif %}
+                        </td>
 
-    <!-- 全域 More 選單 -->
+                        <td class="hidden md:table-cell py-4 align-top">
+                            {% if course.is_promote %}
+                                <i class="fa-solid fa-check text-green-500"></i>
+                            {% else %}
+                                <i class="fa-solid fa-xmark text-red-500"></i>
+                            {% endif %}
+                        </td>
+
+                        <td class="hidden md:table-cell py-4 align-top">{{ course.registation_expiry_date|date:"Y-m-d" }}</td>
+                        <td class="hidden md:table-cell py-4 align-top">{{ course.period_from|date:"Y-m-d" }}</td>
+                        <td class="hidden md:table-cell py-4 align-top">{{ course.period_to|date:"Y-m-d" }}</td>
+                        
+                        <td class="py-4">
+                            <button type="button" class="more-btn text-gray-400 text-xl hover:text-gray-600" data-id="{{ course.hash_id }}">
+                                <div class="px-3">
+                                    <i class="fa-solid fa-ellipsis-v"></i>
+                                </div>
+                            </button>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="9" class="text-center py-8 text-gray-500">目前沒有找到相關的課程。</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </form> 
     <div id="globalMoreMenu" class="hidden fixed z-[999999] bg-white border border-gray-300 shadow-lg min-w-[130px]">
-        <div class="py-2.5 px-3 hover:bg-gray-100 cursor-pointer flex items-center gap-3">
+        <a id="menuView" href="#" class="py-2.5 px-3 hover:bg-gray-100 cursor-pointer flex items-center gap-3">
             <i class="fa-solid fa-eye text-[#737373]"></i> View
-        </div>
-        <div class="py-2.5 px-3 hover:bg-gray-100 cursor-pointer flex items-center gap-3">
+        </a>
+        <a id="menuEdit" href="#" class="py-2.5 px-3 hover:bg-gray-100 cursor-pointer flex items-center gap-3">
             <i class="fa-solid fa-pen-to-square text-[#527bff]"></i> Edit
-        </div>
+        </a>
     </div>
 </main>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
+<script>
+let isClearingFilters = false;
+document.addEventListener('DOMContentLoaded', function() {
+    
+    // --- More 按鈕全域選單控制 ---
+    const globalMoreMenu = document.getElementById('globalMoreMenu');
+    
+    document.querySelectorAll('.more-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            
+            const rect = btn.getBoundingClientRect();
+            globalMoreMenu.style.left = (rect.left - 130) + 'px';
+            globalMoreMenu.style.top = (rect.top + window.scrollY + 10) + 'px'; // 加上 scrollY 防止滾動後錯位
+            globalMoreMenu.classList.remove('hidden');
+            
+            const id = btn.dataset.id;
+            document.getElementById('menuView').href = `/manage/courses/view/${id}`;
+            document.getElementById('menuEdit').href = `/manage/courses/edit/${id}`;
+        });
+    });
+
+    // 點擊頁面其他地方時隱藏 More 選AN
+    document.addEventListener('click', () => {
+        globalMoreMenu.classList.add('hidden');
+    });
+
+    // --- 檢查網址是否有日期參數，有就自動展開「進階篩選」 ---
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('start_date_from') || urlParams.get('start_date_to') || 
+        urlParams.get('expiry_date_from') || urlParams.get('expiry_date_to')) {
+        document.getElementById('advancedFilters').classList.remove('hidden');
+    }
+
+    // --- 初始化 Flatpickr 日期選取器 ---
+    flatpickr(".datepicker", {
+        dateFormat: "Y-m-d", 
+        allowInput: true,    
+        onChange: function(selectedDates, dateStr, instance) {
+            // 當日期選好後，自動觸發送出
+            if (!isClearingFilters) {
+                submitGetForm();
+            }
+        }
+    });
+});
+
+// --- 切換進階篩選面板顯示/隱藏 ---
+function toggleAdvancedFilters() {
+    const panel = document.getElementById('advancedFilters');
+    panel.classList.toggle('hidden');
+}
+
+// --- 🎯 補上你 HTML 裡面呼叫的表單送出與 CSRF 清除函數 ---
+function submitGetForm() {
+    const form = document.getElementById('courseForm');
+    // 如果是 GET 搜尋，把 CSRF Token 拔掉，讓網址變乾淨
+    const csrfInput = form.querySelector('input[name="csrfmiddlewaretoken"]');
+    if (csrfInput) {
+        csrfInput.remove();
+    }
+    form.submit();
+};
+
+function clearAllFilters() {
+
+    isClearingFilters = true;
+
+    const form = document.getElementById('courseForm');
+    
+    document.getElementById('sort_by_input').value = '';
+    document.getElementById('sort_dir_input').value = 'asc';
+
+    // 1. 清空文字輸入框 (關鍵字)
+    const keywordInput = form.querySelector('input[name="txtkeyword"]');
+    if (keywordInput) keywordInput.value = '';
+
+    // 2. 還原所有下拉選單到第一個選項 (-- 所有狀態 --, -- 所有類別 -- 等)
+    const selectors = ['StatusSelector', 'MainCategorySelector', 'SubCategorySelector', 'PublishSelector', 'PromoteSelector'];
+    selectors.forEach(name => {
+        const selectEl = form.querySelector(`select[name="${name}"]`);
+        if (selectEl) selectEl.selectedIndex = 0;
+    });
+
+    // 3. 清空進階篩選裡面的所有 Flatpickr 日期欄位
+    // 這裡我們直接找到所有帶有 .datepicker 的 input 並清空它
+    form.querySelectorAll('.datepicker').forEach(input => {
+        if (input._flatpickr) {
+            input._flatpickr.clear(); // 🌟 這是 Flatpickr 專屬的清空方法，最乾淨
+        } else {
+            input.value = ''; // 防呆備用
+        }
+    });
+
+    // 4. 順手把進階篩選面板藏起來 (因為條件都清空了)
+    const advancedPanel = document.getElementById('advancedFilters');
+    if (advancedPanel) {
+        advancedPanel.classList.add('hidden');
+    }
+
+    // 5. 呼叫你原本就寫好的表單送出函數 (順便幫你拔掉網址的 CSRF)
+    submitGetForm();
+};
+
+function handleSort(columnName) {
+    const sortByInput = document.getElementById('sort_by_input');
+    const sortDirInput = document.getElementById('sort_dir_input');
+
+    // 如果點擊的是原本的欄位，就切換方向 (asc -> desc -> asc)
+    if (sortByInput.value === columnName) {
+        sortDirInput.value = sortDirInput.value === 'asc' ? 'desc' : 'asc';
+    } else {
+        // 如果點擊新的欄位，預設為遞增 (asc)
+        sortByInput.value = columnName;
+        sortDirInput.value = 'asc';
+    }
+
+    // 呼叫你原本的送出函數
+    submitGetForm();
+};
+</script>
 {% endblock %}

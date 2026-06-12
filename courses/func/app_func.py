@@ -3,6 +3,10 @@ from django.conf import settings
 from django.template.loader import render_to_string
 from weasyprint import HTML
 from administration.models import Center
+from django.db.models import Count, Case, When, Value, CharField, F, Q
+from django.utils import timezone
+from django.contrib import messages
+from ..models import Course
 
 def generate_payment_receipt_pdf(obj_signup):
 
@@ -30,3 +34,74 @@ def generate_refund_receipt_pdf(obj_refund):
     pdf_bytes = HTML(string=html_string).write_pdf()
     
     return pdf_bytes
+
+
+def get_courses_with_dynamic_status(**kwargs):
+    today = timezone.now().date()
+    keyword = kwargs.pop('keyword', None)
+
+    list_course = Course.objects.exclude(file_status="deleted").order_by("-created_datetime")
+
+    if keyword:
+        keyword = keyword.strip()
+        list_course = list_course.filter(Q(name__icontains=keyword) | Q(code__icontains=keyword))
+
+    if kwargs:
+        list_course = list_course.filter(**kwargs)
+
+    valid_signup_condition = (
+        Q(signup_set__payment_date__isnull=False) &
+        Q(signup_set__sign_up_status="success") & 
+        Q(signup_set__cancel_date__isnull=True) & 
+        ~Q(signup_set__file_status="deleted"))
+
+
+    list_course = list_course.annotate(current_signup_count=Count('signup_set', filter=valid_signup_condition), 
+                                    course_dynamic_status=Case(
+                                    When(course_status='cancel', then=Value('已取消')),
+                                    When(period_to__lt=today, then=Value('已完結')),
+                                    When(period_from__lte=today,period_to__gte=today,then=Value('進行中')),
+                                    When(registation_expiry_date__lt=today, then=Value('截止報名')),
+                                    When(current_signup_count__gte=F('max_no_student'), then=Value('人數已滿')),
+                                    default=Value('報名中'),output_field=CharField()))
+    return list_course
+
+def course_set_publish(request, list_course_id):
+    try:
+        for id in list_course_id:
+            temp_course = Course.objects.filter(id=id).update(is_web_publish=True, last_updated_by=request.obj_staff.username)
+        return True
+    except Exception as e:
+        print(f"Course set web publish fail: {e}")
+        messages.error(request, "Fail to set web publish")
+        return False
+    
+def course_undo_publish(request, list_course_id):
+    try:
+        for id in list_course_id:
+            temp_course = Course.objects.filter(id=id).update(is_web_publish=False, last_updated_by=request.obj_staff.username)
+        return True
+    except Exception as e:
+        print(f"Course undo web publish fail: {e}")
+        messages.error(request, "Fail to undo web publish")
+        return False 
+
+def course_set_promote(request, list_course_id):
+    try:
+        for id in list_course_id:
+            temp_course = Course.objects.filter(id=id).update(is_promote=True, last_updated_by=request.obj_staff.username)
+        return True
+    except Exception as e:
+        print(f"Course set web promote fail: {e}")
+        messages.error(request, "Fail to set web promote")
+        return False
+    
+def course_undo_promote(request, list_course_id):
+    try:
+        for id in list_course_id:
+            temp_course = Course.objects.filter(id=id).update(is_promote=False, last_updated_by=request.obj_staff.username)
+        return True
+    except Exception as e:
+        print(f"Course undo web promote fail: {e}")
+        messages.error(request, "Fail to undo web promote")
+        return False 

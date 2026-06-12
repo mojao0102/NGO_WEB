@@ -6,7 +6,7 @@
     <!-- Desktop Links -->
     <div class="hidden md:flex gap-6">
         {% for mc in list_mc %}
-            <a href="{% url "front_web:course_list" mc.id %}" class="text-gray-700 hover:text-blue-600">
+            <a href="{% url "front_web:course_list" mc.hash_id %}" class="text-gray-700 hover:text-blue-600">
               {% if mc.nav_icon %}
                 <i class="fa-solid {{mc.nav_icon}} fa-xl"{% if mc.theme_color %} style="color: {{mc.theme_color}};"{% endif %}></i>
               {% endif %}
@@ -108,7 +108,7 @@
     
     <div class="flex flex-col items-center gap-4 mt-4">
     {% for mc in list_mc %}
-    <a href="{% url "front_web:course_list" mc.id %}">
+    <a href="{% url "front_web:course_list" mc.hash_id %}">
         <button class="w-40 py-2 bg-white hover:bg-gray-100 border-4 {% if mc.theme_color %}border-[{{mc.theme_color}}] {% endif %}rounded-2xl flex flex-col items-center justify-center shadow-md">
         {% if mc.nav_icon %}
           <i class="fa-solid {{mc.nav_icon}} text-4xl {% if mc.theme_color %}text-[{{mc.theme_color}}] {% endif %}mb-2"></i>
