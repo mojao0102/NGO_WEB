@@ -106,7 +106,7 @@ class Course(AuditBaseModel):
     
     age_group = models.CharField(max_length=200, blank=True, verbose_name="對象")
 
-    total_lessons = models.DecimalField(max_digits=5, decimal_places=1, verbose_name="總上課堂數")
+    total_lessons = models.IntegerField(verbose_name="總上課堂數")
     hours_per_lesson = models.DecimalField(max_digits=5, decimal_places=1, blank=True, verbose_name="每堂上課時數")
     
     # 日期與時間 (v04 核心欄位：供前端扁平表單輸入)

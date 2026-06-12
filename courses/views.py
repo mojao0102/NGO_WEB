@@ -82,6 +82,7 @@ def course_list(request):
     else:#GET
         course_filters = {} 
 
+        print(f"Keyword: {request.GET.get('txtkeyword', '').strip()}")
         if keyword:= request.GET.get('txtkeyword', '').strip():
             course_filters['keyword'] = keyword
 
@@ -168,7 +169,6 @@ def course_create(request):
                 blnIsValid = False
 
         if not (total_lessons:=request.POST.get("total_lessons", '').strip()) or not total_lessons.isdigit() or int(total_lessons) <= 0:
-            print(f"total_lessons: {request.POST.get("total_lessons", '').strip()}")
             messages.error(request, "總堂數必須是大於 0 的整數")
             blnIsValid = False
 
@@ -272,10 +272,10 @@ def course_create(request):
         return render(request, "courses/course_edit.html", context)
 
 @admin_app_func.staff_access_control
-def course_edit(request, course_hash):
+def course_edit(request, hash_course):
 
     #decode hash id
-    course_id = decode_id(course_hash)
+    course_id = decode_id(hash_course)
     if not course_id:
         raise Http404("無效的課程連結")
     
@@ -349,7 +349,7 @@ def course_edit(request, course_hash):
         if not blnIsValid:
             #Create dict from pass non-string value back to template
             temp_obj = request.POST.dict()
-            temp_obj['id'] = course_id
+            temp_obj['hash_id'] = hash_course
             temp_obj['period_from'] = period_from
             temp_obj['period_to'] = period_to
             temp_obj['registation_expiry_date'] = registation_expiry_date
@@ -419,10 +419,10 @@ def course_edit(request, course_hash):
         return render(request, "courses/course_edit.html", context)
 
 @admin_app_func.staff_access_control
-def course_delete(request, course_hash):
+def course_delete(request, hash_course):
 
     #decode hash id
-    course_id = decode_id(course_hash)
+    course_id = decode_id(hash_course)
     if not course_id:
         raise Http404("無效的課程連結")
 
@@ -438,14 +438,23 @@ def course_delete(request, course_hash):
 # endregion
 
 @admin_app_func.staff_access_control
-def course_view(request, course_hash):
+def course_view(request, hash_course):
 
     #decode hash id
-    course_id = decode_id(course_hash)
+    course_id = decode_id(hash_course)
     if not course_id:
         raise Http404("無效的課程連結")
+    #Get Course object
 
-    return render(request, "courses/course_view.html")
+    obj_course = course_app_func.get_courses_with_dynamic_status(id=course_id).first()
+    if not obj_course:
+        raise Http404("找不到該課程")
+    
+    if request.method == "POST":
+        print("POST")
+    else:
+        context = {"obj_course" : obj_course,}
+        return render(request, "courses/course_view.html", context)
 # endregion
 
 # region CourseTemplate

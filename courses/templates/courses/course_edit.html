@@ -152,7 +152,7 @@
 
         <div>
             <label class="block text-sm text-gray-600 mb-1">Max number of student</label>
-            <input type="number" name="max_no_student" value="{{ obj_course.max_no_student|default:'' }}" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200" required>
+            <input type="number" name="max_no_student" value="{{ obj_course.max_no_student|floatformat:'0'|default:'' }}" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200" required>
         </div>
 
         {% comment %} <div>
