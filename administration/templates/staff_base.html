@@ -52,7 +52,15 @@
                 <i class="fa-solid fa-gauge-high w-5 text-center"></i>
                 <span>Dashboard</span>
             </a>
-            <a href="{% url "courses:course_template_list" %}" class="rounded-lg py-2.5 px-3 flex items-center gap-3 hover:bg-gray-100 text-gray-700 text-xs">
+
+            {# Course Template #}
+            <a href="{% url "courses:course_template_list" %}"
+            class="rounded-lg py-2.5 px-3 flex items-center gap-3 text-xs
+                    {% if '/manage/courses/template/' in request.path %}
+                    bg-gray-100 text-gray-600
+                    {% else %}
+                    hover:bg-gray-100 text-gray-700
+                    {% endif %}">
                 <i class="fa-solid fa-table-columns w-5 text-center"></i>
                 <span>Course Template</span>
             </a>
@@ -60,7 +68,7 @@
             {# Course #}
             <a href="{% url "courses:course_list" %}"
             class="rounded-lg py-2.5 px-3 flex items-center gap-3 text-xs
-                    {% if '/manage/courses/' in request.path %}
+                    {% if '/manage/courses/' in request.path and '/manage/courses/template/' not in request.path %}
                     bg-gray-100 text-gray-600
                     {% else %}
                     hover:bg-gray-100 text-gray-700

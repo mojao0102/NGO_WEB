@@ -67,7 +67,7 @@
       <a href="{% url "front_web:course" course.hash_id %}">
         <div class="bg-white rounded-2xl shadow-lg overflow-hidden">
           <!-- 課程圖片區 -->
-          <div class="w-3/4 mx-auto mt-5">
+          <div class="w-full h-[150px] mx-auto mt-5">
             {% if course.photo %}
               <img src="{{course.photo.url}}" alt="{{course.title}}" class="w-full h-full object-cover">
             {% endif %}
@@ -103,7 +103,7 @@
     {% for news in list_news %}
     <a href="{% url "front_web:news" news.id %}">
       <div class="bg-white rounded-2xl shadow-lg overflow-hidden flex flex-col">
-        <div class="w-full aspect-[3/4]">
+        <div class="w-full h-[360px]">
           {% if news.list_photo %}
           <img src="{{news.list_photo.url}}" alt="{{news.title}}" class="w-full h-full object-cover">
           {% endif %}

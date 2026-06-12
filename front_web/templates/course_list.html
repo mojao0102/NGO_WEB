@@ -52,29 +52,37 @@
 
         {% if list_course %}
         <!-- 課程卡片 -->
+        <!-- 課程卡片 -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         {% for course in list_course %}
             <a href="{% url "front_web:course" course.hash_id %}">
-                <div class="bg-white shadow-md rounded-lg p-6 text-center relative h-full">
-                <!-- 右上角標籤：收生中 -->
-                <div class="absolute top-4 right-4 bg-green-500 text-white text-sm font-medium px-4 py-2 rounded-full">
-                    {{course.str_course_status}}
-                </div>
+                <div class="bg-white shadow-md rounded-lg p-6 text-center relative h-full overflow-hidden group">
+                    <!-- 右上角標籤：收生中 -->
+                    <div class="text-right">
+                        <span class="text-right bg-green-500 text-white text-sm font-medium px-2 py-2 rounded-full z-20">
+                            {{course.str_course_status}}
+                        </span>
+                    </div>
 
-                <div class="text-lg font-medium mb-4">
-                    {% if course.age_group %}
-                    {{course.age_group}}<br>
-                    {% endif %}
-                    {{course.name | wordwrap:10}}
-                </div>
-                <!-- 小熊圖片 絕對定位 貼齊左下角 -->
-                <img src="./img/icon/Playgroup_bear.png" 
-                    class="absolute bottom-0 left-0 h-20 w-auto" 
-                    alt="">
+                    <!-- 課程文字內容 (置頂層級，不會被圖片遮擋) -->
+                    <div class="text-lg font-medium my-4 mx-5 relative z-10">
+                        {% if course.age_group %}
+                        {{course.age_group}}<br>
+                        {% endif %}
+                        <!-- 名稱最多顯示3行，超出隱藏 -->
+                        <div class="line-clamp-3 text-break">
+                            {{ course.name }}
+                        </div>
+                    </div>
+
+                    <!-- 小熊圖片：最底層 z-0，不遮擋任何內容 -->
+                    <img 
+                        src="{% static 'img/icon/Playgroup_bear.png' %}" 
+                        class="absolute bottom-0 left-0 h-20 w-auto z-0 translate-y-1/2 group-hover:translate-y-0 transition-all duration-300" 
+                        alt="">
                 </div>
             </a>
         {% endfor %}
-
         </div>
         {% endif %}
         {% endif %}

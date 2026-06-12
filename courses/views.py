@@ -168,7 +168,6 @@ def course_create(request):
                 blnIsValid = False
 
         if not (total_lessons:=request.POST.get("total_lessons", '').strip()) or not total_lessons.isdigit() or int(total_lessons) <= 0:
-            print(f"total_lessons: {request.POST.get("total_lessons", '').strip()}")
             messages.error(request, "總堂數必須是大於 0 的整數")
             blnIsValid = False
 

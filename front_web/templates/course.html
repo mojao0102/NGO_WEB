@@ -4,13 +4,19 @@
 {% block content %}
 
 <!-- 1.2 background -->
-<div class="relative h-[250px] bg-cover bg-center" 
+<div class="relative h-[120px] bg-cover bg-center" 
     style="background-image: url('{% static "img/banner/mainbanner.jpg" %}');">
 </div>
 
 <!-- 2. Page Content -->
 <div class="max-w-3xl mx-auto p-8">
 {% include "partials/_alert.html" %}
+
+<!-- 課程圖片區 -->
+<div class="w-full h-[180px] mx-auto my-5">
+    <img src="{{obj_course.photo.url}}" alt="{{obj_course.title}}" class="w-full h-full object-cover">
+</div>
+
 <!-- 課程標題 -->
 <h1 class="text-[#70c1d6] text-3xl md:text-4xl font-light mb-6">
     {{obj_course.name}}
@@ -57,7 +63,7 @@
 <!-- 費用 -->
 <div class="mb-6">
     <h3 class="font-bold text-lg mb-2">費用:</h3>
-    <p class="text-gray-800">${{obj_course.course_fee | floatformat:2}}</p>
+    <p class="text-gray-800">${{obj_course.course_fee | floatformat:0}}</p>
 </div>
 
 <!-- 對象 -->
