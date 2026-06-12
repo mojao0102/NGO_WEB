@@ -99,7 +99,7 @@
 
     <!-- 按鈕列 -->
     <div class="flex justify-center gap-6">
-        <form id="ConfirmSignUp" action="{% url "front_web:course_payment" obj_course.id %}" method="POST">
+        <form id="ConfirmSignUp" action="{% url "front_web:course_payment" obj_course.hash_id %}" method="POST">
         {% csrf_token %}
             <button id="confirmModalBtn" class="bg-[#b4d26e] hover:bg-green-500 text-white px-8 py-4 rounded-full text-xl font-bold flex items-center gap-3">
                 <i class="fa-solid fa-check-circle text-2xl"></i> 確定報名

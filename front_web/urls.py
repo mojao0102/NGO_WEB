@@ -20,15 +20,15 @@ urlpatterns = [
     path('register/change-email/', auth_views.student_change_email_and_resend, name='student_change_email_and_resend'),
     path('emailverify/<str:uidb64>/<str:token>/', auth_views.student_verifiy_email, name='student_verifiy_email'),
 
-    path('course_list/<int:mc_id>/', course_views.course_list, name='course_list'),
-    path('course/<int:course_id>/', course_views.course, name='course'),
+    path('course_list/<str:hash_mc>/', course_views.course_list, name='course_list'),
+    path('course/<str:hash_course>/', course_views.course, name='course'),
 
-    path('course/<int:course_id>/pay/', payment_views.course_payment, name='course_payment'),
+    path('course/<str:hash_course>/pay/', payment_views.course_payment, name='course_payment'),
     path('payment_successful/', payment_views.payment_successful, name='payment_successful'),
     path('payment_fail/', payment_views.payment_fail, name='payment_fail'),
     path('stripe/webhook/', payment_views.stripe_webhook, name='stripe_webhook'),
 
     path('student_dashboard/', dashboard_views.student_dashboard, name='student_dashboard'),
-    path('student_dashboard/payment_receipt/<int:signup_id>/', dashboard_views.download_payment_receipt, name='download_payment_receipt'),
-    path('student_dashboard/refund_receipt/<int:refund_id>/', dashboard_views.download_refund_receipt, name='download_refund_receipt'),
+    path('student_dashboard/payment_receipt/<str:hash_signup>/', dashboard_views.download_payment_receipt, name='download_payment_receipt'),
+    path('student_dashboard/refund_receipt/<str:hash_refund>/', dashboard_views.download_refund_receipt, name='download_refund_receipt'),
 ]

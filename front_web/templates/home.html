@@ -35,7 +35,7 @@
 
     <div class="grid grid-cols-1 md:grid-cols-3 text-center">
     {% for mc in list_mc %}
-    <a href="{% url "front_web:course_list" mc.id %}">
+    <a href="{% url "front_web:course_list" mc.hash_id %}">
       <div class="flex flex-col items-center">
         <div class="w-[200px] h-[200px] mb-4">
           {% if mc.home_photo %}
@@ -64,7 +64,7 @@
       {% for course in list_promote_course %}
       <!-- 課程卡片 1 -->
       {% comment %} fix url {% endcomment %}
-      <a href="{% url "front_web:course" course.id %}">
+      <a href="{% url "front_web:course" course.hash_id %}">
         <div class="bg-white rounded-2xl shadow-lg overflow-hidden">
           <!-- 課程圖片區 -->
           <div class="w-3/4 mx-auto mt-5">

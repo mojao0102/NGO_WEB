@@ -14,7 +14,7 @@
     <!-- 頂部課程分類導航 -->
     <div class="flex justify-center -space-x-2">
     {% for mc in list_mc %}
-        <a href="{% url "front_web:course_list" mc.id %}">
+        <a href="{% url "front_web:course_list" mc.hash_id %}">
             <div class="bg-[{{mc.theme_color}}] hover:bg-[{{mc.theme_color}}] text-center py-3 px-8 rounded-t-lg text-sm font-medium">
             {{mc.name}}
             </div>
@@ -29,8 +29,8 @@
         <form>
         <div class="flex flex-wrap justify-center gap-3 mb-8">
         {% for sc in list_sc %}
-            <button name="sc" value="{{sc.id}}" type="submit">
-                {% if sc.id == obj_sc.id %}
+            <button name="sc" value="{{sc.hash_id}}" type="submit">
+                {% if sc.hash_id == obj_sc.hash_id %}
                     <div class="bg-[{{obj_mc.theme_color}}] text-white text-center py-3 px-4 rounded-full text-sm font-medium transition-colors hover:bg-gray-200">
                 {% else %}
                     <div class="bg-cyan-200 text-center py-3 px-4 rounded-full text-sm font-medium transition-colors hover:bg-gray-200">
@@ -54,7 +54,7 @@
         <!-- 課程卡片 -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         {% for course in list_course %}
-            <a href="{% url "front_web:course" course.id %}">
+            <a href="{% url "front_web:course" course.hash_id %}">
                 <div class="bg-white shadow-md rounded-lg p-6 text-center relative h-full">
                 <!-- 右上角標籤：收生中 -->
                 <div class="absolute top-4 right-4 bg-green-500 text-white text-sm font-medium px-4 py-2 rounded-full">

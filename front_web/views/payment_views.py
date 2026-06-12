@@ -12,10 +12,18 @@ from students.models import Student
 from ..func import app_func as frontweb_app_func, stripe_func
 import stripe
 
+from core.utils import decode_id
+from django.http import Http404
+
 
 # region View: Course SignUp/Payment
 @frontweb_app_func.student_access_control()
-def course_payment(request, course_id):
+def course_payment(request, hash_course):
+
+    course_id = decode_id(hash_course)
+    if not course_id:
+        raise Http404("無效的連結")
+
     if request.method == "POST":
 
         #1 Get course and check if course still avaliable, Only course with status "created", web published, signup number < max no and not over registation expiry date allow to sign_up
@@ -101,8 +109,8 @@ def payment_successful(request):
             student = signup.student
                 
             context = {
-                'course_id' : course.id,
-                'course_list_id': course.sub_category.main_category_id,
+                'course_id' : course.hash_id,
+                'course_list_id': course.sub_category.main_category.hash_id,
                 'course_name': course.name,
                 'course_code': course.code,
                 'student_name': student.cn_name,

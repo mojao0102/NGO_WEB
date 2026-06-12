@@ -4,10 +4,17 @@ from django.shortcuts import render, get_object_or_404
 from courses.models import CourseMainCategory, CourseSubCategory, Course
 from web_contents.models import News
 from ..func import app_func as frontweb_app_func, stripe_func
+from core.utils import decode_id
+from django.http import Http404
 
 # region View: Course/Category
 @frontweb_app_func.load_main_category
-def course_list(request, mc_id):
+def course_list(request, hash_mc):
+
+    #hash id
+    mc_id = decode_id(hash_mc)
+    if not mc_id:
+        raise Http404("無效的連結")
 
     #Get main category object by id & is_active
     obj_mc = get_object_or_404(CourseMainCategory, id = mc_id, is_active = True)
@@ -20,7 +27,7 @@ def course_list(request, mc_id):
                 "list_sc" : list_sc}
 
     #check if is from sc button press at web page or page/mc button load
-    sc_id = int(request.GET['sc'] if 'sc' in request.GET else list_sc[0].id if list_sc else 0)
+    sc_id = decode_id(request.GET['sc']) if 'sc' in request.GET else list_sc[0].id if list_sc else 0
 
     #Get sub category object
     if sc_id > 0 :
@@ -52,8 +59,12 @@ def course_list(request, mc_id):
     return render(request, "course_list.html", context)
 
 @frontweb_app_func.load_main_category
-def course(request, course_id):
+def course(request, hash_course):
     
+    course_id = decode_id(hash_course)
+    if not course_id:
+        raise Http404("無效的連結")
+
     if request.method == "POST":
         print("POST here")
     else:#GET

@@ -11,7 +11,7 @@
     {% include "partials/_alert.html" %} 
 
     <form method="post" 
-        action="{% if form_mode == 'edit' %}{% url 'courses:course_edit' obj_course.id %}{% else %}{% url 'courses:course_create' %}{% endif %}" 
+        action="{% if form_mode == 'edit' %}{% url 'courses:course_edit' obj_course.hash_id %}{% else %}{% url 'courses:course_create' %}{% endif %}" 
         enctype="multipart/form-data" 
         class="max-w-2xl space-y-5">
         {% csrf_token %}
@@ -186,7 +186,7 @@
             <a href="{% url 'courses:course_list' %}" class="bg-gray-700 text-white px-6 py-2 rounded hover:bg-gray-800 text-center">Back</a>
             {% if form_mode == 'edit' %}
             {% comment %} <button type="button" class="bg-red-500 text-white px-6 py-2 rounded hover:bg-red-600">Delete</button> {% endcomment %}
-            <a href="{% url 'courses:course_delete' obj_course.id %}" class="bg-red-500 text-white px-6 py-2 rounded hover:bg-red-600">Delete</a>
+            <a href="{% url 'courses:course_delete' obj_course.hash_id %}" class="bg-red-500 text-white px-6 py-2 rounded hover:bg-red-600">Delete</a>
             {% endif %}
         </div>
 

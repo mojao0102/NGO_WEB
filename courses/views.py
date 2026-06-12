@@ -10,6 +10,8 @@ from .func import app_func as course_app_func
 from django.utils.dateparse import parse_date, parse_time
 from django.utils import timezone
 import json
+from core.utils import decode_id
+from django.http import Http404
 
 # region Course
 @admin_app_func.staff_access_control
@@ -270,8 +272,14 @@ def course_create(request):
         return render(request, "courses/course_edit.html", context)
 
 @admin_app_func.staff_access_control
-def course_edit(request, course_id):
+def course_edit(request, course_hash):
 
+    #decode hash id
+    course_id = decode_id(course_hash)
+    if not course_id:
+        raise Http404("無效的課程連結")
+    
+    #Get course object & drop down list datasource
     obj_course = get_object_or_404(Course, Q(id=course_id) & ~Q(file_status="deleted"))
     list_templates = CourseTemplate.objects.exclude(file_status="deleted")
     list_subcategory = CourseSubCategory.objects.filter(is_active=True).exclude(file_status="deleted")
@@ -411,7 +419,13 @@ def course_edit(request, course_id):
         return render(request, "courses/course_edit.html", context)
 
 @admin_app_func.staff_access_control
-def course_delete(request, course_id):
+def course_delete(request, course_hash):
+
+    #decode hash id
+    course_id = decode_id(course_hash)
+    if not course_id:
+        raise Http404("無效的課程連結")
+
     #Check if any student signup already, if yes, only allow cancel
     if SignUp.objects.filter(course_id=course_id).exclude(file_status="deleted"):
         messages.error(request, "SignUp found, cannot delete, please consider cancel it")
@@ -424,7 +438,13 @@ def course_delete(request, course_id):
 # endregion
 
 @admin_app_func.staff_access_control
-def course_view(request, course_id):
+def course_view(request, course_hash):
+
+    #decode hash id
+    course_id = decode_id(course_hash)
+    if not course_id:
+        raise Http404("無效的課程連結")
+
     return render(request, "courses/course_view.html")
 # endregion
 

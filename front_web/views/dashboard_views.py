@@ -7,6 +7,9 @@ from courses.models import Course, SignUp, SignUpRefund
 from ..func import app_func as frontweb_app_func
 from courses.func import app_func as courses_app_func
 
+from core.utils import decode_id, encode_id
+from django.http import Http404
+
 import stripe
 
 # region View: Dashboard
@@ -75,12 +78,23 @@ def student_dashboard(request):
             'display_status')
 
         #Union and sort by display date desc
-        context["list_trans"] = payment_list.union(refund_list)
+        list_trans = payment_list.union(refund_list).order_by("-display_date")
+
+        #hash id
+        for trans in list_trans:
+            trans['record_id'] = encode_id(trans['record_id']) 
+
+        context["list_trans"] = list_trans
 
     return render(request, "student_dashboard.html", context)
 
 @frontweb_app_func.student_access_control()
-def download_payment_receipt(request, signup_id):
+def download_payment_receipt(request, hash_signup):
+
+    signup_id = decode_id(hash_signup)
+    if not signup_id:
+        raise Http404("無效的連結")
+
     obj_signup = get_object_or_404(SignUp, id=signup_id)
     
     pdf_bytes = courses_app_func.generate_payment_receipt_pdf(obj_signup)
@@ -91,7 +105,12 @@ def download_payment_receipt(request, signup_id):
     return response
 
 @frontweb_app_func.student_access_control()
-def download_refund_receipt(request, refund_id):
+def download_refund_receipt(request, hash_refund):
+
+    refund_id = decode_id(hash_refund)
+    if not refund_id:
+        raise Http404("無效的連結")
+
     obj_refund = get_object_or_404(SignUpRefund, id=refund_id)
     
     pdf_bytes = courses_app_func.generate_refund_receipt_pdf(obj_refund)
